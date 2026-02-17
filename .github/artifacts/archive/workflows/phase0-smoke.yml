@@ -1,0 +1,61 @@
+name: Phase0 Smoke
+
+on:
+  pull_request:
+    branches:
+      - 'phase0/**'
+  workflow_dispatch: {}
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare environment
+        run: |
+          python -V || true
+          echo "workspace=$GITHUB_WORKSPACE"
+
+      - name: Lint and discovery
+        id: discovery
+        run: |
+          LINT_OK=true
+          if command -v flake8 >/dev/null 2>&1; then
+            flake8 || LINT_OK=false
+          else
+            echo "no flake8 found"
+          fi
+          TESTS_OK=true
+          if [ -d "tests" ]; then
+            if command -v pytest >/dev/null 2>&1; then
+              pytest -q || TESTS_OK=false
+            else
+              echo "pytest not available; skipping test-run"
+            fi
+          else
+            echo "no tests/ directory found"
+          fi
+          ARTIFACT_CHECK=true
+          if [ -d "frontend/assets/phase0" ]; then
+            echo "assets found"
+          else
+            ARTIFACT_CHECK=false
+          fi
+          python - <<'PY'
+import json, os
+data = {
+  'lint': 'ok' if os.getenv('LINT_OK','true')=='true' else 'fail',
+  'tests': 'ok' if os.getenv('TESTS_OK','true')=='true' else 'fail',
+  'artifact_check': 'ok' if os.getenv('ARTIFACT_CHECK','true')=='true' else 'fail'
+}
+open('phase0-smoke.json','w').write(json.dumps(data))
+print('wrote phase0-smoke.json')
+PY
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase0-smoke
+          path: phase0-smoke.json

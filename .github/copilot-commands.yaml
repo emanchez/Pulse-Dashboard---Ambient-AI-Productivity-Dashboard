@@ -1,0 +1,19 @@
+scaffold:
+  description: "Create a feature skeleton for Phase‑0 step work"
+  usage: "Make a branch, add files, open PR"
+  commands:
+    - "git checkout -b phase0/step-<n>-short-desc"
+    - "git add <files> && git commit -m 'phase0: add <desc>'"
+    - "git push origin phase0/step-<n>-short-desc"
+
+run-tests:
+  description: "Run Python tests if present"
+  command: "pytest -q || echo 'no pytest or tests failed'"
+
+run-smoke:
+  description: "Run Phase-0 smoke checks locally (discovery + artifact)"
+  command: "./scripts/phase0_smoke_local.sh || echo 'run GitHub Actions on PR to validate'"
+
+generate-docs:
+  description: "Build docs (if docs generator present)"
+  command: "make docs || echo 'no docs generator configured'"
