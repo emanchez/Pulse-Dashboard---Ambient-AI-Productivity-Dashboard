@@ -47,6 +47,9 @@ Create basic CRUD API endpoints for tasks with JWT authentication and action log
 - Branch: phase-1/step-3-api-skeleton
 - Depends on steps 1 and 2.
 
+- Blocking steps: .github/artifacts/phase1/plan/data-models.md
+- Merge Readiness: true
+
 ## Risks & Mitigations
 - Auth failures; test thoroughly.
 

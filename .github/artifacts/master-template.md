@@ -10,6 +10,12 @@ Short summary of phase goals and boundaries.
 1. Step 1 — [step-1-short-title.md](./step-1-short-title.md)
 2. Step 2 — [step-2-short-title.md](./step-2-short-title.md)
 
+## Merge Order
+
+- When the numeric `Steps (ordered)` list does not reflect the actual merge sequence, populate this `Merge Order` subsection with the exact merge sequence (by step file path and suggested branch name). Example:
+	1. `.github/artifacts/phase1/plan/step-2-db-schema.md` — branch: `phase-1/step-2-db-schema`
+	2. `.github/artifacts/phase1/plan/step-3-api.md` — branch: `phase-1/step-3-api`
+
 ## Phase Acceptance Criteria
 - High-level measurable outcomes and release criteria.
 

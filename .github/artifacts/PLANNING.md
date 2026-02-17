@@ -55,6 +55,14 @@ Concurrency & PR strategy
 - Recommend focused PRs: separate schema/persistence changes into their own PRs with explicit backup/migration steps.
 - Suggested branch naming convention: `phase-<n>/step-<m>-short-desc` (adjust to project conventions).
 
+### Merge Order and Blocking Rules (Required)
+
+- Numeric `Steps (ordered)` MUST reflect the intended merge sequence. If the intended merge sequence differs from numeric ordering, the phase master MUST include a `Merge Order` subsection immediately after `Steps (ordered)` that lists the exact merge sequence (by step filename and suggested branch name).
+- Each phase master and step document MUST include the following fields in their `Concurrency & PR strategy` section:
+  - `Blocking steps:` (workspace-relative paths of step files or branch names that must be merged first)
+  - `Merge Readiness: true|false`
+- If merging a step prior to its blockers would break CI or the build, the step MUST either be blocked until blockers are merged or include a feature-flagged stub implementation with automated tests that assert safe fallback behavior. Acceptance criteria must verify the safe fallback.
+
 Author checklist (to complete before opening PR)
 -----------------------------------------------
 - [ ] Purpose filled

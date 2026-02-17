@@ -34,6 +34,17 @@ One-sentence statement of intent. (Required)
 ## Concurrency & PR strategy
 - Suggested branch names, merge order, and any dependent steps. Link other step files by path.
 
+- **Required fields (add below):**
+
+	- `Blocking steps:`  
+		- List workspace-relative paths or branch names that must be merged first. Example: `Blocked until: .github/artifacts/phase1/plan/type-sync.md`
+
+	- `Merge Readiness: true|false`  
+		- Authors must set this to `false` while blockers remain, and flip to `true` when the step is safe to merge.
+
+	- `Stub/FeatureFlag:` (optional)  
+		- If a step uses a stubbed implementation because a dependency hasn't merged, describe the feature flag, the stub behavior, and link tests that assert safe fallback.
+
 ## Risks & Mitigations
 - Short list of risks. If data/storage is modified: "BEFORE MERGE: call `backup_snapshot()` and follow atomic-write pattern in `code/backend/app/storage.py`."
 

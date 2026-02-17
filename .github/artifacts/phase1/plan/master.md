@@ -29,6 +29,9 @@ Establish the foundational architecture for the Ambient AI Productivity Dashboar
 - Step 4 (frontend) depends on Step 5 (type-sync) completion.
 - Merge order: Backend steps first, then frontend after type sync is ready.
 
+- Blocking steps: None
+- Merge Readiness: true
+
 ## Verification Plan
 - Run backend tests: `pytest` in /code/backend
 - Start backend server: `uvicorn app.main:app --reload` and verify /docs endpoint.

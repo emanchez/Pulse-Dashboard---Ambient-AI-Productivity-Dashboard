@@ -81,3 +81,12 @@ All feature/version/phase work must follow the master/step planning framework de
 - **Validation:** After changes, run builds/tests/linters and verify against the acceptance criteria and testing checklists in your step or master document.
 - **Consistency:** Maintain strict typing, event sourcing, and mobile-first design as per coding standards.
 - **Documentation:** Update or reference these context files if new decisions or changes arise, keeping everything intertwined and up-to-date.
+
+## Dependency & Merge Enforcement (New)
+
+- **Blocking steps required:** Every step document MUST include a `Blocking steps:` line in the `Concurrency & PR strategy` section when it depends on other step artifacts. Use workspace-relative paths or branch names (example: `Blocked until: .github/artifacts/phase1/plan/type-sync.md`).
+- **Merge Readiness flag:** Every step document MUST include `Merge Readiness: true|false`. PRs that implement a step must only be merged when the corresponding step file shows `Merge Readiness: true`, or when an approved stub/feature-flag pattern is present (see next bullet).
+- **Generated artifacts & stubs:** If a step depends on generated artifacts (for example a TypeScript client), the author must either:
+  - mark the step as blocked until the generating step merges, or
+  - include a clearly documented, feature-flagged stub implementation plus automated tests that assert safe fallback behavior and add `Depends-On: <branch>` metadata to the PR.
+- **Branch and PR metadata:** Branches must follow `phase-<n>/step-<m>-short-desc`. If a PR depends on an unmerged step, include `Depends-On: <branch>` in the PR description and add a `depends` label. Reviewers must verify that `Depends-On` blockers are resolved before merging.

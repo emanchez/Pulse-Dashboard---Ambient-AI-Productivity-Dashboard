@@ -50,6 +50,9 @@ Define Pydantic models for core data entities with camelCase JSON serialization 
 - Branch: phase-1/step-2-data-models
 - Depends on step 1.
 
+- Blocking steps: .github/artifacts/phase1/plan/backend-setup.md
+- Merge Readiness: true
+
 ## Risks & Mitigations
 - Schema mismatches; validate against PDD.md.
 

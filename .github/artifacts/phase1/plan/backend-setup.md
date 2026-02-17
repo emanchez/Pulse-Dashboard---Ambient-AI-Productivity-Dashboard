@@ -56,6 +56,9 @@ Establish the foundational FastAPI backend with JWT authentication and SQLAlchem
 - Branch: phase-1/step-1-backend-setup
 - Can be parallel with other backend steps.
 
+- Blocking steps: None
+- Merge Readiness: true
+
 ## Risks & Mitigations
 - Dependency version conflicts; use pinned versions.
 

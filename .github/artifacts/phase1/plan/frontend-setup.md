@@ -45,6 +45,9 @@ Set up Next.js frontend with Bento Box grid layout and basic components.
 - Branch: phase-1/step-4-frontend-setup
 - Can be parallel with backend steps.
 
+- Blocking steps: .github/artifacts/phase1/plan/type-sync.md
+- Merge Readiness: false
+
 ## Risks & Mitigations
 - Build errors; follow Next.js docs.
 

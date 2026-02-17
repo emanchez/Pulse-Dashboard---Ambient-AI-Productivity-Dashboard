@@ -38,6 +38,9 @@ Automate generation of TypeScript clients from FastAPI openapi.json using @hey-a
 - Branch: phase-1/step-5-type-sync
 - Depends on step 3 (API skeleton).
 
+- Blocking steps: .github/artifacts/phase1/plan/api-skeleton.md
+- Merge Readiness: true
+
 ## Risks & Mitigations
 - Generation failures; check openapi spec.
 
