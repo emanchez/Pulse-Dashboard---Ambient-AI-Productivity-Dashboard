@@ -1,0 +1,23 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from .core.config import get_settings
+
+settings = get_settings()
+
+app = FastAPI(title="Ambient AI Productivity Dashboard")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.frontend_cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+# Routers (api) will be included here in later steps.
