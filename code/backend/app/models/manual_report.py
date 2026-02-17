@@ -1,7 +1,8 @@
 from datetime import datetime
 from typing import List
 
-from pydantic import BaseModel, Field
+from ..schemas.base import CamelModel
+from pydantic import Field
 from sqlalchemy import Integer, Text, String, JSON
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -13,7 +14,7 @@ def _to_camel(string: str) -> str:
     return parts[0] + "".join(w.capitalize() for w in parts[1:])
 
 
-class ManualReportSchema(BaseModel):
+class ManualReportSchema(CamelModel):
     id: str | None = None
     title: str
     body: str
@@ -21,7 +22,7 @@ class ManualReportSchema(BaseModel):
     associated_task_ids: List[str] | None = None
     created_at: datetime | None = None
 
-    model_config = {"alias_generator": _to_camel, "populate_by_name": True}
+    # inheritance from CamelModel provides alias_generator and populate_by_name
 
 
 class ManualReport(TimestampedBase):

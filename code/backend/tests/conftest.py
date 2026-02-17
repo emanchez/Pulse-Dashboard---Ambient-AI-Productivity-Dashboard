@@ -1,0 +1,90 @@
+import os
+import pytest
+import asyncio
+import os
+import sys
+import subprocess
+import socket
+import time
+
+# Ensure the app package can be imported when running uvicorn from code/backend
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, ROOT)
+
+# Use a temporary sqlite file for tests
+DB_PATH = os.path.join(os.path.dirname(__file__), "test.db")
+os.environ.setdefault("DATABASE_URL", f"sqlite+aiosqlite:///{DB_PATH}")
+
+import httpx
+
+from app.db.session import engine, async_session
+from app.db.base import Base
+from app.models.user import User
+from app.core.security import get_password_hash
+
+
+@pytest.fixture(scope="session", autouse=True)
+def prepare_database():
+    async def _prepare():
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
+    asyncio.get_event_loop().run_until_complete(_prepare())
+    yield
+
+
+def _find_free_port() -> int:
+    s = socket.socket()
+    s.bind(("127.0.0.1", 0))
+    addr, port = s.getsockname()
+    s.close()
+    return port
+
+
+@pytest.fixture(scope="session")
+def server():
+    port = _find_free_port()
+    env = os.environ.copy()
+    # Ensure PYTHONPATH includes the code/backend directory so `app` is importable
+    env["PYTHONPATH"] = ROOT
+    cmd = [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", str(port)]
+    proc = subprocess.Popen(cmd, env=env, cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    # wait for server to be responsive
+    base_url = f"http://127.0.0.1:{port}"
+    timeout = 10.0
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            r = httpx.get(f"{base_url}/health", timeout=1.0)
+            if r.status_code == 200:
+                break
+        except Exception:
+            time.sleep(0.1)
+
+    yield base_url
+
+    proc.terminate()
+    try:
+        proc.wait(timeout=5)
+    except Exception:
+        proc.kill()
+
+
+@pytest.fixture
+def client(server):
+    with httpx.Client(base_url=server) as c:
+        yield c
+
+
+@pytest.fixture
+def create_user():
+    async def _create():
+        async with async_session() as session:
+            user = User(username="testuser", hashed_password=get_password_hash("testpass"))
+            session.add(user)
+            await session.commit()
+            await session.refresh(user)
+            return user
+
+    return asyncio.get_event_loop().run_until_complete(_create())

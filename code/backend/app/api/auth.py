@@ -1,9 +1,16 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..core.security import create_access_token, decode_access_token
+from ..core.security import create_access_token, decode_access_token, verify_password
+from ..db.session import get_async_session
+from ..models.user import User, UserSchema
+from fastapi.security import OAuth2PasswordBearer
 
 router = APIRouter()
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 
 class LoginRequest(BaseModel):
@@ -12,19 +19,23 @@ class LoginRequest(BaseModel):
 
 
 @router.post("/login")
-async def login(payload: LoginRequest):
-    # Dummy user validation for Step 3 — replace with proper lookup later
-    if payload.username != "dev" or payload.password != "dev":
+async def login(payload: LoginRequest, session: AsyncSession = Depends(get_async_session)):
+    q = await session.execute(select(User).filter_by(username=payload.username))
+    user: User | None = q.scalars().first()
+    if not user or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    token = create_access_token(subject=payload.username)
+    token = create_access_token(subject=str(user.id))
     return {"access_token": token, "token_type": "bearer"}
 
 
 @router.get("/me")
-async def me(token: str | None = None):
-    # Simple token introspection endpoint for development
-    if not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+async def me(token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_async_session)):
     payload = decode_access_token(token)
-    return payload
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    q = await session.get(User, user_id)
+    if not q:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return UserSchema.model_validate(q.__dict__)

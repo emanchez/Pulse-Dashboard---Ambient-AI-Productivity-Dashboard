@@ -1,5 +1,7 @@
 from typing import List
-from pydantic import BaseSettings, Field, AnyUrl
+import os
+from pydantic_settings import BaseSettings
+from pydantic import Field, AnyUrl
 
 
 class Settings(BaseSettings):
@@ -10,8 +12,13 @@ class Settings(BaseSettings):
     frontend_cors_origins: List[str] = Field(["http://localhost:3000"], env="FRONTEND_CORS_ORIGINS")
 
     class Config:
-        env_file = ".env"
+        env_file = None
 
 
 def get_settings() -> Settings:
-    return Settings()
+    s = Settings()
+    # allow FRONTEND_CORS_ORIGINS to be supplied as a comma-separated string in .env
+    origins = s.frontend_cors_origins
+    if isinstance(origins, str):
+        s.frontend_cors_origins = [o.strip() for o in origins.split(",") if o.strip()]
+    return s

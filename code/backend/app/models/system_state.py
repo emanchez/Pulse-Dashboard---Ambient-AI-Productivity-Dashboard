@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from ..schemas.base import CamelModel
 from sqlalchemy import String, DateTime, Boolean, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -12,7 +12,7 @@ def _to_camel(string: str) -> str:
     return parts[0] + "".join(w.capitalize() for w in parts[1:])
 
 
-class SystemStateSchema(BaseModel):
+class SystemStateSchema(CamelModel):
     id: str | None = None
     mode_type: str
     start_date: datetime | None = None
@@ -20,7 +20,7 @@ class SystemStateSchema(BaseModel):
     requires_recovery: bool | None = None
     description: str | None = None
 
-    model_config = {"alias_generator": _to_camel, "populate_by_name": True}
+    # inheritance from CamelModel provides alias_generator and populate_by_name
 
 
 class SystemState(TimestampedBase):

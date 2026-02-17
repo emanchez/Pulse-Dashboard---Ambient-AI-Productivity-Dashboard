@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel
+from ..schemas.base import CamelModel
 from sqlalchemy import DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -14,14 +14,14 @@ def _to_camel(string: str) -> str:
     return parts[0] + "".join(word.capitalize() for word in parts[1:])
 
 
-class ActionLogSchema(BaseModel):
+class ActionLogSchema(CamelModel):
     id: str | None = None
     timestamp: datetime | None = None
     task_id: str | None = None
     action_type: str | None = None
     change_summary: str | None = None
 
-    model_config = {"alias_generator": _to_camel, "populate_by_name": True}
+    # inheritance from CamelModel provides alias_generator and populate_by_name
 
 
 class ActionLog(TimestampedBase):

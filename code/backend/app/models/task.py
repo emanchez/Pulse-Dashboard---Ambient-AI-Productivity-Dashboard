@@ -3,7 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List
 
-from pydantic import BaseModel, Field
+from ..schemas.base import CamelModel
+from pydantic import Field
 from sqlalchemy import Boolean, DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -15,7 +16,7 @@ def _to_camel(string: str) -> str:
     return parts[0] + "".join(word.capitalize() for word in parts[1:])
 
 
-class TaskSchema(BaseModel):
+class TaskSchema(CamelModel):
     id: str | None = None
     name: str
     priority: str | None = None
