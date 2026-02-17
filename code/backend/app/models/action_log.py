@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from pydantic import BaseModel
-from sqlalchemy import Column, DateTime, String, Text
+from sqlalchemy import DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..db.base import TimestampedBase
@@ -11,7 +11,7 @@ from ..db.base import TimestampedBase
 
 def _to_camel(string: str) -> str:
     parts = string.split("_")
-    return parts[0] + ''.join(word.capitalize() for word in parts[1:])
+    return parts[0] + "".join(word.capitalize() for word in parts[1:])
 
 
 class ActionLogSchema(BaseModel):
@@ -27,7 +27,6 @@ class ActionLogSchema(BaseModel):
 class ActionLog(TimestampedBase):
     __tablename__ = "action_logs"
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
     timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     task_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     action_type: Mapped[str | None] = mapped_column(String(64), nullable=True)

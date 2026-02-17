@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List
 
 from pydantic import BaseModel, Field
-from sqlalchemy import Boolean, Column, DateTime, Enum, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..db.base import TimestampedBase
@@ -12,7 +12,7 @@ from ..db.base import TimestampedBase
 
 def _to_camel(string: str) -> str:
     parts = string.split("_")
-    return parts[0] + ''.join(word.capitalize() for word in parts[1:])
+    return parts[0] + "".join(word.capitalize() for word in parts[1:])
 
 
 class TaskSchema(BaseModel):
@@ -20,9 +20,9 @@ class TaskSchema(BaseModel):
     name: str
     priority: str | None = None
     tags: str | None = None
-    is_completed: bool = Field(False, alias="isCompleted")
-    date_created: datetime | None = Field(None, alias="dateCreated")
-    date_updated: datetime | None = Field(None, alias="dateUpdated")
+    is_completed: bool = Field(False)
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
     deadline: datetime | None = None
     notes: str | None = None
 
@@ -36,7 +36,6 @@ class TaskSchema(BaseModel):
 class Task(TimestampedBase):
     __tablename__ = "tasks"
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
     name: Mapped[str] = mapped_column(String(256), nullable=False)
     priority: Mapped[str | None] = mapped_column(String(32), nullable=True)
     tags: Mapped[str | None] = mapped_column(String(512), nullable=True)
