@@ -20,4 +20,16 @@ app.add_middleware(
 async def health():
     return {"status": "ok"}
 
-# Routers (api) will be included here in later steps.
+
+# include routers
+try:
+    from .api import auth as auth_router
+    from .api import tasks as tasks_router
+    from .middlewares.action_log import ActionLogMiddleware
+
+    app.include_router(auth_router.router)
+    app.include_router(tasks_router.router)
+    app.add_middleware(ActionLogMiddleware)
+except Exception:
+    # Routers will be wired when API modules are present
+    pass
