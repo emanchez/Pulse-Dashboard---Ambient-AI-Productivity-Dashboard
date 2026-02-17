@@ -1,0 +1,57 @@
+name: Phase1 CI
+
+on:
+  push:
+    branches: [ "main", "phase-1/**" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  backend-and-frontend:
+    runs-on: ubuntu-latest
+    services: {}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install backend deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r code/backend/requirements.txt
+
+      - name: Run backend tests
+        run: |
+          cd code/backend
+          pytest -q
+
+      - name: Start backend (uvicorn)
+        run: |
+          cd code/backend
+          PYTHONPATH=$(pwd) nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 &
+          # wait for OpenAPI to be available
+          until curl -sS http://127.0.0.1:8000/openapi.json > /dev/null; do sleep 1; done
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install frontend deps
+        run: |
+          cd code/frontend
+          npm ci
+
+      - name: Generate TypeScript client
+        run: |
+          cd code/frontend
+          npm run generate:api
+
+      - name: Build frontend (type-check)
+        run: |
+          cd code/frontend
+          npm run build

@@ -26,6 +26,13 @@ from app.core.security import get_password_hash
 @pytest.fixture(scope="session", autouse=True)
 def prepare_database():
     async def _prepare():
+        # Ensure a clean sqlite file for each test session
+        if os.path.exists(DB_PATH):
+            try:
+                os.remove(DB_PATH)
+            except OSError:
+                pass
+
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 

@@ -1,51 +1,53 @@
-// Minimal TypeScript client stub for the backend API.
-// This provides typed helper functions for the frontend to use.
-
-export type LoginRequest = { username: string; password: string }
-export type TokenResponse = { accessToken: string }
+const BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
 export type Task = {
-  id: string
-  title: string
-  description?: string
-  completed: boolean
+  id?: string | null;
+  name: string;
+  priority?: string | null;
+  tags?: string | null;
+  isCompleted?: boolean;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  deadline?: string | null;
+  notes?: string | null;
+};
+
+async function request(path: string, opts: RequestInit = {}) {
+  const res = await fetch(`${BASE}${path}`, {
+    headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
+    credentials: "omit",
+    ...opts,
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Request failed ${res.status}: ${text}`);
+  }
+  if (res.status === 204) return undefined;
+  return res.json();
 }
 
-const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '')
-
-async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
-  const res = await fetch(baseUrl + path, { ...opts, credentials: 'same-origin' })
-  if (!res.ok) throw new Error(`API error ${res.status}: ${res.statusText}`)
-  return (await res.json()) as T
+export async function login(username: string, password: string) {
+  return request(`/login`, { method: "POST", body: JSON.stringify({ username, password }) });
 }
 
-export async function login(body: LoginRequest): Promise<TokenResponse> {
-  return request<TokenResponse>('/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
+export async function me(token: string) {
+  return request(`/me`, { headers: { Authorization: `Bearer ${token}` } });
 }
 
-export async function getMe(token: string): Promise<{ username: string; sub: string }> {
-  return request('/me', { headers: { Authorization: `Bearer ${token}` } })
+export async function listTasks(token: string) {
+  return request(`/tasks/`, { headers: { Authorization: `Bearer ${token}` } });
 }
 
-export async function listTasks(token: string): Promise<Task[]> {
-  return request('/tasks', { headers: { Authorization: `Bearer ${token}` } })
+export async function createTask(token: string, task: Task) {
+  return request(`/tasks/`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify(task) });
 }
 
-export async function createTask(token: string, task: Partial<Task>): Promise<Task> {
-  return request('/tasks', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify(task),
-  })
+export async function updateTask(token: string, id: string, task: Task) {
+  return request(`/tasks/${id}`, { method: "PUT", headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify(task) });
 }
 
-export default {
-  login,
-  getMe,
-  listTasks,
-  createTask,
+export async function deleteTask(token: string, id: string) {
+  return request(`/tasks/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
 }
+
+export default { login, me, listTasks, createTask, updateTask, deleteTask };

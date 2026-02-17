@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "generate:api": "sh ./lib/generate-client.sh"
+    "generate:api": "bash ./lib/generate-client.sh"
   },
   "dependencies": {
     "next": "14.0.0",
