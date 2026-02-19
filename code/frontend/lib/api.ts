@@ -1,5 +1,8 @@
 const BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
+// Re-export the typed PulseStats from the generated client
+export type { PulseStats } from "./generated/pulseClient";
+
 export type Task = {
   id?: string | null;
   name: string;

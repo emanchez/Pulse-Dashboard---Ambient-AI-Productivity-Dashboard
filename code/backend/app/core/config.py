@@ -9,7 +9,12 @@ class Settings(BaseSettings):
     jwt_secret: str = Field("dev-secret-change-me", env="JWT_SECRET")
     jwt_algorithm: str = Field("HS256", env="JWT_ALGORITHM")
     access_token_expire_minutes: int = Field(60 * 24 * 7, env="ACCESS_TOKEN_EXPIRE_MINUTES")
-    frontend_cors_origins: List[str] = Field(["http://localhost:3000"], env="FRONTEND_CORS_ORIGINS")
+    frontend_cors_origins: List[str] = Field([
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+    ], env="FRONTEND_CORS_ORIGINS")
 
     class Config:
         env_file = None

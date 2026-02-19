@@ -6,6 +6,11 @@ deps:
 dev:
 	npm run dev
 
+start-dev:
+	@echo "Starting frontend (background dev)"
+	@# honor PORT env; record PID to ./.dev.pid
+	@PORT=$${PORT:-3000} nohup npm run dev >/dev/null 2>&1 & echo $$! > ./.dev.pid && echo "PID saved to ./.dev.pid"
+
 start:
 	@echo "Starting frontend (background)"
 	nohup npm run start >/dev/null 2>&1 & echo $$! > ./.dev.pid && echo "PID saved to ./.dev.pid"

@@ -12,10 +12,11 @@ FRONTEND_PID := $(TMP_DIR)/dev-frontend.pid
 dev:
 	@mkdir -p $(TMP_DIR)
 	@echo "Starting backend (background)..."
-	@$(MAKE) -C $(BACKEND_DIR) start
+	@$(MAKE) -C $(BACKEND_DIR) start PORT=8000
 	@cp -f $(BACKEND_DIR)/.dev.pid $(BACKEND_PID) 2>/dev/null || true
 	@echo "Starting frontend (background)..."
-	@$(MAKE) -C $(FRONTEND_DIR) start
+	@# Ensure frontend runs in dev mode on port 3000 (background)
+	@$(MAKE) -C $(FRONTEND_DIR) start-dev PORT=3000
 	@cp -f $(FRONTEND_DIR)/.dev.pid $(FRONTEND_PID) 2>/dev/null || true
 	@echo "Started backend (PID: $$(cat $(BACKEND_PID) 2>/dev/null || echo 'unknown')) and frontend (PID: $$(cat $(FRONTEND_PID) 2>/dev/null || echo 'unknown'))."
 
