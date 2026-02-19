@@ -32,3 +32,26 @@ npm run dev
 Notes
 - The generator script accepts an optional OPENAPI URL and output dir: `./lib/generate-client.sh [OPENAPI_URL] [OUT_DIR]`.
 - CI runs the generator and build; ensure your local Node version matches CI (Node 20 recommended).
+
+Commit policy for generated client
+
+- Current policy: a canonical generated client is committed to the repo under `code/frontend/lib/generated` to avoid blocking frontend work. Regenerate when the API surface changes.
+- Regeneration steps:
+
+```bash
+# Start backend (from repo root)
+cd code/backend
+python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.txt
+export PYTHONPATH=$(pwd)
+.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 &
+
+# Generate client (from code/frontend)
+cd code/frontend
+npm ci
+./lib/generate-client.sh http://127.0.0.1:8000/openapi.json ./lib/generated
+
+# Commit if acceptable
+git add code/frontend/lib/generated && git commit -m "chore(frontend): update generated API client"
+```
+
+- CI policy: CI runs `npm run generate:api` before `npm run build` as a verification step; CI Node is set to 20.

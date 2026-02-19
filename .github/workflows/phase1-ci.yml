@@ -39,12 +39,12 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-            node-version: '20'
-      
-        - name: Run E2E smoke (pytest)
-          run: |
-            cd code/backend
-            pytest -q code/backend/tests/test_api.py::test_login_and_tasks_flow
+          node-version: '20'
+
+      - name: Run E2E smoke (pytest)
+        run: |
+          cd code/backend
+          pytest -q code/backend/tests/e2e
 
       - name: Install frontend deps
         run: |
