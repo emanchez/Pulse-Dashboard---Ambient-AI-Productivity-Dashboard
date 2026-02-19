@@ -29,6 +29,36 @@ npm ci
 npm run dev
 ```
 
+Makefile (developer shortcuts)
+
+The repository includes simple Makefiles to speed local development:
+
+- `make deps` — install backend Python deps and frontend npm packages
+- `make dev` — start backend (127.0.0.1:8000) and frontend (localhost:3000) in background; PIDs stored under `.tmp/`
+- `make stop` — stop background dev servers started with `make dev`
+- `make test` — runs backend tests (pytest); frontend currently has no test runner
+- `make generate-api` — runs the TypeScript client generator
+- `make build` — builds the frontend
+
+Examples:
+
+```bash
+# install both services' deps
+make deps
+
+# start dev servers (background)
+make dev
+
+# stop dev servers
+make stop
+
+# run backend tests
+make test
+
+# regenerate the frontend API client
+make generate-api
+```
+
 Notes
 - The generator script accepts an optional OPENAPI URL and output dir: `./lib/generate-client.sh [OPENAPI_URL] [OUT_DIR]`.
 - CI runs the generator and build; ensure your local Node version matches CI (Node 20 recommended).
