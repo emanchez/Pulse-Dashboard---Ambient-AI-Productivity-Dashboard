@@ -63,9 +63,9 @@ Provide authenticated pulse telemetry that reports the time since the last Actio
 - [code/backend/models/action_log.py](code/backend/app/models/action_log.py)
 
 ## Author Checklist (must complete before PR)
-- [ ] Purpose filled
-- [ ] Deliverables listed
-- [ ] Primary files to change referenced
-- [ ] Acceptance Criteria are measurable/testable
-- [ ] Tests added under `code/backend/tests/` (happy path + validation)
-- [ ] Manual QA checklist added
+- [x] Purpose filled
+- [x] Deliverables listed
+- [x] Primary files to change referenced
+- [x] Acceptance Criteria are measurable/testable
+- [x] Tests added under `code/backend/tests/` (happy path + validation)
+- [x] Manual QA checklist added

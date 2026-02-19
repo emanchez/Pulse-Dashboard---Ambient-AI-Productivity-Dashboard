@@ -50,4 +50,8 @@ export async function deleteTask(token: string, id: string) {
   return request(`/tasks/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
 }
 
-export default { login, me, listTasks, createTask, updateTask, deleteTask };
+export async function getPulse(token: string) {
+  return request(`/stats/pulse`, { headers: { Authorization: `Bearer ${token}` } });
+}
+
+export default { login, me, listTasks, createTask, updateTask, deleteTask, getPulse };

@@ -39,3 +39,8 @@ async def me(token: str = Depends(oauth2_scheme), session: AsyncSession = Depend
     if not q:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return UserSchema.model_validate(q.__dict__)
+
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    payload = decode_access_token(token)
+    return payload.get("sub")

@@ -17,6 +17,8 @@ os.environ.setdefault("DATABASE_URL", f"sqlite+aiosqlite:///{DB_PATH}")
 
 import httpx
 
+from sqlalchemy import select
+
 from app.db.session import engine, async_session
 from app.db.base import Base
 from app.models.user import User
@@ -88,6 +90,13 @@ def client(server):
 def create_user():
     async def _create():
         async with async_session() as session:
+            # Delete existing user if any
+            existing_stmt = select(User).where(User.username == "testuser")
+            existing = await session.execute(existing_stmt)
+            existing_user = existing.scalar_one_or_none()
+            if existing_user:
+                await session.delete(existing_user)
+                await session.commit()
             user = User(username="testuser", hashed_password=get_password_hash("testpass"))
             session.add(user)
             await session.commit()
