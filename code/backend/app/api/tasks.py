@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.security import OAuth2PasswordBearer
 
 from ..db.session import get_async_session
-from ..models.task import Task, TaskSchema
+from ..models.task import Task, TaskSchema, TaskUpdate
 from ..core.security import decode_access_token
 
 router = APIRouter(prefix="/tasks")
@@ -43,13 +43,18 @@ async def create_task(payload: TaskSchema, session: AsyncSession = Depends(get_a
 
 
 @router.put("/{task_id}", response_model=TaskSchema)
-async def update_task(task_id: str, payload: TaskSchema, session: AsyncSession = Depends(get_async_session), user: str = Depends(get_current_user)):
+async def update_task(task_id: str, payload: TaskUpdate, session: AsyncSession = Depends(get_async_session), user: str = Depends(get_current_user)):
     result = await session.get(Task, task_id)
     if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    # Fields that must never be overwritten with None (system / primary-key fields)
+    _protect_from_none = {"id", "created_at", "updated_at"}
     for k, v in payload.model_dump().items():
-        if hasattr(result, k) and v is not None:
-            setattr(result, k, v)
+        if not hasattr(result, k):
+            continue
+        if v is None and k in _protect_from_none:
+            continue
+        setattr(result, k, v)
     session.add(result)
     await session.commit()
     await session.refresh(result)

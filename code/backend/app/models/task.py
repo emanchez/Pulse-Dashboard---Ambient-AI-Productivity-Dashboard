@@ -34,6 +34,21 @@ class TaskSchema(CamelModel):
     }
 
 
+class TaskUpdate(CamelModel):
+    """Schema for PUT/PATCH requests: excludes read-only fields (id, created_at, updated_at)."""
+    name: str
+    priority: str | None = None
+    tags: str | None = None
+    is_completed: bool = Field(False)
+    deadline: datetime | None = None
+    notes: str | None = None
+
+    model_config = {
+        "alias_generator": _to_camel,
+        "populate_by_name": True,
+    }
+
+
 class Task(TimestampedBase):
     __tablename__ = "tasks"
 

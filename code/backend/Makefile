@@ -20,7 +20,7 @@ dev:
 start:
 	@if [ ! -x .venv/bin/python ]; then echo "No .venv found — run 'make deps' to create virtualenv and install dependencies"; exit 1; fi
 	@echo "Starting backend (background) using $(PYTHON)"
-	PYTHONPATH=$(PWD) nohup $(PYTHON) -m uvicorn app.main:app --host 127.0.0.1 --port $(PORT) >/dev/null 2>&1 & echo $$! > ./.dev.pid && echo "PID saved to ./.dev.pid"
+	PYTHONPATH=$(PWD) nohup $(PYTHON) -m uvicorn app.main:app --reload --host 127.0.0.1 --port $(PORT) >/dev/null 2>&1 & echo $$! > ./.dev.pid && echo "PID saved to ./.dev.pid"
 
 test:
 	$(PYTHON) -m pytest -q

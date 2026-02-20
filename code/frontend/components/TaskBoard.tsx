@@ -51,10 +51,10 @@ export default function TaskBoard({ token, onAuthError }: TaskBoardProps) {
   }, [fetchTasks])
 
   // ── Track field changes ────────────────────────────────────────
-  function handleFieldChange(taskId: string, field: keyof Task, value: string | boolean) {
-    // Normalize deadline to UTC ISO datetime to avoid timezone drift
-    if (field === "deadline" && typeof value === "string" && value) {
-      value = `${value}T00:00:00Z`
+  function handleFieldChange(taskId: string, field: keyof Task, value: string | boolean | null) {
+    // Normalize deadline: convert date string to UTC ISO datetime; treat empty string as null
+    if (field === "deadline" && typeof value === "string") {
+      value = value ? `${value}T00:00:00Z` : null
     }
     setUnsaved((prev) => {
       const next = new Map(prev)
@@ -81,9 +81,12 @@ export default function TaskBoard({ token, onAuthError }: TaskBoardProps) {
 
     for (const [id, diff] of Array.from(unsaved.entries())) {
       try {
-        const orig = tasks.find((t) => t.id === id) ?? {} as Task
+        const orig = tasks.find((t) => t.id === id)
+        if (!orig) continue  // task no longer in local state; skip to avoid sending a body without `name`
         const body: Task = { ...orig, ...diff }
-        await updateTask(token, id, body)
+        // Exclude read-only fields from the request body
+        const { id: _id, createdAt: _created, updatedAt: _updated, ...sendBody } = body
+        await updateTask(token, id, sendBody as Task)
       } catch (err: any) {
         if (err?.message?.includes("401")) {
           setSaving(false)

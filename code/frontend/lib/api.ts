@@ -18,9 +18,10 @@ export type Task = {
 
 async function request(path: string, opts: RequestInit = {}) {
   const res = await fetch(`${BASE}${path}`, {
-    headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
     credentials: "omit",
     ...opts,
+    // headers must come AFTER ...opts so Content-Type is never overwritten
+    headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
   });
   if (!res.ok) {
     const text = await res.text();

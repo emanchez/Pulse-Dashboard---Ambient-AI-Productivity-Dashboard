@@ -33,6 +33,23 @@ This summary captures the conversation and actions taken to address the Phase 2
 - Deadline handling is more robust and helper duplication eliminated.
 - Full test coverage retained; migration performed safely with backup.
 
+## Ultimate Issue & Final Fix
+After applying the initial round of improvements the frontend still kept
+receiving 422 responses. Inspection of the network tab showed the request body
+arriving as a **string** (`"{...}"`) — FastAPI was never parsing it as JSON.
+The culprit was a subtle header merge bug in `lib/api.ts`: spreading `...opts`
+*after* setting a default headers object overwrote the `Content-Type` value. In
+other words, every POST/PUT was being sent with `text/plain` and the backend
+fed a raw string into Pydantic, triggering `model_attributes_type` errors.
+
+Reordering the spread (place headers after `...opts`) guarantees
+`Content-Type: application/json` survives, eliminating the error entirely and
+restoring full CRUD functionality.
+
+## Next Steps
+- Create a PR for the changes, ensuring commit messages reference fixes and include migration notes.
+- Continue with Phase 2 Step 3 documentation and CI updates now that API contract changed.
+
 ## Next Steps
 - Create a PR for the changes, ensuring commit messages reference fixes and include migration notes.
 - Continue with Phase 2 Step 3 documentation and CI updates now that API contract changed.
