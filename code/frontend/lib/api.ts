@@ -2,6 +2,7 @@ const BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
 // Re-export the typed PulseStats from the generated client
 export type { PulseStats } from "./generated/pulseClient";
+export { getPulse } from "./generated/pulseClient";
 
 export type Task = {
   id?: string | null;
@@ -53,8 +54,4 @@ export async function deleteTask(token: string, id: string) {
   return request(`/tasks/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
 }
 
-export async function getPulse(token: string) {
-  return request(`/stats/pulse`, { headers: { Authorization: `Bearer ${token}` } });
-}
-
-export default { login, me, listTasks, createTask, updateTask, deleteTask, getPulse };
+export default { login, me, listTasks, createTask, updateTask, deleteTask };

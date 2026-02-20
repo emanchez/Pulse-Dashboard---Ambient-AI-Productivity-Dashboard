@@ -52,6 +52,10 @@ export default function TaskBoard({ token, onAuthError }: TaskBoardProps) {
 
   // ── Track field changes ────────────────────────────────────────
   function handleFieldChange(taskId: string, field: keyof Task, value: string | boolean) {
+    // Normalize deadline to UTC ISO datetime to avoid timezone drift
+    if (field === "deadline" && typeof value === "string" && value) {
+      value = `${value}T00:00:00Z`
+    }
     setUnsaved((prev) => {
       const next = new Map(prev)
       const existing: Record<string, unknown> = { ...(next.get(taskId) ?? {}) }
@@ -77,9 +81,12 @@ export default function TaskBoard({ token, onAuthError }: TaskBoardProps) {
 
     for (const [id, diff] of Array.from(unsaved.entries())) {
       try {
-        await updateTask(token, id, diff as Task)
+        const orig = tasks.find((t) => t.id === id) ?? {} as Task
+        const body: Task = { ...orig, ...diff }
+        await updateTask(token, id, body)
       } catch (err: any) {
         if (err?.message?.includes("401")) {
+          setSaving(false)
           onAuthError?.()
           return
         }
@@ -205,7 +212,7 @@ export default function TaskBoard({ token, onAuthError }: TaskBoardProps) {
                   type="date"
                   value={
                     (displayValue(task, "deadline") as string)
-                      ? new Date(displayValue(task, "deadline") as string).toISOString().split("T")[0]
+                      ? (displayValue(task, "deadline") as string).slice(0, 10)
                       : ""
                   }
                   onChange={(e) => handleFieldChange(id, "deadline", e.target.value || "")}
