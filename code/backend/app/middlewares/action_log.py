@@ -7,6 +7,7 @@ import json
 
 from ..db.session import async_session
 from ..models.action_log import ActionLog
+from ..core.security import decode_access_token
 from sqlalchemy import insert
 
 logger = logging.getLogger(__name__)
@@ -40,11 +41,22 @@ class ActionLogMiddleware(BaseHTTPMiddleware):
                     except Exception:
                         task_id = None
 
+                # Extract user_id from Authorization header JWT (best-effort)
+                user_id: str | None = None
+                auth_header = request.headers.get("Authorization", "")
+                if auth_header.startswith("Bearer "):
+                    try:
+                        payload = decode_access_token(auth_header.removeprefix("Bearer ").strip())
+                        user_id = payload.get("sub")
+                    except Exception:
+                        pass
+
                 async with async_session() as session:
                     stmt = insert(ActionLog.__table__).values(
                         task_id=task_id,
                         action_type=f"{method} {path}",
                         change_summary=f"{method} on {path} returned {response.status_code}",
+                        user_id=user_id,
                     )
                     await session.execute(stmt)
                     await session.commit()

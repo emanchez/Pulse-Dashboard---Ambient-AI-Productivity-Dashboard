@@ -28,8 +28,13 @@ async def get_pulse_stats(
     """
     now = datetime.utcnow()
 
-    # Get last ActionLog
-    last_action_stmt = select(ActionLog).order_by(ActionLog.timestamp.desc()).limit(1)
+    # Get last ActionLog scoped to current user
+    last_action_stmt = (
+        select(ActionLog)
+        .where(ActionLog.user_id == user_id)
+        .order_by(ActionLog.timestamp.desc())
+        .limit(1)
+    )
     result = await session.execute(last_action_stmt)
     last_action = result.scalar_one_or_none()
 
@@ -40,9 +45,10 @@ async def get_pulse_stats(
         gap_minutes = 0
         last_action_at = None
 
-    # Get active SystemState (paused if Vacation or Leave covering now)
+    # Get active SystemState scoped to current user (paused if Vacation or Leave covering now)
     active_pause_stmt = (
         select(SystemState)
+        .where(SystemState.user_id == user_id)
         .where(SystemState.start_date <= now)
         .where(
             (SystemState.end_date == None) | (SystemState.end_date >= now)

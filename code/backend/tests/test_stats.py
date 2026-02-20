@@ -23,18 +23,18 @@ def _clear_tables():
     return asyncio.get_event_loop().run_until_complete(_c())
 
 
-def _insert_action(timestamp):
+def _insert_action(timestamp, user_id: str | None = None):
     async def _i():
         async with async_session() as s:
-            s.add(ActionLog(timestamp=timestamp, action_type="TEST"))
+            s.add(ActionLog(timestamp=timestamp, action_type="TEST", user_id=user_id))
             await s.commit()
     return asyncio.get_event_loop().run_until_complete(_i())
 
 
-def _insert_system_state(mode_type, start_date, end_date):
+def _insert_system_state(mode_type, start_date, end_date, user_id: str | None = None):
     async def _i():
         async with async_session() as s:
-            s.add(SystemState(mode_type=mode_type, start_date=start_date, end_date=end_date))
+            s.add(SystemState(mode_type=mode_type, start_date=start_date, end_date=end_date, user_id=user_id))
             await s.commit()
     return asyncio.get_event_loop().run_until_complete(_i())
 
@@ -59,7 +59,7 @@ def test_pulse_no_actionlog_defaults_to_engaged(client, create_user):
 def test_pulse_engaged_recent_action(client, create_user):
     _clear_tables()
     now = datetime.utcnow()
-    _insert_action(now - timedelta(minutes=30))
+    _insert_action(now - timedelta(minutes=30), user_id=create_user.id)
     headers = _auth_headers(client)
     r = client.get("/stats/pulse", headers=headers)
     assert r.status_code == 200
@@ -72,7 +72,7 @@ def test_pulse_engaged_recent_action(client, create_user):
 
 def test_pulse_stagnant_old_action(client, create_user):
     _clear_tables()
-    _insert_action(datetime.utcnow() - timedelta(hours=72))
+    _insert_action(datetime.utcnow() - timedelta(hours=72), user_id=create_user.id)
     headers = _auth_headers(client)
     r = client.get("/stats/pulse", headers=headers)
     assert r.status_code == 200
@@ -83,9 +83,9 @@ def test_pulse_stagnant_old_action(client, create_user):
 
 def test_pulse_paused_by_system_state_overrides_stagnant(client, create_user):
     _clear_tables()
-    _insert_action(datetime.utcnow() - timedelta(hours=72))
+    _insert_action(datetime.utcnow() - timedelta(hours=72), user_id=create_user.id)
     end = datetime.utcnow() + timedelta(days=3)
-    _insert_system_state("Vacation", datetime.utcnow() - timedelta(days=1), end)
+    _insert_system_state("Vacation", datetime.utcnow() - timedelta(days=1), end, user_id=create_user.id)
     headers = _auth_headers(client)
     r = client.get("/stats/pulse", headers=headers)
     data = r.json()
@@ -98,8 +98,8 @@ def test_pulse_overlapping_systemstate_picks_latest_end_date(client, create_user
     _clear_tables()
     a_end = datetime.utcnow() + timedelta(days=1)
     b_end = datetime.utcnow() + timedelta(days=5)
-    _insert_system_state("Vacation", datetime.utcnow() - timedelta(days=2), a_end)
-    _insert_system_state("Vacation", datetime.utcnow() - timedelta(days=3), b_end)
+    _insert_system_state("Vacation", datetime.utcnow() - timedelta(days=2), a_end, user_id=create_user.id)
+    _insert_system_state("Vacation", datetime.utcnow() - timedelta(days=3), b_end, user_id=create_user.id)
     headers = _auth_headers(client)
     r = client.get("/stats/pulse", headers=headers)
     data = r.json()

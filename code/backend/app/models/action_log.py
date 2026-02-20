@@ -20,6 +20,7 @@ class ActionLogSchema(CamelModel):
     task_id: str | None = None
     action_type: str | None = None
     change_summary: str | None = None
+    user_id: str | None = None
 
     # inheritance from CamelModel provides alias_generator and populate_by_name
 
@@ -31,3 +32,4 @@ class ActionLog(TimestampedBase):
     task_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     action_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
     change_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    user_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)

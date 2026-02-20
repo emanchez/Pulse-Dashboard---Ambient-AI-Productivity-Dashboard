@@ -19,6 +19,7 @@ class SystemStateSchema(CamelModel):
     end_date: datetime | None = None
     requires_recovery: bool | None = None
     description: str | None = None
+    user_id: str | None = None
 
     # inheritance from CamelModel provides alias_generator and populate_by_name
 
@@ -31,3 +32,4 @@ class SystemState(TimestampedBase):
     end_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     requires_recovery: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    user_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
