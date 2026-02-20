@@ -2,7 +2,7 @@ name: Phase1 CI
 
 on:
   push:
-    branches: [ "main", "phase-1/**" ]
+    branches: [ "main", "phase-1/**", "phase-2/**" ]
   pull_request:
     branches: [ "main" ]
 
@@ -44,7 +44,7 @@ jobs:
       - name: Run E2E smoke (pytest)
         run: |
           cd code/backend
-          pytest -q code/backend/tests/e2e
+          pytest -q tests/e2e
 
       - name: Install frontend deps
         run: |

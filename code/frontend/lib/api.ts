@@ -1,20 +1,11 @@
 const BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
-// Re-export the typed PulseStats from the generated client
+// Re-export all generated API-contract types from the canonical stubs.
+// PulseStats + getPulse live in generated/pulseClient; Task lives in generated/types.
 export type { PulseStats } from "./generated/pulseClient";
 export { getPulse } from "./generated/pulseClient";
-
-export type Task = {
-  id?: string | null;
-  name: string;
-  priority?: string | null;
-  tags?: string | null;
-  isCompleted?: boolean;
-  createdAt?: string | null;
-  updatedAt?: string | null;
-  deadline?: string | null;
-  notes?: string | null;
-};
+import type { Task } from "./generated/types";
+export type { Task };
 
 async function request(path: string, opts: RequestInit = {}) {
   const res = await fetch(`${BASE}${path}`, {

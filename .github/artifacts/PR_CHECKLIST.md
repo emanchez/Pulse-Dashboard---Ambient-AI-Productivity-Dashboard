@@ -8,3 +8,4 @@ Use this checklist when reviewing PRs that implement phase masters or step files
 - Confirm branch name follows `phase-<n>/step-<m>-short-desc`.
 - Confirm acceptance criteria include at least one automated check that would fail if the dependency is missing (or confirm CI will gate the PR).
 - If the PR updates templates or planning docs, ensure existing open plans are annotated or migrated to the new fields.
+- **API contract changes:** If the PR modifies any backend schema or endpoint (including `/stats/pulse` or Task fields), confirm the author has re-run `npm run generate:api` from `code/frontend`, committed the updated `lib/generated/` files, and the CI `Generate TypeScript client` step passes on the branch. Reference: `.github/artifacts/phase2/plan/step-3-docs-and-ci.md`.

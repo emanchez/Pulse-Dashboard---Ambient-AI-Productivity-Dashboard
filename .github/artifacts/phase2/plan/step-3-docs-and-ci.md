@@ -52,7 +52,7 @@ Lock in the new pulse contract and dashboard behavior by regenerating the TypeSc
 - Blocking steps:
   - Blocked until: `.github/artifacts/phase2/plan/step-1-pulse-api.md`
   - Blocked until: `.github/artifacts/phase2/plan/step-2-dashboard.md`
-- Merge Readiness: false
+- Merge Readiness: true
 
 ## Risks & Mitigations
 - Risk: CI run fails to regenerate the client due to missing backend dependencies. Mitigation: reuse Phase 1 backend startup script and log instructions for replicating locally.
