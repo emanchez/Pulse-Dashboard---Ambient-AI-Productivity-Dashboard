@@ -22,6 +22,7 @@ from sqlalchemy import select
 from app.db.session import engine, async_session
 from app.db.base import Base
 from app.models.user import User
+from app.models.session_log import SessionLog  # noqa: F401 — register table with Base.metadata
 from app.core.security import get_password_hash
 
 
@@ -104,3 +105,23 @@ def create_user():
             return user
 
     return asyncio.get_event_loop().run_until_complete(_create())
+
+
+@pytest.fixture
+def auth_headers(client):
+    """Create testuser if needed, log in, return Authorization headers."""
+    async def _ensure_user():
+        async with async_session() as session:
+            existing_stmt = select(User).where(User.username == "testuser")
+            existing = await session.execute(existing_stmt)
+            existing_user = existing.scalar_one_or_none()
+            if not existing_user:
+                user = User(username="testuser", hashed_password=get_password_hash("testpass"))
+                session.add(user)
+                await session.commit()
+
+    asyncio.get_event_loop().run_until_complete(_ensure_user())
+    r = client.post("/login", json={"username": "testuser", "password": "testpass"})
+    assert r.status_code == 200, f"Login failed: {r.text}"
+    token = r.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}

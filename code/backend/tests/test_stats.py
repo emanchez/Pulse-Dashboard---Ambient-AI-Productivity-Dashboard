@@ -105,3 +105,41 @@ def test_pulse_overlapping_systemstate_picks_latest_end_date(client, create_user
     data = r.json()
     assert data["silenceState"] == "paused"
     assert data["pausedUntil"].startswith(b_end.isoformat()[:19])
+
+
+def test_flow_state_empty(client, auth_headers):
+    """Flow state with no logs returns zero values and empty series."""
+    r = client.get("/stats/flow-state", headers=auth_headers)
+    assert r.status_code == 200
+    data = r.json()
+    assert data["flowPercent"] == 0
+    assert data["changePercent"] == 0
+    assert data["windowLabel"] == "Last 6 hours"
+    assert data["series"] == []
+
+
+def test_flow_state_no_auth(client):
+    """Flow state without JWT returns 401."""
+    r = client.get("/stats/flow-state")
+    assert r.status_code == 401
+
+
+def test_flow_state_schema_shape(client, auth_headers):
+    """Flow state always returns correct schema shape."""
+    r = client.get("/stats/flow-state", headers=auth_headers)
+    assert r.status_code == 200
+    data = r.json()
+    assert "flowPercent" in data
+    assert "changePercent" in data
+    assert "windowLabel" in data
+    assert "series" in data
+    assert isinstance(data["series"], list)
+    assert len(data["series"]) <= 12
+    assert 0 <= data["flowPercent"] <= 100
+
+
+def test_pulse_still_works(client, auth_headers):
+    """Existing /stats/pulse endpoint is unaffected."""
+    r = client.get("/stats/pulse", headers=auth_headers)
+    assert r.status_code == 200
+    assert "silenceState" in r.json()

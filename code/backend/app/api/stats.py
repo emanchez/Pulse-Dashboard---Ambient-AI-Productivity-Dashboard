@@ -8,6 +8,8 @@ from app.db.session import get_async_session
 from app.models.action_log import ActionLog
 from app.models.system_state import SystemState
 from app.schemas.stats import PulseStatsSchema
+from app.schemas.flow_state import FlowStateSchema
+from app.services.flow_state import calculate_flow_state
 
 
 router = APIRouter(prefix="/stats")
@@ -78,3 +80,11 @@ async def get_pulse_stats(
         gap_minutes=gap_minutes,
         paused_until=paused_until,
     )
+
+
+@router.get("/flow-state", response_model=FlowStateSchema)
+async def get_flow_state(
+    user_id: str = Depends(get_current_user),
+    db=Depends(get_async_session),
+) -> FlowStateSchema:
+    return await calculate_flow_state(db, user_id)

@@ -1,0 +1,76 @@
+"use client"
+
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { Zap, Bell, WifiOff } from "lucide-react"
+
+interface AppNavBarProps {
+  silenceState?: "engaged" | "stagnant" | "paused"
+}
+
+export default function AppNavBar({ silenceState = "engaged" }: AppNavBarProps) {
+  const pathname = usePathname()
+
+  const tabClass = (path: string) =>
+    pathname === path
+      ? "text-white border-b-2 border-blue-500 pb-0.5 text-sm font-medium"
+      : "text-slate-400 hover:text-slate-200 text-sm font-medium"
+
+  const badge = () => {
+    if (silenceState === "stagnant") {
+      return (
+        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
+          <WifiOff size={12} />
+          STAGNANT
+        </span>
+      )
+    }
+    if (silenceState === "paused") {
+      return (
+        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium bg-sky-500/20 text-sky-400 border border-sky-500/30">
+          <span className="w-1.5 h-1.5 rounded-full bg-sky-400 inline-block" />
+          SYSTEM PAUSED
+        </span>
+      )
+    }
+    return (
+      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+        FOCUS MODE ACTIVE
+      </span>
+    )
+  }
+
+  return (
+    <nav className="flex items-center justify-between px-6 h-14 bg-slate-900 border-b border-slate-800">
+      {/* Left — Logo */}
+      <div className="flex items-center">
+        <Zap className="text-yellow-400" size={18} />
+        <span className="text-white font-semibold ml-2 text-sm">Pulse Dashboard</span>
+      </div>
+
+      {/* Center — Tabs */}
+      <div className="flex items-center gap-6">
+        <Link href="/tasks" className={tabClass("/tasks")}>
+          Tasks
+        </Link>
+        <Link href="/reports" className={tabClass("/reports")}>
+          Reports
+        </Link>
+      </div>
+
+      {/* Right — Actions */}
+      <div className="flex items-center gap-3">
+        <button className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-1.5 rounded-md transition-colors">
+          + Create Report
+        </button>
+        {badge()}
+        <Bell size={18} className="text-slate-400 cursor-pointer hover:text-slate-200" />
+        <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-sm text-white font-medium">
+          U
+        </div>
+      </div>
+    </nav>
+  )
+}
