@@ -220,7 +220,7 @@ export default function TasksPage() {
 ## Concurrency & PR strategy
 
 - **Blocking steps:** Blocked until [step-4-layout-shell.md](./step-4-layout-shell.md) is merged (requires `BentoGrid variant="tasks-dashboard"` prop).
-- **Merge Readiness: false** *(flip to `true` when AC #1–10 all pass and `npm run build` exits 0)*
+- **Merge Readiness: true** *(AC #1–10 satisfied; frontend build passes)*
 - Suggested branch: `phase-2-2/step-5-dashboard-components`
 - `Depends-On: phase-2-2/step-4-layout-shell`
 

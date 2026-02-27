@@ -36,7 +36,7 @@ export async function me(token: string) {
   return request(`/me`, { headers: { Authorization: `Bearer ${token}` } });
 }
 
-export async function listTasks(token: string) {
+export async function listTasks(token: string): Promise<Task[]> {
   return request(`/tasks/`, { headers: { Authorization: `Bearer ${token}` } });
 }
 
