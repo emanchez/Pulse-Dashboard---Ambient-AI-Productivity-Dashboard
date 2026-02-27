@@ -1,11 +1,17 @@
 const BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
-// Re-export all generated API-contract types from the canonical stubs.
-// PulseStats + getPulse live in generated/pulseClient; Task lives in generated/types.
+// Re-export all generated API-contract types.
+// PulseStats + getPulse live in the hand-written generated/pulseClient (preserved alongside generated files).
+// Task, SessionLog, FlowState types come from the @hey-api/openapi-ts generated barrel.
 export type { PulseStats } from "./generated/pulseClient";
 export { getPulse } from "./generated/pulseClient";
-import type { Task } from "./generated/types";
-export type { Task };
+import type {
+  TaskSchema as Task,
+  SessionLogSchema,
+  SessionStartRequest,
+  FlowStateSchema,
+} from "./generated";
+export type { Task, SessionLogSchema, SessionStartRequest, FlowStateSchema };
 
 async function request(path: string, opts: RequestInit = {}) {
   const res = await fetch(`${BASE}${path}`, {
@@ -46,4 +52,38 @@ export async function deleteTask(token: string, id: string) {
   return request(`/tasks/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
 }
 
-export default { login, me, listTasks, createTask, updateTask, deleteTask };
+// ── Session management ────────────────────────────────────────────────────────
+
+export async function getActiveSession(token: string): Promise<SessionLogSchema | null> {
+  const res = await fetch(`${BASE}/sessions/active`, {
+    credentials: "omit",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Request failed ${res.status}: ${text}`);
+  }
+  const text = await res.text();
+  if (!text || text.trim() === "null") return null;
+  return JSON.parse(text) as SessionLogSchema;
+}
+
+export async function startSession(token: string, body: SessionStartRequest): Promise<SessionLogSchema> {
+  return request(`/sessions/start`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function stopSession(token: string): Promise<SessionLogSchema> {
+  return request(`/sessions/stop`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+}
+
+// ── Flow state ────────────────────────────────────────────────────────────────
+
+export async function getFlowState(token: string): Promise<FlowStateSchema> {
+  return request(`/stats/flow-state`, { headers: { Authorization: `Bearer ${token}` } });
+}
+
+export default { login, me, listTasks, createTask, updateTask, deleteTask, getActiveSession, startSession, stopSession, getFlowState };

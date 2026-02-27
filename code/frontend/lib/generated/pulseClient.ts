@@ -1,3 +1,7 @@
+// Hand-written alongside @hey-api/openapi-ts generated files.
+// Preserved because the TypeScript-only plugin does not emit service functions.
+// getPulse and PulseStats are imported directly by PulseCard.tsx and lib/api.ts.
+
 export type PulseStats = {
   silenceState: "paused" | "stagnant" | "engaged";
   lastActionAt: string | null;
