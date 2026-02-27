@@ -1,14 +1,30 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 
 from .core.config import get_settings
+from .db.base import Base
+from .db.session import engine
 
 settings = get_settings()
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Ambient AI Productivity Dashboard")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Ensure all registered models have their tables created (idempotent).
+    # This covers newly added models (e.g. session_logs) without requiring
+    # a manual migration step in development.
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("DB tables verified/created via create_all")
+    yield
+
+
+app = FastAPI(title="Ambient AI Productivity Dashboard", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

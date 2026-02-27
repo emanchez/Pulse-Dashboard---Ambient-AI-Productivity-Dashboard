@@ -1,0 +1,30 @@
+console errors: 
+```
+GET
+http://localhost:3000/favicon.ico
+[HTTP/1.1 404 Not Found 23ms]
+
+XHRGET
+http://localhost:8000/sessions/active
+[HTTP/1.1 500 Internal Server Error 55ms]
+
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://localhost:8000/sessions/active. (Reason: CORS header ‘Access-Control-Allow-Origin’ missing). Status code: 500.
+Source map error: request failed with status 404
+Resource URL: http://localhost:3000/%3Canonymous%20code%3E
+Source Map URL: installHook.js.map
+Source map error: can't access property "sources", map is undefined
+Resource URL: http://localhost:3000/%3Canonymous%20code%3E
+Source Map URL: react_devtools_backend_compact.js.map
+XHRGET
+http://localhost:8000/sessions/active
+CORS Missing Allow Origin
+
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://localhost:8000/sessions/active. (Reason: CORS header ‘Access-Control-Allow-Origin’ missing). Status code: 500.
+XHRGET
+http://localhost:8000/sessions/active
+[HTTP/1.1 500 Internal Server Error 15ms]
+
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://localhost:8000/sessions/active. (Reason: CORS header ‘Access-Control-Allow-Origin’ missing). Status code: 500.
+
+
+```
