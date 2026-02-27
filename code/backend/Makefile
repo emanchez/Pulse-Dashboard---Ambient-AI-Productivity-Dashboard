@@ -1,4 +1,4 @@
-.PHONY: deps dev start test e2e build lint fmt
+.PHONY: deps dev start stop test e2e build lint fmt
 
 # Prefer a project virtualenv if present, else fallback to system python
 PYTHON := $(shell [ -x .venv/bin/python ] && echo .venv/bin/python || command -v python || command -v python3)
@@ -21,6 +21,17 @@ start:
 	@if [ ! -x .venv/bin/python ]; then echo "No .venv found — run 'make deps' to create virtualenv and install dependencies"; exit 1; fi
 	@echo "Starting backend (background) using $(PYTHON)"
 	PYTHONPATH=$(PWD) nohup $(PYTHON) -m uvicorn app.main:app --reload --host 127.0.0.1 --port $(PORT) >/dev/null 2>&1 & echo $$! > ./.dev.pid && echo "PID saved to ./.dev.pid"
+
+stop:
+	@# Kill by PID file if available
+	@if [ -f ./.dev.pid ]; then \
+		echo "Stopping backend (PID: $$(cat ./.dev.pid))"; \
+		kill $$(cat ./.dev.pid) 2>/dev/null || true; \
+		rm -f ./.dev.pid; \
+	fi
+	@# Fallback: kill any uvicorn still bound to the configured port
+	@PIDS=$$(lsof -ti :$(PORT) 2>/dev/null); if [ -n "$$PIDS" ]; then echo "Killing lingering uvicorn on :$(PORT) (PIDs: $$PIDS)"; kill $$PIDS 2>/dev/null || true; fi
+	@echo "Backend stopped."
 
 test:
 	$(PYTHON) -m pytest -q

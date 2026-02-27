@@ -1,7 +1,7 @@
 # Repository-level Makefile — orchestrates backend and frontend targets
 # Usage: `make <target>` or `make -C code/backend <target>` / `make -C code/frontend <target>`
 
-.PHONY: dev stop start build deps test generate-api fmt lint
+.PHONY: dev stop restart start build deps test generate-api fmt lint clean-cache
 
 TMP_DIR := .tmp
 BACKEND_DIR := code/backend
@@ -21,9 +21,35 @@ dev:
 	@echo "Started backend (PID: $$(cat $(BACKEND_PID) 2>/dev/null || echo 'unknown')) and frontend (PID: $$(cat $(FRONTEND_PID) 2>/dev/null || echo 'unknown'))."
 
 stop:
-	@if [ -f $(BACKEND_PID) ]; then echo "Stopping backend (PID: $$(cat $(BACKEND_PID)))"; kill $$(cat $(BACKEND_PID)) 2>/dev/null || true; rm -f $(BACKEND_PID); fi
-	@if [ -f $(FRONTEND_PID) ]; then echo "Stopping frontend (PID: $$(cat $(FRONTEND_PID)))"; kill $$(cat $(FRONTEND_PID)) 2>/dev/null || true; rm -f $(FRONTEND_PID); fi
-	@rm -f $(BACKEND_DIR)/.dev.pid $(FRONTEND_DIR)/.dev.pid || true
+	@# --- Frontend ---
+	@if [ -f $(FRONTEND_PID) ]; then \
+		echo "Stopping frontend (PID: $$(cat $(FRONTEND_PID)))"; \
+		kill $$(cat $(FRONTEND_PID)) 2>/dev/null || true; \
+		rm -f $(FRONTEND_PID); \
+	fi
+	@# Fallback: kill any next-server still bound to port 3000
+	@PIDS=$$(lsof -ti :3000 2>/dev/null); if [ -n "$$PIDS" ]; then echo "Killing lingering next-server on :3000 (PIDs: $$PIDS)"; kill $$PIDS 2>/dev/null || true; fi
+	@rm -f $(FRONTEND_DIR)/.dev.pid || true
+	@# Clear Next.js build cache so the next start is always clean
+	@if [ -d $(FRONTEND_DIR)/.next ]; then echo "Clearing $(FRONTEND_DIR)/.next cache..."; rm -rf $(FRONTEND_DIR)/.next; fi
+	@# --- Backend ---
+	@if [ -f $(BACKEND_PID) ]; then \
+		echo "Stopping backend (PID: $$(cat $(BACKEND_PID)))"; \
+		kill $$(cat $(BACKEND_PID)) 2>/dev/null || true; \
+		rm -f $(BACKEND_PID); \
+	fi
+	@# Fallback: kill any uvicorn still bound to port 8000
+	@PIDS=$$(lsof -ti :8000 2>/dev/null); if [ -n "$$PIDS" ]; then echo "Killing lingering uvicorn on :8000 (PIDs: $$PIDS)"; kill $$PIDS 2>/dev/null || true; fi
+	@rm -f $(BACKEND_DIR)/.dev.pid || true
+	@echo "All services stopped."
+
+restart:
+	@$(MAKE) stop
+	@sleep 1
+	@$(MAKE) dev
+
+clean-cache:
+	@$(MAKE) -C $(FRONTEND_DIR) clean-cache
 
 start:
 	@$(MAKE) -C $(BACKEND_DIR) start & $(MAKE) -C $(FRONTEND_DIR) start

@@ -1,0 +1,34 @@
+console errors: ```GET
+http://localhost:3000/
+[HTTP/1.1 500 Internal Server Error 0ms]
+
+GET
+http://localhost:3000/_next/static/chunks/fallback/webpack.js?ts=1772195040291
+[HTTP/1.1 404 Not Found 0ms]
+
+GET
+http://localhost:3000/_next/static/chunks/fallback/main.js?ts=1772195040291
+[HTTP/1.1 404 Not Found 0ms]
+
+GET
+http://localhost:3000/_next/static/chunks/fallback/pages/_error.js?ts=1772195040291
+[HTTP/1.1 404 Not Found 0ms]
+
+GET
+http://localhost:3000/_next/static/chunks/fallback/pages/_app.js?ts=1772195040291
+[HTTP/1.1 404 Not Found 0ms]
+
+GET
+http://localhost:3000/_next/static/chunks/fallback/react-refresh.js?ts=1772195040291
+[HTTP/1.1 404 Not Found 0ms]
+
+Loading failed for the <script> with source “http://localhost:3000/_next/static/chunks/fallback/react-refresh.js?ts=1772195040291”. localhost:3000:1:947
+Loading failed for the <script> with source “http://localhost:3000/_next/static/chunks/fallback/webpack.js?ts=1772195040291”. localhost:3000:1:498
+Loading failed for the <script> with source “http://localhost:3000/_next/static/chunks/fallback/main.js?ts=1772195040291”. localhost:3000:1:585
+Loading failed for the <script> with source “http://localhost:3000/_next/static/chunks/fallback/pages/_app.js?ts=1772195040291”. localhost:3000:1:678
+Loading failed for the <script> with source “http://localhost:3000/_next/static/chunks/fallback/pages/_error.js?ts=1772195040291”. localhost:3000:1:773
+GET
+http://localhost:3000/favicon.ico
+[HTTP/1.1 404 Not Found 0ms]
+
+```
