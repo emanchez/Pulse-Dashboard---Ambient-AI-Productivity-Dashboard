@@ -6,9 +6,10 @@ import { Zap, Bell, WifiOff } from "lucide-react"
 
 interface AppNavBarProps {
   silenceState?: "engaged" | "stagnant" | "paused"
+  gapMinutes?: number
 }
 
-export default function AppNavBar({ silenceState = "engaged" }: AppNavBarProps) {
+export default function AppNavBar({ silenceState, gapMinutes }: AppNavBarProps) {
   const pathname = usePathname()
 
   const tabClass = (path: string) =>
@@ -17,12 +18,20 @@ export default function AppNavBar({ silenceState = "engaged" }: AppNavBarProps) 
       : "text-slate-400 hover:text-slate-200 text-sm font-medium"
 
   const badge = () => {
+    if (!silenceState) {
+      return (
+        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium bg-slate-700/50 text-slate-500 border border-slate-600/30">
+          Checking…
+        </span>
+      )
+    }
     if (silenceState === "stagnant") {
+      const gapHours = Math.round((gapMinutes ?? 0) / 60)
       return (
         <span className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30">
           <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
           <WifiOff size={12} />
-          STAGNANT
+          STAGNANT — {gapHours}h gap
         </span>
       )
     }

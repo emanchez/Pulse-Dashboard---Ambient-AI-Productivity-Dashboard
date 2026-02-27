@@ -1,55 +1,14 @@
 "use client"
 
-import React, { useCallback, useEffect, useState } from "react"
+import React from "react"
 import { CheckCircle2 } from "lucide-react"
-import { listTasks } from "../../lib/api"
 import { TaskSchema } from "../../lib/generated/types.gen"
 
 interface DailyGoalsCardProps {
-  token: string
-  onAuthError?: () => void
+  tasks: TaskSchema[]
 }
 
-export default function DailyGoalsCard({ token, onAuthError }: DailyGoalsCardProps) {
-  const [tasks, setTasks] = useState<TaskSchema[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchTasks = useCallback(async () => {
-    try {
-      const data = await listTasks(token)
-      setTasks(data)
-      setError(null)
-    } catch (err: any) {
-      if (err?.message?.includes("401")) {
-        onAuthError?.()
-        return
-      }
-      setError(err?.message ?? "Failed to fetch tasks")
-    }
-  }, [token, onAuthError])
-
-  useEffect(() => {
-    fetchTasks()
-  }, [fetchTasks])
-
-  if (error) {
-    return (
-      <div className="bg-slate-800 rounded-xl p-5">
-        <p className="text-red-500 text-sm">{error}</p>
-      </div>
-    )
-  }
-
-  if (!tasks) {
-    return (
-      <div className="bg-slate-800 rounded-xl p-5">
-        <div className="h-6 animate-pulse bg-slate-700 rounded mb-2" />
-        <div className="h-6 animate-pulse bg-slate-700 rounded mb-2" />
-        <div className="h-6 animate-pulse bg-slate-700 rounded" />
-      </div>
-    )
-  }
-
+export default function DailyGoalsCard({ tasks }: DailyGoalsCardProps) {
   const today = new Date().toISOString().slice(0, 10)
   const todays = tasks.filter(
     (t) => t.deadline?.slice(0, 10) === today

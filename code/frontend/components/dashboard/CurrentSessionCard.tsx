@@ -1,47 +1,14 @@
 "use client"
 
-import React, { useCallback, useEffect, useState } from "react"
+import React from "react"
 import { FileText } from "lucide-react"
-import { getActiveSession } from "../../lib/api"
 import { SessionLogSchema } from "../../lib/generated/types.gen"
 
 interface CurrentSessionCardProps {
-  token: string
-  onAuthError?: () => void
+  session: SessionLogSchema | null
 }
 
-export default function CurrentSessionCard({ token, onAuthError }: CurrentSessionCardProps) {
-  const [session, setSession] = useState<SessionLogSchema | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchSession = useCallback(async () => {
-    try {
-      const data = await getActiveSession(token)
-      setSession(data)
-      setError(null)
-    } catch (err: any) {
-      if (err?.message?.includes("401")) {
-        onAuthError?.()
-        return
-      }
-      setError(err?.message ?? "Failed to fetch session")
-    }
-  }, [token, onAuthError])
-
-  useEffect(() => {
-    fetchSession()
-    const id = setInterval(fetchSession, 30000)
-    return () => clearInterval(id)
-  }, [fetchSession])
-
-  if (error) {
-    return (
-      <div className="bg-slate-800 rounded-xl p-5 relative overflow-hidden">
-        <p className="text-red-500 text-sm">{error}</p>
-      </div>
-    )
-  }
-
+export default function CurrentSessionCard({ session }: CurrentSessionCardProps) {
   const elapsed = session?.elapsedMinutes ?? 0
   const goal = session?.goalMinutes ?? 0
   const percent = goal > 0 ? Math.min((elapsed / goal) * 100, 100) : 0

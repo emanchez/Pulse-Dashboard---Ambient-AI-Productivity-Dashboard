@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useCallback, useEffect, useState } from "react"
+import React from "react"
 import {
   AreaChart,
   Area,
@@ -8,45 +8,14 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts"
-import { getFlowState } from "../../lib/api"
 import { FlowStateSchema } from "../../lib/generated/types.gen"
 
 interface ProductivityPulseCardProps {
-  token: string
-  onAuthError?: () => void
+  flowState: FlowStateSchema | null
 }
 
-export default function ProductivityPulseCard({ token, onAuthError }: ProductivityPulseCardProps) {
-  const [flow, setFlow] = useState<FlowStateSchema | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchFlow = useCallback(async () => {
-    try {
-      const data = await getFlowState(token)
-      setFlow(data)
-      setError(null)
-    } catch (err: any) {
-      if (err?.message?.includes("401")) {
-        onAuthError?.()
-        return
-      }
-      setError(err?.message ?? "Failed to fetch flow state")
-    }
-  }, [token, onAuthError])
-
-  useEffect(() => {
-    fetchFlow()
-    const id = setInterval(fetchFlow, 60000)
-    return () => clearInterval(id)
-  }, [fetchFlow])
-
-  if (error) {
-    return (
-      <div className="bg-slate-800 rounded-xl p-5 h-full">
-        <p className="text-red-500 text-sm">{error}</p>
-      </div>
-    )
-  }
+export default function ProductivityPulseCard({ flowState }: ProductivityPulseCardProps) {
+  const flow = flowState
 
   if (!flow) {
     return (

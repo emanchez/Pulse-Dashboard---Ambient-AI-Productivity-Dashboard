@@ -1,50 +1,18 @@
 "use client"
 
-import React, { useCallback, useEffect, useState } from "react"
-import { listTasks } from "../../lib/api"
+import React from "react"
 import { TaskSchema } from "../../lib/generated/types.gen"
 
 interface TaskQueueTableProps {
-  token: string
+  tasks: TaskSchema[]
   activeSessionTaskId?: string | null
-  onAuthError?: () => void
 }
 
 export default function TaskQueueTable({
-  token,
+  tasks,
   activeSessionTaskId,
-  onAuthError,
 }: TaskQueueTableProps) {
-  const [tasks, setTasks] = useState<TaskSchema[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchTasks = useCallback(async () => {
-    try {
-      const data = await listTasks(token)
-      setTasks(data)
-      setError(null)
-    } catch (err: any) {
-      if (err?.message?.includes("401")) {
-        onAuthError?.()
-        return
-      }
-      setError(err?.message ?? "Failed to fetch tasks")
-    }
-  }, [token, onAuthError])
-
-  useEffect(() => {
-    fetchTasks()
-  }, [fetchTasks])
-
-  if (error) {
-    return (
-      <div className="bg-slate-800 rounded-xl p-5">
-        <p className="text-red-500 text-sm">{error}</p>
-      </div>
-    )
-  }
-
-  if (!tasks) {
+  if (!tasks.length) {
     return (
       <div className="bg-slate-800 rounded-xl p-5">
         <div className="h-10 animate-pulse bg-slate-700 rounded mb-2" />
