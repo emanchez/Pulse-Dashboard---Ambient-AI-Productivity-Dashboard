@@ -105,6 +105,25 @@ This pattern prevents accidental partial saves and keeps the action log clean (o
 
 ---
 
+## Priority Color Rules
+
+Task rows in the `TaskBoard` component are tinted by priority using a left-border + background + text color scheme defined in `PRIORITY_STYLES` ([components/TaskBoard.tsx](components/TaskBoard.tsx)):
+
+| Priority | Border | Background | Text | Visual colour |
+|----------|----------------------|-------------------|-------------------|---------------|
+| **High** | `border-l-rose-500` | `bg-rose-50` | `text-rose-600` | Rose / Red |
+| **Medium** | `border-l-amber-500` | `bg-amber-50` | `text-amber-700` | Amber / Orange|
+| **Low** | `border-l-sky-500` | `bg-sky-50` | `text-sky-700` | Sky Blue |
+| *(none)* | `border-l-gray-300` | `bg-white` | `text-gray-600` | Gray |
+
+**Implementation notes:**
+
+- The backend stores `priority` as a free-form `String(32)` column, not a database enum. The frontend `<select>` restricts values to `High`, `Medium`, and `Low`. Any unrecognised or empty value falls back to the gray style.
+- The compact `TaskQueueTable` on the dashboard does **not** show priority colours — it displays *status* colours (emerald/blue/slate) instead. This is intentional to keep the dashboard view minimal.
+- Do **not** confuse this palette with the Silence Indicator palette (Emerald / Amber / Sky Blue), which maps to *engagement states* (`engaged` / `stagnant` / `paused`) and is documented in the next section.
+
+---
+
 ## Silence Indicator States
 
 The `PulseCard` polls `GET /stats/pulse` every 30 seconds and displays one of three states:
