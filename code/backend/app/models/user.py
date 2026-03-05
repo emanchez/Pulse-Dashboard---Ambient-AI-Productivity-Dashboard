@@ -10,11 +10,6 @@ from sqlalchemy.orm import Mapped, mapped_column
 from ..db.base import TimestampedBase
 
 
-def _to_camel(string: str) -> str:
-    parts = string.split("_")
-    return parts[0] + "".join(word.capitalize() for word in parts[1:])
-
-
 class UserSchema(CamelModel):
     id: str | None = None
     username: str

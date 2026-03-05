@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import statistics
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +19,7 @@ def _safe_mean(values: list[float]) -> float:
 
 
 async def calculate_flow_state(db: AsyncSession, user_id: str) -> FlowStateSchema:
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     window_start = now - timedelta(hours=_WINDOW_HOURS)
 
     result = await db.execute(

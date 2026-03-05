@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
-from sqlalchemy import Column, DateTime, String
+from sqlalchemy import DateTime, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -17,5 +17,5 @@ class TimestampedBase(Base):
     __abstract__ = True
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), onupdate=lambda: datetime.now(timezone.utc).replace(tzinfo=None))

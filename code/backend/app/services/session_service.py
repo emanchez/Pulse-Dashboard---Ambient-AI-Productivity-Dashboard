@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,7 +29,7 @@ async def start_session(db: AsyncSession, user_id: str, req: SessionStartRequest
         task_id=req.task_id,
         task_name=req.task_name,
         goal_minutes=req.goal_minutes,
-        started_at=datetime.utcnow(),
+        started_at=datetime.now(timezone.utc).replace(tzinfo=None),
     )
     db.add(session_log)
     await db.commit()
@@ -42,7 +42,7 @@ async def stop_session(db: AsyncSession, user_id: str) -> SessionLog | None:
     if existing is None:
         return None
 
-    existing.ended_at = datetime.utcnow()
+    existing.ended_at = datetime.now(timezone.utc).replace(tzinfo=None)
     await db.commit()
     await db.refresh(existing)
     return existing

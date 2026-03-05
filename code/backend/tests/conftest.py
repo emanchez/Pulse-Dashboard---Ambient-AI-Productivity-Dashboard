@@ -1,7 +1,6 @@
 import os
 import pytest
 import asyncio
-import os
 import sys
 import subprocess
 import socket

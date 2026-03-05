@@ -11,11 +11,6 @@ from sqlalchemy.orm import Mapped, mapped_column
 from ..db.base import TimestampedBase
 
 
-def _to_camel(string: str) -> str:
-    parts = string.split("_")
-    return parts[0] + "".join(word.capitalize() for word in parts[1:])
-
-
 class TaskSchema(CamelModel):
     id: str | None = None
     name: str
@@ -28,8 +23,6 @@ class TaskSchema(CamelModel):
     notes: str | None = None
 
     model_config = {
-        "alias_generator": _to_camel,
-        "populate_by_name": True,
         "json_schema_extra": {"example": {"name": "Write docs", "priority": "High"}},
     }
 
@@ -43,10 +36,6 @@ class TaskUpdate(CamelModel):
     deadline: datetime | None = None
     notes: str | None = None
 
-    model_config = {
-        "alias_generator": _to_camel,
-        "populate_by_name": True,
-    }
 
 
 class Task(TimestampedBase):

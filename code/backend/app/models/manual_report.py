@@ -9,11 +9,6 @@ from sqlalchemy.orm import Mapped, mapped_column
 from ..db.base import TimestampedBase
 
 
-def _to_camel(string: str) -> str:
-    parts = string.split("_")
-    return parts[0] + "".join(w.capitalize() for w in parts[1:])
-
-
 class ManualReportSchema(CamelModel):
     id: str | None = None
     title: str

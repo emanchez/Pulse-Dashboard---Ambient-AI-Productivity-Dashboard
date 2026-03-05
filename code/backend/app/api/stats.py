@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Literal
 from sqlalchemy import select, func
 from fastapi import APIRouter, Depends
@@ -28,7 +28,7 @@ async def get_pulse_stats(
     - stagnant: if gap > 2880 minutes (48h) and not paused
     - engaged: otherwise (gap <= 48h or no actions)
     """
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
 
     # Get last ActionLog scoped to current user
     last_action_stmt = (
@@ -53,7 +53,7 @@ async def get_pulse_stats(
         .where(SystemState.user_id == user_id)
         .where(SystemState.start_date <= now)
         .where(
-            (SystemState.end_date == None) | (SystemState.end_date >= now)
+            SystemState.end_date.is_(None) | (SystemState.end_date >= now)
         )
         .where(func.lower(SystemState.mode_type).in_(["vacation", "leave"]))
         .order_by(

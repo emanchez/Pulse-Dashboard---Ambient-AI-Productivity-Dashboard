@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from pydantic import ConfigDict
 from sqlalchemy import DateTime, Integer, String
@@ -17,12 +17,12 @@ class SessionLog(TimestampedBase):
     task_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     task_name: Mapped[str | None] = mapped_column(String(256), nullable=True)
     goal_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
     ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     @property
     def elapsed_minutes(self) -> int:
-        end = self.ended_at if self.ended_at is not None else datetime.utcnow()
+        end = self.ended_at if self.ended_at is not None else datetime.now(timezone.utc).replace(tzinfo=None)
         return int((end - self.started_at).total_seconds() // 60)
 
 
@@ -42,4 +42,4 @@ class SessionLogSchema(CamelModel):
     ended_at: datetime | None = None
     elapsed_minutes: int | None = None
 
-    model_config = ConfigDict(from_attributes=True, populate_by_name=True, alias_generator=lambda s: ''.join(w.capitalize() if i else w for i, w in enumerate(s.split('_'))))
+    model_config = ConfigDict(from_attributes=True)

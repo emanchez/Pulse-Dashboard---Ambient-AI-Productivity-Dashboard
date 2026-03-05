@@ -41,6 +41,9 @@ async def me(token: str = Depends(oauth2_scheme), session: AsyncSession = Depend
     return UserSchema.model_validate(q.__dict__)
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> str:
     payload = decode_access_token(token)
-    return payload.get("sub")
+    sub = payload.get("sub")
+    if not sub:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    return sub

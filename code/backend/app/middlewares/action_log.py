@@ -25,9 +25,7 @@ class ActionLogMiddleware(BaseHTTPMiddleware):
                 parts = [p for p in path.split("/") if p]
                 task_id = None
                 if len(parts) >= 2 and parts[0] == "tasks":
-                    # e.g. /tasks/<id>
-                    if len(parts) >= 2:
-                        task_id = parts[1]
+                    task_id = parts[1]
 
                 # as a best-effort, try to parse response body for created resource id
                 if method == "POST" and not task_id:
@@ -61,6 +59,7 @@ class ActionLogMiddleware(BaseHTTPMiddleware):
                     await session.execute(stmt)
                     await session.commit()
         except Exception:
+            # Intentionally non-fatal: logging failure must not break the user request.
             logger.exception("ActionLog middleware failed to write log")
 
         return response

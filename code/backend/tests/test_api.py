@@ -2,6 +2,15 @@ import pytest
 from sqlalchemy import select
 
 
+def test_missing_sub_claim_returns_401(client):
+    """Verify get_current_user rejects tokens with no 'sub' claim (empty string)."""
+    from app.core.security import create_access_token
+
+    bad_token = create_access_token(subject="")
+    r = client.get("/me", headers={"Authorization": f"Bearer {bad_token}"})
+    assert r.status_code == 401
+
+
 def test_login_and_tasks_flow(client, create_user):
     # login
     r = client.post("/login", json={"username": "testuser", "password": "testpass"})

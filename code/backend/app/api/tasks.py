@@ -2,20 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi.security import OAuth2PasswordBearer
 
 from ..db.session import get_async_session
 from ..models.task import Task, TaskSchema, TaskUpdate
-from ..core.security import decode_access_token
+from .auth import get_current_user
 
 router = APIRouter(prefix="/tasks")
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
-
-
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    payload = decode_access_token(token)
-    return payload.get("sub")
 
 
 @router.get("/", response_model=List[TaskSchema])
