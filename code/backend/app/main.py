@@ -45,12 +45,18 @@ from .api import auth as auth_router
 from .api import tasks as tasks_router
 from .api import stats as stats_router
 from .api import sessions as sessions_router
+from .api import reports as reports_router
+from .api import system_states as system_states_router
 from .middlewares.action_log import ActionLogMiddleware
 from .models.session_log import SessionLog as _SessionLog  # noqa: F401 — register with Base.metadata
+from .models.manual_report import ManualReport as _ManualReport  # noqa: F401 — register with Base.metadata
+from .models.system_state import SystemState as _SystemState  # noqa: F401 — register with Base.metadata
 
 app.include_router(auth_router.router)
 app.include_router(tasks_router.router)
 app.include_router(stats_router.router)
 app.include_router(sessions_router.router, prefix="/sessions")
+app.include_router(reports_router.router)
+app.include_router(system_states_router.router)
 app.add_middleware(ActionLogMiddleware)
 logger.info("Routers and middleware wired")

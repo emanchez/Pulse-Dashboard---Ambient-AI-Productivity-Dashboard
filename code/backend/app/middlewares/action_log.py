@@ -12,6 +12,15 @@ from sqlalchemy import insert
 
 logger = logging.getLogger(__name__)
 
+# Paths whose mutations are action-logged.  Extend here for new resources.
+_LOGGED_PREFIXES = ("/tasks", "/reports", "/system-states")
+_LOGGED_METHODS = {"POST", "PUT", "DELETE", "PATCH"}
+
+
+def _extract_entity_id(parts: list[str]) -> str | None:
+    """Return the second URL segment as a generic entity reference, if present."""
+    return parts[1] if len(parts) >= 2 else None
+
 
 class ActionLogMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
@@ -20,14 +29,12 @@ class ActionLogMiddleware(BaseHTTPMiddleware):
         try:
             path = request.url.path
             method = request.method.upper()
-            if path.startswith("/tasks") and method in {"POST", "PUT", "DELETE"}:
-                # attempt to extract task id from path (/tasks/{id})
+            if any(path.startswith(p) for p in _LOGGED_PREFIXES) and method in _LOGGED_METHODS:
+                # attempt to extract entity id from path (/<resource>/{id})
                 parts = [p for p in path.split("/") if p]
-                task_id = None
-                if len(parts) >= 2 and parts[0] == "tasks":
-                    task_id = parts[1]
+                task_id = _extract_entity_id(parts)  # stored in task_id column as generic entity ref
 
-                # as a best-effort, try to parse response body for created resource id
+                # as a best-effort, parse response body for created resource id on POST
                 if method == "POST" and not task_id:
                     try:
                         if hasattr(response, "body") and response.body:
