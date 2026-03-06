@@ -4,11 +4,13 @@ from datetime import datetime
 from typing import List
 
 from ..schemas.base import CamelModel
-from pydantic import Field
+from pydantic import Field, field_validator
 from sqlalchemy import Boolean, DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..db.base import TimestampedBase
+
+_ALLOWED_PRIORITIES = {"High", "Medium", "Low"}
 
 
 class TaskSchema(CamelModel):
@@ -21,21 +23,71 @@ class TaskSchema(CamelModel):
     updated_at: datetime | None = None
     deadline: datetime | None = None
     notes: str | None = None
+    user_id: str | None = None
 
     model_config = {
         "json_schema_extra": {"example": {"name": "Write docs", "priority": "High"}},
     }
 
 
-class TaskUpdate(CamelModel):
-    """Schema for PUT/PATCH requests: excludes read-only fields (id, created_at, updated_at)."""
+class TaskCreate(CamelModel):
+    """Schema for POST /tasks/ — no read-only fields accepted."""
     name: str
     priority: str | None = None
     tags: str | None = None
-    is_completed: bool = Field(False)
+    is_completed: bool = False
     deadline: datetime | None = None
     notes: str | None = None
 
+    @field_validator("name")
+    @classmethod
+    def name_not_empty(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("name must not be empty")
+        if len(v) > 256:
+            raise ValueError("name must be <= 256 characters")
+        return v
+
+    @field_validator("priority")
+    @classmethod
+    def priority_valid(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        if v not in _ALLOWED_PRIORITIES:
+            raise ValueError(f"priority must be one of {_ALLOWED_PRIORITIES}")
+        return v
+
+
+class TaskUpdate(CamelModel):
+    """Schema for PUT/PATCH requests: excludes read-only fields (id, created_at, updated_at)."""
+    name: str | None = None
+    priority: str | None = None
+    tags: str | None = None
+    is_completed: bool | None = None
+    deadline: datetime | None = None
+    notes: str | None = None
+
+    @field_validator("name")
+    @classmethod
+    def name_not_empty(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        v = v.strip()
+        if not v:
+            raise ValueError("name must not be empty")
+        if len(v) > 256:
+            raise ValueError("name must be <= 256 characters")
+        return v
+
+    @field_validator("priority")
+    @classmethod
+    def priority_valid(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        if v not in _ALLOWED_PRIORITIES:
+            raise ValueError(f"priority must be one of {_ALLOWED_PRIORITIES}")
+        return v
 
 
 class Task(TimestampedBase):
@@ -47,3 +99,4 @@ class Task(TimestampedBase):
     is_completed: Mapped[bool] = mapped_column(Boolean, default=False)
     deadline: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    user_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)

@@ -24,6 +24,7 @@ from app.models.user import User
 from app.models.session_log import SessionLog  # noqa: F401 — register table with Base.metadata
 from app.models.manual_report import ManualReport  # noqa: F401 — register table with Base.metadata
 from app.models.system_state import SystemState  # noqa: F401 — register table with Base.metadata
+from app.models.task import Task  # noqa: F401 — register table with Base.metadata
 from app.core.security import get_password_hash
 
 
@@ -123,6 +124,26 @@ def auth_headers(client):
 
     asyncio.get_event_loop().run_until_complete(_ensure_user())
     r = client.post("/login", json={"username": "testuser", "password": "testpass"})
+    assert r.status_code == 200, f"Login failed: {r.text}"
+    token = r.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def auth_headers_b(client):
+    """Create testuser2 and return its Authorization headers (used for cross-user tests)."""
+    async def _ensure_user():
+        async with async_session() as session:
+            existing_stmt = select(User).where(User.username == "testuser2")
+            existing = await session.execute(existing_stmt)
+            existing_user = existing.scalar_one_or_none()
+            if not existing_user:
+                user = User(username="testuser2", hashed_password=get_password_hash("testpass2"))
+                session.add(user)
+                await session.commit()
+
+    asyncio.get_event_loop().run_until_complete(_ensure_user())
+    r = client.post("/login", json={"username": "testuser2", "password": "testpass2"})
     assert r.status_code == 200, f"Login failed: {r.text}"
     token = r.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}

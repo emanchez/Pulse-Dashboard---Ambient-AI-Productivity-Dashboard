@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect, useRef, useState } from "react"
+import { Plus } from "lucide-react"
 import { useAuth } from "../../lib/hooks/useAuth"
 import LoadingSpinner from "../LoadingSpinner"
 import AppNavBar from "../../components/nav/AppNavBar"
@@ -10,9 +11,10 @@ import ProductivityPulseCard from "../../components/dashboard/ProductivityPulseC
 import CurrentSessionCard from "../../components/dashboard/CurrentSessionCard"
 import DailyGoalsCard from "../../components/dashboard/DailyGoalsCard"
 import TaskQueueTable from "../../components/dashboard/TaskQueueTable"
+import TaskForm from "../../components/tasks/TaskForm"
 import { useSilenceState } from "../../components/SilenceStateProvider"
-import { getFlowState, getActiveSession, listTasks } from "../../lib/api"
-import type { FlowStateSchema, SessionLogSchema, Task } from "../../lib/api"
+import { getFlowState, getActiveSession, listTasks, updateTask, deleteTask } from "../../lib/api"
+import type { FlowStateSchema, SessionLogSchema, Task, TaskUpdate } from "../../lib/api"
 
 export default function TasksPage() {
   const { token, ready, logout } = useAuth()
@@ -23,9 +25,22 @@ export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Task form modal state
+  const [showTaskForm, setShowTaskForm] = useState(false)
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
+
   // Ref so polling callbacks always read the latest token without stale closures
   const tokenRef = useRef(token)
   useEffect(() => { tokenRef.current = token }, [token])
+
+  const refreshTasks = async () => {
+    if (!tokenRef.current) return
+    try {
+      setTasks(await listTasks(tokenRef.current))
+    } catch (err: any) {
+      if (err?.message?.includes("401")) logout()
+    }
+  }
 
   useEffect(() => {
     if (!token) return
@@ -75,6 +90,43 @@ export default function TasksPage() {
     }
   }, [token, logout])
 
+  const handleOpenCreate = () => {
+    setEditingTask(null)
+    setShowTaskForm(true)
+  }
+
+  const handleEdit = (task: Task) => {
+    setEditingTask(task)
+    setShowTaskForm(true)
+  }
+
+  const handleDelete = async (task: Task) => {
+    if (!token || !task.id) return
+    try {
+      await deleteTask(token, task.id)
+      await refreshTasks()
+    } catch (err) {
+      console.error("Failed to delete task:", err)
+    }
+  }
+
+  const handleToggleComplete = async (task: Task) => {
+    if (!token || !task.id) return
+    try {
+      const update: TaskUpdate = { isCompleted: !task.isCompleted }
+      await updateTask(token, task.id, update)
+      await refreshTasks()
+    } catch (err) {
+      console.error("Failed to toggle task:", err)
+    }
+  }
+
+  const handleFormSave = async () => {
+    setShowTaskForm(false)
+    setEditingTask(null)
+    await refreshTasks()
+  }
+
   if (!ready || !token || loading) {
     return <LoadingSpinner />
   }
@@ -107,18 +159,40 @@ export default function TasksPage() {
           }
           row2B={<DailyGoalsCard tasks={tasks} />}
           row2C={
-            <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 text-slate-500 text-sm flex items-center justify-center h-full">
-              Quick actions — coming soon
+            <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-col items-center justify-center h-full gap-3">
+              <p className="text-slate-400 text-sm">Quick Actions</p>
+              <button
+                onClick={handleOpenCreate}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors w-full justify-center"
+              >
+                <Plus size={15} />
+                Create Task
+              </button>
             </div>
           }
           row3={
             <TaskQueueTable
               tasks={tasks}
               activeSessionTaskId={activeSession?.taskId ?? null}
+              onCreateTask={handleOpenCreate}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onToggleComplete={handleToggleComplete}
             />
           }
         />
       </main>
+
+      {showTaskForm && (
+        <TaskForm
+          mode={editingTask ? "edit" : "create"}
+          task={editingTask ?? undefined}
+          token={token}
+          onClose={() => { setShowTaskForm(false); setEditingTask(null) }}
+          onSave={handleFormSave}
+        />
+      )}
     </>
   )
 }
+

@@ -7,6 +7,8 @@ export type { PulseStats } from "./generated/pulseClient";
 export { getPulse } from "./generated/pulseClient";
 import type {
   TaskSchema as Task,
+  TaskCreate,
+  TaskUpdate,
   SessionLogSchema,
   SessionStartRequest,
   FlowStateSchema,
@@ -20,6 +22,8 @@ import type {
 } from "./generated";
 export type {
   Task,
+  TaskCreate,
+  TaskUpdate,
   SessionLogSchema,
   SessionStartRequest,
   FlowStateSchema,
@@ -59,11 +63,11 @@ export async function listTasks(token: string): Promise<Task[]> {
   return request(`/tasks/`, { headers: { Authorization: `Bearer ${token}` } });
 }
 
-export async function createTask(token: string, task: Task) {
+export async function createTask(token: string, task: TaskCreate): Promise<Task> {
   return request(`/tasks/`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify(task) });
 }
 
-export async function updateTask(token: string, id: string, task: Task) {
+export async function updateTask(token: string, id: string, task: TaskUpdate): Promise<Task> {
   return request(`/tasks/${id}`, { method: "PUT", headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify(task) });
 }
 
