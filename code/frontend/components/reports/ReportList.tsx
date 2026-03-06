@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useState } from "react"
 import { ChevronDown, FileText } from "lucide-react"
 import ReportCard from "./ReportCard"
 import type { ManualReportSchema } from "../../lib/api"
@@ -11,6 +11,8 @@ interface ReportListProps {
   loading: boolean
   onEdit: (report: ManualReportSchema) => void
   onLoadMore: () => void
+  onDelete?: (id: string) => void
+  onArchive?: (id: string) => void
 }
 
 export default function ReportList({
@@ -19,7 +21,22 @@ export default function ReportList({
   loading,
   onEdit,
   onLoadMore,
+  onDelete,
+  onArchive,
 }: ReportListProps) {
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(
+    () => new Set(reports.length > 0 ? [reports[0].id] : [])
+  )
+
+  const toggleExpanded = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   if (reports.length === 0 && !loading) {
     return (
       <div className="flex flex-col items-center justify-center py-24">
@@ -34,12 +51,15 @@ export default function ReportList({
 
   return (
     <div className="space-y-4">
-      {reports.map((report, index) => (
+      {reports.map((report) => (
         <ReportCard
           key={report.id}
           report={report}
-          expanded={index === 0}
+          expanded={expandedIds.has(report.id)}
           onEdit={onEdit}
+          onToggle={() => toggleExpanded(report.id)}
+          onDelete={onDelete}
+          onArchive={onArchive}
         />
       ))}
 

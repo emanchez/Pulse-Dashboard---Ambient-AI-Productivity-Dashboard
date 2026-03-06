@@ -39,7 +39,7 @@ export default function LoginPage() {
   if (!ready) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-indigo-600" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-600 border-t-blue-500" />
       </div>
     )
   }
@@ -48,18 +48,18 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-[60vh]">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm bg-white rounded-lg shadow p-6 space-y-4"
+        className="w-full max-w-sm bg-slate-800 border border-slate-700 rounded-xl shadow-xl p-6 space-y-4"
       >
-        <h1 className="text-xl font-semibold text-center">Sign In</h1>
+        <h1 className="text-xl font-semibold text-center text-white">Sign In</h1>
 
         {error && (
-          <div className="bg-red-50 text-red-700 text-sm rounded p-2">
+          <div className="bg-red-500/20 text-red-400 border border-red-500/30 text-sm rounded-lg px-4 py-3">
             {error}
           </div>
         )}
 
         <div>
-          <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="username" className="block text-sm font-medium text-slate-300 mb-1">
             Username
           </label>
           <input
@@ -68,12 +68,12 @@ export default function LoginPage() {
             required
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            className="w-full rounded-lg bg-slate-900 border border-slate-600 text-white px-4 py-2 focus:outline-none focus:border-blue-500 transition-colors sm:text-sm"
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-1">
             Password
           </label>
           <input
@@ -82,14 +82,14 @@ export default function LoginPage() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            className="w-full rounded-lg bg-slate-900 border border-slate-600 text-white px-4 py-2 focus:outline-none focus:border-blue-500 transition-colors sm:text-sm"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded bg-indigo-600 px-4 py-2 text-white font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          className="w-full rounded-lg bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           {loading ? "Signing in…" : "Sign In"}
         </button>

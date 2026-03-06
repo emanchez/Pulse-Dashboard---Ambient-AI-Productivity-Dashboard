@@ -9,7 +9,7 @@ import ReportList from "../../components/reports/ReportList"
 import ReportForm from "../../components/reports/ReportForm"
 import SystemStateManager from "../../components/system-state/SystemStateManager"
 import { useSilenceState } from "../../components/SilenceStateProvider"
-import { listReports, listTasks } from "../../lib/api"
+import { listReports, listTasks, deleteReport, archiveReport } from "../../lib/api"
 import type {
   ManualReportSchema,
   Task,
@@ -69,6 +69,26 @@ export default function ReportsPage() {
     }
   }
 
+  const handleDeleteReport = async (id: string) => {
+    if (!token) return
+    try {
+      await deleteReport(token, id)
+      await refreshReports()
+    } catch (err: any) {
+      handleAuthError(err)
+    }
+  }
+
+  const handleArchiveReport = async (id: string) => {
+    if (!token) return
+    try {
+      await archiveReport(token, id)
+      await refreshReports()
+    } catch (err: any) {
+      handleAuthError(err)
+    }
+  }
+
   useEffect(() => {
     if (!token) return
 
@@ -104,6 +124,7 @@ export default function ReportsPage() {
           setEditingReport(null)
           setShowForm(true)
         }}
+        onLogout={logout}
       />
       <main className="max-w-5xl mx-auto px-6 py-8">
         {/* Page Header */}
@@ -132,6 +153,8 @@ export default function ReportsPage() {
             setShowForm(true)
           }}
           onLoadMore={handleLoadMore}
+          onDelete={handleDeleteReport}
+          onArchive={handleArchiveReport}
         />
 
         {/* === SYSTEM PAUSES SECTION === */}

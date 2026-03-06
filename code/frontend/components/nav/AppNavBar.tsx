@@ -9,9 +9,10 @@ interface AppNavBarProps {
   gapMinutes?: number
   onCreateReport?: () => void
   onManagePauses?: () => void
+  onLogout?: () => void
 }
 
-export default function AppNavBar({ silenceState, gapMinutes, onCreateReport, onManagePauses }: AppNavBarProps) {
+export default function AppNavBar({ silenceState, gapMinutes, onCreateReport, onManagePauses, onLogout }: AppNavBarProps) {
   const pathname = usePathname()
 
   const tabClass = (path: string) =>
@@ -73,12 +74,14 @@ export default function AppNavBar({ silenceState, gapMinutes, onCreateReport, on
 
       {/* Right — Actions */}
       <div className="flex items-center gap-3">
-        <button
-          onClick={onCreateReport}
-          className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-1.5 rounded-md transition-colors"
-        >
-          + Create New Report
-        </button>
+        {onCreateReport && (
+          <button
+            onClick={onCreateReport}
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-1.5 rounded-md transition-colors"
+          >
+            + Create New Report
+          </button>
+        )}
         {badge()}
         {silenceState === "paused" && onManagePauses && (
           <button
@@ -90,10 +93,16 @@ export default function AppNavBar({ silenceState, gapMinutes, onCreateReport, on
             <CalendarOff size={18} />
           </button>
         )}
-        <Bell size={18} className="text-slate-400 cursor-pointer hover:text-slate-200" />
-        <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-sm text-white font-medium">
+        <span title="Notifications — coming soon" className="opacity-50 pointer-events-none">
+          <Bell size={18} className="text-slate-500" />
+        </span>
+        <button
+          onClick={onLogout}
+          title="Click to logout"
+          className="w-8 h-8 rounded-full bg-slate-600 hover:bg-slate-500 flex items-center justify-center text-sm text-white font-medium transition-colors"
+        >
           U
-        </div>
+        </button>
       </div>
     </nav>
   )

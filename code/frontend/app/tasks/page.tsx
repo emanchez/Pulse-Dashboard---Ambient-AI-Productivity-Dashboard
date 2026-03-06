@@ -9,12 +9,10 @@ import FocusHeader from "../../components/dashboard/FocusHeader"
 import ProductivityPulseCard from "../../components/dashboard/ProductivityPulseCard"
 import CurrentSessionCard from "../../components/dashboard/CurrentSessionCard"
 import DailyGoalsCard from "../../components/dashboard/DailyGoalsCard"
-import QuickAccessCard from "../../components/dashboard/QuickAccessCard"
 import TaskQueueTable from "../../components/dashboard/TaskQueueTable"
 import { useSilenceState } from "../../components/SilenceStateProvider"
 import { getFlowState, getActiveSession, listTasks } from "../../lib/api"
 import type { FlowStateSchema, SessionLogSchema, Task } from "../../lib/api"
-import { Users, FileText } from "lucide-react"
 
 export default function TasksPage() {
   const { token, ready, logout } = useAuth()
@@ -86,6 +84,7 @@ export default function TasksPage() {
       <AppNavBar
         silenceState={silenceState}
         gapMinutes={gapMinutes}
+        onLogout={logout}
       />
       <main className="px-6 py-6">
         <BentoGrid
@@ -97,20 +96,19 @@ export default function TasksPage() {
             />
           }
           row1Right={<ProductivityPulseCard flowState={flowState} />}
-          row2A={<CurrentSessionCard session={activeSession} />}
+          row2A={
+            <CurrentSessionCard
+              session={activeSession}
+              token={token}
+              tasks={tasks}
+              onStartSession={(s) => setActiveSession(s)}
+              onStopSession={() => setActiveSession(null)}
+            />
+          }
           row2B={<DailyGoalsCard tasks={tasks} />}
           row2C={
-            <div className="flex flex-col gap-4">
-              <QuickAccessCard
-                icon={Users}
-                title="Team Sync"
-                subtitle="Starts in 14 mins"
-              />
-              <QuickAccessCard
-                icon={FileText}
-                title="Docs & Assets"
-                subtitle="Internal wiki access"
-              />
+            <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 text-slate-500 text-sm flex items-center justify-center h-full">
+              Quick actions — coming soon
             </div>
           }
           row3={

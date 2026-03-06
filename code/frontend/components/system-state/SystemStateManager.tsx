@@ -18,13 +18,15 @@ export default function SystemStateManager({ token, onStateChange }: SystemState
   const [showForm, setShowForm] = useState(false)
   const [editingState, setEditingState] = useState<SystemStateSchema | null>(null)
   const [showPast, setShowPast] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchStates = useCallback(async () => {
+    setError(null)
     try {
       const data = await listSystemStates(token)
       setStates(data)
-    } catch {
-      /* ignore */
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load system states.")
     } finally {
       setLoading(false)
     }
@@ -55,12 +57,13 @@ export default function SystemStateManager({ token, onStateChange }: SystemState
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this pause?")) return
+    setError(null)
     try {
       await deleteSystemState(token, id)
       await fetchStates()
       onStateChange?.()
-    } catch {
-      /* ignore */
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete state.")
     }
   }
 
@@ -92,6 +95,13 @@ export default function SystemStateManager({ token, onStateChange }: SystemState
           Schedule Pause
         </button>
       </div>
+
+      {/* API Error */}
+      {error && (
+        <div className="bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg px-4 py-3 text-sm">
+          {error}
+        </div>
+      )}
 
       {/* Loading */}
       {loading && (

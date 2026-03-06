@@ -37,6 +37,7 @@ export default function ReportForm({
   const [status, setStatus] = useState<string>(report?.status ?? "published")
   const [showTaskDropdown, setShowTaskDropdown] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [apiError, setApiError] = useState<string | null>(null)
   const [errors, setErrors] = useState<{ title?: string; body?: string }>({})
 
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -94,6 +95,7 @@ export default function ReportForm({
   const handleSubmit = async () => {
     if (!validate()) return
     setSaving(true)
+    setApiError(null)
     try {
       if (mode === "create") {
         const data: ManualReportCreate = {
@@ -117,6 +119,7 @@ export default function ReportForm({
       onSave()
     } catch (err) {
       console.error("Failed to save report:", err)
+      setApiError(err instanceof Error ? err.message : "Failed to save report. Please try again.")
     } finally {
       setSaving(false)
     }
@@ -297,6 +300,13 @@ export default function ReportForm({
             </button>
           </div>
         </div>
+
+        {/* API Error */}
+        {apiError && (
+          <div className="mb-4 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg px-4 py-3 text-sm">
+            {apiError}
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-3">

@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { ChevronRight, Pencil, Tag } from "lucide-react"
+import { ChevronRight, Pencil, Tag, Archive, Trash2 } from "lucide-react"
 import type { ManualReportSchema } from "../../lib/api"
 
 function formatDateExpanded(dateStr: string): string {
@@ -32,27 +32,50 @@ interface ReportCardProps {
   report: ManualReportSchema
   expanded: boolean
   onEdit: (report: ManualReportSchema) => void
+  onToggle?: () => void
+  onDelete?: (id: string) => void
+  onArchive?: (id: string) => void
 }
 
-export default function ReportCard({ report, expanded, onEdit }: ReportCardProps) {
+export default function ReportCard({ report, expanded, onEdit, onToggle, onDelete, onArchive }: ReportCardProps) {
   if (expanded) {
     return (
       <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 border-l-4 border-l-accent-primary accent-transition">
         {/* Top row */}
         <div className="flex items-start justify-between mb-2">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={onToggle}>
             <h2 className="text-xl font-bold text-white">{report.title}</h2>
             <span className="bg-accent-bg text-accent-light text-xs font-medium px-2 py-0.5 rounded accent-transition">
               LATEST
             </span>
           </div>
-          <button
-            onClick={() => onEdit(report)}
-            className="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-white text-sm px-3 py-1.5 rounded-md transition-colors"
-          >
-            <Pencil size={14} />
-            Edit Report
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onEdit(report)}
+              className="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-white text-sm px-3 py-1.5 rounded-md transition-colors"
+            >
+              <Pencil size={14} />
+              Edit Report
+            </button>
+            <button
+              onClick={() => onArchive?.(report.id)}
+              className="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white text-sm px-3 py-1.5 rounded-md transition-colors"
+            >
+              <Archive size={14} />
+              Archive
+            </button>
+            <button
+              onClick={() => {
+                if (window.confirm("Delete this report? This cannot be undone.")) {
+                  onDelete?.(report.id)
+                }
+              }}
+              className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1.5 rounded-md transition-colors"
+            >
+              <Trash2 size={14} />
+              Delete
+            </button>
+          </div>
         </div>
 
         {/* Date row */}
@@ -101,7 +124,10 @@ export default function ReportCard({ report, expanded, onEdit }: ReportCardProps
 
   // Collapsed variant
   return (
-    <div className="bg-slate-800/50 border border-slate-700 rounded-xl px-6 py-4">
+    <div
+      className="bg-slate-800/50 border border-slate-700 rounded-xl px-6 py-4 cursor-pointer"
+      onClick={onToggle}
+    >
       <div className="flex items-center justify-between gap-4">
         {/* Left – title + date */}
         <div className="flex-shrink-0 min-w-0">
@@ -123,7 +149,10 @@ export default function ReportCard({ report, expanded, onEdit }: ReportCardProps
               ARCHIVED
             </span>
           )}
-          <ChevronRight size={16} className="text-slate-500" />
+          <ChevronRight
+            size={16}
+            className={`text-slate-500 transition-transform ${expanded ? "rotate-90" : ""}`}
+          />
         </div>
       </div>
     </div>
