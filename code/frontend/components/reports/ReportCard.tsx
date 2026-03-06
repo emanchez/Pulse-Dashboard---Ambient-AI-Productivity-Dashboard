@@ -37,12 +37,12 @@ interface ReportCardProps {
 export default function ReportCard({ report, expanded, onEdit }: ReportCardProps) {
   if (expanded) {
     return (
-      <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 border-l-4 border-l-cyan-500">
+      <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 border-l-4 border-l-accent-primary accent-transition">
         {/* Top row */}
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-bold text-white">{report.title}</h2>
-            <span className="bg-cyan-500/20 text-cyan-400 text-xs font-medium px-2 py-0.5 rounded">
+            <span className="bg-accent-bg text-accent-light text-xs font-medium px-2 py-0.5 rounded accent-transition">
               LATEST
             </span>
           </div>
@@ -64,7 +64,7 @@ export default function ReportCard({ report, expanded, onEdit }: ReportCardProps
         <div className="grid grid-cols-3 gap-6">
           {/* Left – body */}
           <div className="col-span-2">
-            <p className="text-cyan-400 text-xs font-bold tracking-widest uppercase mb-3">
+            <p className="text-accent-light text-xs font-bold tracking-widest uppercase mb-3 accent-transition">
               STRATEGIC NARRATIVE
             </p>
             <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">

@@ -44,21 +44,21 @@ export default function ProductivityPulseCard({ flowState }: ProductivityPulseCa
         </div>
       </div>
       <h2 className="text-2xl font-bold text-white mt-1">
-        Flow State <span className="text-blue-400">{flowPercent}%</span>
+        Flow State <span className="text-accent-light accent-transition">{flowPercent}%</span>
       </h2>
       <div className="h-40 mt-4">
         <ResponsiveContainer width="100%" height={160}>
           <AreaChart data={series}>
             <defs>
               <linearGradient id="flowGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                <stop offset="5%" stopColor="var(--accent-primary)" stopOpacity={0.4} />
+                <stop offset="95%" stopColor="var(--accent-primary)" stopOpacity={0} />
               </linearGradient>
             </defs>
             <Area
               type="monotone"
               dataKey="activityScore"
-              stroke="#3b82f6"
+              stroke="var(--accent-primary)"
               fill="url(#flowGrad)"
               strokeWidth={2}
               dot={false}

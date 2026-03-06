@@ -8,9 +8,9 @@ import AppNavBar from "../../components/nav/AppNavBar"
 import ReportList from "../../components/reports/ReportList"
 import ReportForm from "../../components/reports/ReportForm"
 import SystemStateManager from "../../components/system-state/SystemStateManager"
-import { getPulse, listReports, listTasks } from "../../lib/api"
+import { useSilenceState } from "../../components/SilenceStateProvider"
+import { listReports, listTasks } from "../../lib/api"
 import type {
-  PulseStats,
   ManualReportSchema,
   Task,
 } from "../../lib/api"
@@ -30,7 +30,7 @@ function relativeTime(dateStr: string): string {
 
 export default function ReportsPage() {
   const { token, ready, logout } = useAuth()
-  const [pulseStats, setPulseStats] = useState<PulseStats | null>(null)
+  const { silenceState, gapMinutes, refreshPulse } = useSilenceState()
   const [reports, setReports] = useState<ManualReportSchema[]>([])
   const [totalReports, setTotalReports] = useState(0)
   const [tasks, setTasks] = useState<Task[]>([])
@@ -45,15 +45,6 @@ export default function ReportsPage() {
 
   const handleAuthError = (err: any) => {
     if (err?.message?.includes("401")) logout()
-  }
-
-  const refreshPulse = async () => {
-    if (!tokenRef.current) return
-    try {
-      setPulseStats(await getPulse(tokenRef.current))
-    } catch {
-      /* ignore */
-    }
   }
 
   const refreshReports = async () => {
@@ -83,12 +74,10 @@ export default function ReportsPage() {
 
     const fetchAll = async () => {
       try {
-        const [pulse, reportsRes, taskList] = await Promise.all([
-          getPulse(token),
+        const [reportsRes, taskList] = await Promise.all([
           listReports(token, 0, 20),
           listTasks(token),
         ])
-        setPulseStats(pulse)
         setReports(reportsRes.items)
         setTotalReports(reportsRes.total)
         setTasks(taskList)
@@ -101,17 +90,7 @@ export default function ReportsPage() {
 
     fetchAll()
 
-    const pulseTimer = setInterval(async () => {
-      try {
-        setPulseStats(await getPulse(tokenRef.current!))
-      } catch (err: any) {
-        handleAuthError(err)
-      }
-    }, 30_000)
-
-    return () => {
-      clearInterval(pulseTimer)
-    }
+    return () => {}
   }, [token, logout])
 
   if (!ready || !token || loading) return <LoadingSpinner />
@@ -119,8 +98,8 @@ export default function ReportsPage() {
   return (
     <>
       <AppNavBar
-        silenceState={pulseStats?.silenceState}
-        gapMinutes={pulseStats?.gapMinutes}
+        silenceState={silenceState}
+        gapMinutes={gapMinutes}
         onCreateReport={() => {
           setEditingReport(null)
           setShowForm(true)

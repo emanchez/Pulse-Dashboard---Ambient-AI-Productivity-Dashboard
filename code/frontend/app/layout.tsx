@@ -1,5 +1,6 @@
 import React from 'react'
 import './globals.css'
+import SilenceStateProvider from '../components/SilenceStateProvider'
 
 export const metadata = {
   title: 'Pulse Dashboard',
@@ -25,7 +26,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-screen bg-slate-950 text-white">
-        {children}
+        <SilenceStateProvider>
+          {children}
+        </SilenceStateProvider>
       </body>
     </html>
   )

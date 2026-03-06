@@ -6,7 +6,16 @@ module.exports = {
     "./lib/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        accent: {
+          primary: "var(--accent-primary)",
+          light: "var(--accent-light)",
+          bg: "var(--accent-bg)",
+          border: "var(--accent-border)",
+        },
+      },
+    },
   },
   plugins: [require("@tailwindcss/forms")],
 }
