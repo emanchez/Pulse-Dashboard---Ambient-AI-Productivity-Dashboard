@@ -65,6 +65,126 @@ export type LoginRequest = {
 };
 
 /**
+ * ManualReportCreate
+ */
+export type ManualReportCreate = {
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Body
+     */
+    body: string;
+    /**
+     * Associatedtaskids
+     */
+    associatedTaskIds?: Array<string> | null;
+    /**
+     * Tags
+     */
+    tags?: Array<string> | null;
+    /**
+     * Status
+     */
+    status?: string;
+};
+
+/**
+ * ManualReportSchema
+ */
+export type ManualReportSchema = {
+    /**
+     * Id
+     */
+    id?: string | null;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Body
+     */
+    body: string;
+    /**
+     * Wordcount
+     */
+    wordCount?: number | null;
+    /**
+     * Associatedtaskids
+     */
+    associatedTaskIds?: Array<string> | null;
+    /**
+     * Status
+     */
+    status?: string | null;
+    /**
+     * Tags
+     */
+    tags?: Array<string> | null;
+    /**
+     * Userid
+     */
+    userId?: string | null;
+    /**
+     * Createdat
+     */
+    createdAt?: string | null;
+    /**
+     * Updatedat
+     */
+    updatedAt?: string | null;
+};
+
+/**
+ * ManualReportUpdate
+ */
+export type ManualReportUpdate = {
+    /**
+     * Title
+     */
+    title?: string | null;
+    /**
+     * Body
+     */
+    body?: string | null;
+    /**
+     * Associatedtaskids
+     */
+    associatedTaskIds?: Array<string> | null;
+    /**
+     * Tags
+     */
+    tags?: Array<string> | null;
+    /**
+     * Status
+     */
+    status?: string | null;
+};
+
+/**
+ * PaginatedReportsResponse
+ */
+export type PaginatedReportsResponse = {
+    /**
+     * Items
+     */
+    items: Array<ManualReportSchema>;
+    /**
+     * Total
+     */
+    total: number;
+    /**
+     * Offset
+     */
+    offset: number;
+    /**
+     * Limit
+     */
+    limit: number;
+};
+
+/**
  * PulseStatsSchema
  *
  * Pulse telemetry reporting silence state. Paused overrides stagnant gaps >48h. Engaged if gap <=48h and no active pause.
@@ -142,6 +262,100 @@ export type SessionStartRequest = {
      * Goalminutes
      */
     goalMinutes?: number | null;
+};
+
+/**
+ * SystemStateCreate
+ */
+export type SystemStateCreate = {
+    /**
+     * Modetype
+     */
+    modeType: string;
+    /**
+     * Startdate
+     */
+    startDate: string;
+    /**
+     * Enddate
+     */
+    endDate?: string | null;
+    /**
+     * Requiresrecovery
+     */
+    requiresRecovery?: boolean;
+    /**
+     * Description
+     */
+    description?: string | null;
+};
+
+/**
+ * SystemStateSchema
+ */
+export type SystemStateSchema = {
+    /**
+     * Id
+     */
+    id?: string | null;
+    /**
+     * Modetype
+     */
+    modeType: string;
+    /**
+     * Startdate
+     */
+    startDate?: string | null;
+    /**
+     * Enddate
+     */
+    endDate?: string | null;
+    /**
+     * Requiresrecovery
+     */
+    requiresRecovery?: boolean | null;
+    /**
+     * Description
+     */
+    description?: string | null;
+    /**
+     * Userid
+     */
+    userId?: string | null;
+    /**
+     * Createdat
+     */
+    createdAt?: string | null;
+    /**
+     * Updatedat
+     */
+    updatedAt?: string | null;
+};
+
+/**
+ * SystemStateUpdate
+ */
+export type SystemStateUpdate = {
+    /**
+     * Modetype
+     */
+    modeType?: string | null;
+    /**
+     * Startdate
+     */
+    startDate?: string | null;
+    /**
+     * Enddate
+     */
+    endDate?: string | null;
+    /**
+     * Requiresrecovery
+     */
+    requiresRecovery?: boolean | null;
+    /**
+     * Description
+     */
+    description?: string | null;
 };
 
 /**
@@ -480,3 +694,307 @@ export type SessionsActiveSessionsActiveGetResponses = {
 };
 
 export type SessionsActiveSessionsActiveGetResponse = SessionsActiveSessionsActiveGetResponses[keyof SessionsActiveSessionsActiveGetResponses];
+
+export type ListReportsReportsGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Offset
+         */
+        offset?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Status
+         */
+        status?: string | null;
+    };
+    url: '/reports';
+};
+
+export type ListReportsReportsGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListReportsReportsGetError = ListReportsReportsGetErrors[keyof ListReportsReportsGetErrors];
+
+export type ListReportsReportsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: PaginatedReportsResponse;
+};
+
+export type ListReportsReportsGetResponse = ListReportsReportsGetResponses[keyof ListReportsReportsGetResponses];
+
+export type CreateReportReportsPostData = {
+    body: ManualReportCreate;
+    path?: never;
+    query?: never;
+    url: '/reports';
+};
+
+export type CreateReportReportsPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateReportReportsPostError = CreateReportReportsPostErrors[keyof CreateReportReportsPostErrors];
+
+export type CreateReportReportsPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: ManualReportSchema;
+};
+
+export type CreateReportReportsPostResponse = CreateReportReportsPostResponses[keyof CreateReportReportsPostResponses];
+
+export type DeleteReportReportsReportIdDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Report Id
+         */
+        report_id: string;
+    };
+    query?: never;
+    url: '/reports/{report_id}';
+};
+
+export type DeleteReportReportsReportIdDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteReportReportsReportIdDeleteError = DeleteReportReportsReportIdDeleteErrors[keyof DeleteReportReportsReportIdDeleteErrors];
+
+export type DeleteReportReportsReportIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteReportReportsReportIdDeleteResponse = DeleteReportReportsReportIdDeleteResponses[keyof DeleteReportReportsReportIdDeleteResponses];
+
+export type GetReportReportsReportIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Report Id
+         */
+        report_id: string;
+    };
+    query?: never;
+    url: '/reports/{report_id}';
+};
+
+export type GetReportReportsReportIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetReportReportsReportIdGetError = GetReportReportsReportIdGetErrors[keyof GetReportReportsReportIdGetErrors];
+
+export type GetReportReportsReportIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ManualReportSchema;
+};
+
+export type GetReportReportsReportIdGetResponse = GetReportReportsReportIdGetResponses[keyof GetReportReportsReportIdGetResponses];
+
+export type UpdateReportReportsReportIdPutData = {
+    body: ManualReportUpdate;
+    path: {
+        /**
+         * Report Id
+         */
+        report_id: string;
+    };
+    query?: never;
+    url: '/reports/{report_id}';
+};
+
+export type UpdateReportReportsReportIdPutErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateReportReportsReportIdPutError = UpdateReportReportsReportIdPutErrors[keyof UpdateReportReportsReportIdPutErrors];
+
+export type UpdateReportReportsReportIdPutResponses = {
+    /**
+     * Successful Response
+     */
+    200: ManualReportSchema;
+};
+
+export type UpdateReportReportsReportIdPutResponse = UpdateReportReportsReportIdPutResponses[keyof UpdateReportReportsReportIdPutResponses];
+
+export type ArchiveReportReportsReportIdArchivePatchData = {
+    body?: never;
+    path: {
+        /**
+         * Report Id
+         */
+        report_id: string;
+    };
+    query?: never;
+    url: '/reports/{report_id}/archive';
+};
+
+export type ArchiveReportReportsReportIdArchivePatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ArchiveReportReportsReportIdArchivePatchError = ArchiveReportReportsReportIdArchivePatchErrors[keyof ArchiveReportReportsReportIdArchivePatchErrors];
+
+export type ArchiveReportReportsReportIdArchivePatchResponses = {
+    /**
+     * Successful Response
+     */
+    200: ManualReportSchema;
+};
+
+export type ArchiveReportReportsReportIdArchivePatchResponse = ArchiveReportReportsReportIdArchivePatchResponses[keyof ArchiveReportReportsReportIdArchivePatchResponses];
+
+export type ListSystemStatesSystemStatesGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/system-states';
+};
+
+export type ListSystemStatesSystemStatesGetResponses = {
+    /**
+     * Response List System States System States Get
+     *
+     * Successful Response
+     */
+    200: Array<SystemStateSchema>;
+};
+
+export type ListSystemStatesSystemStatesGetResponse = ListSystemStatesSystemStatesGetResponses[keyof ListSystemStatesSystemStatesGetResponses];
+
+export type CreateSystemStateSystemStatesPostData = {
+    body: SystemStateCreate;
+    path?: never;
+    query?: never;
+    url: '/system-states';
+};
+
+export type CreateSystemStateSystemStatesPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateSystemStateSystemStatesPostError = CreateSystemStateSystemStatesPostErrors[keyof CreateSystemStateSystemStatesPostErrors];
+
+export type CreateSystemStateSystemStatesPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: SystemStateSchema;
+};
+
+export type CreateSystemStateSystemStatesPostResponse = CreateSystemStateSystemStatesPostResponses[keyof CreateSystemStateSystemStatesPostResponses];
+
+export type GetActiveSystemStateSystemStatesActiveGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/system-states/active';
+};
+
+export type GetActiveSystemStateSystemStatesActiveGetResponses = {
+    /**
+     * Response Get Active System State System States Active Get
+     *
+     * Successful Response
+     */
+    200: SystemStateSchema | null;
+};
+
+export type GetActiveSystemStateSystemStatesActiveGetResponse = GetActiveSystemStateSystemStatesActiveGetResponses[keyof GetActiveSystemStateSystemStatesActiveGetResponses];
+
+export type DeleteSystemStateSystemStatesStateIdDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * State Id
+         */
+        state_id: string;
+    };
+    query?: never;
+    url: '/system-states/{state_id}';
+};
+
+export type DeleteSystemStateSystemStatesStateIdDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteSystemStateSystemStatesStateIdDeleteError = DeleteSystemStateSystemStatesStateIdDeleteErrors[keyof DeleteSystemStateSystemStatesStateIdDeleteErrors];
+
+export type DeleteSystemStateSystemStatesStateIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteSystemStateSystemStatesStateIdDeleteResponse = DeleteSystemStateSystemStatesStateIdDeleteResponses[keyof DeleteSystemStateSystemStatesStateIdDeleteResponses];
+
+export type UpdateSystemStateSystemStatesStateIdPutData = {
+    body: SystemStateUpdate;
+    path: {
+        /**
+         * State Id
+         */
+        state_id: string;
+    };
+    query?: never;
+    url: '/system-states/{state_id}';
+};
+
+export type UpdateSystemStateSystemStatesStateIdPutErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateSystemStateSystemStatesStateIdPutError = UpdateSystemStateSystemStatesStateIdPutErrors[keyof UpdateSystemStateSystemStatesStateIdPutErrors];
+
+export type UpdateSystemStateSystemStatesStateIdPutResponses = {
+    /**
+     * Successful Response
+     */
+    200: SystemStateSchema;
+};
+
+export type UpdateSystemStateSystemStatesStateIdPutResponse = UpdateSystemStateSystemStatesStateIdPutResponses[keyof UpdateSystemStateSystemStatesStateIdPutResponses];

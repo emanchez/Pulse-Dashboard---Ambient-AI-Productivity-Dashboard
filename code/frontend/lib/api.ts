@@ -10,8 +10,27 @@ import type {
   SessionLogSchema,
   SessionStartRequest,
   FlowStateSchema,
+  ManualReportSchema,
+  ManualReportCreate,
+  ManualReportUpdate,
+  PaginatedReportsResponse,
+  SystemStateSchema,
+  SystemStateCreate,
+  SystemStateUpdate,
 } from "./generated";
-export type { Task, SessionLogSchema, SessionStartRequest, FlowStateSchema };
+export type {
+  Task,
+  SessionLogSchema,
+  SessionStartRequest,
+  FlowStateSchema,
+  ManualReportSchema,
+  ManualReportCreate,
+  ManualReportUpdate,
+  PaginatedReportsResponse,
+  SystemStateSchema,
+  SystemStateCreate,
+  SystemStateUpdate,
+};
 
 async function request(path: string, opts: RequestInit = {}) {
   const res = await fetch(`${BASE}${path}`, {
@@ -86,4 +105,71 @@ export async function getFlowState(token: string): Promise<FlowStateSchema> {
   return request(`/stats/flow-state`, { headers: { Authorization: `Bearer ${token}` } });
 }
 
-export default { login, me, listTasks, createTask, updateTask, deleteTask, getActiveSession, startSession, stopSession, getFlowState };
+// ── Reports ───────────────────────────────────────────────────────────────────
+
+export async function createReport(token: string, data: ManualReportCreate): Promise<ManualReportSchema> {
+  return request(`/reports`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify(data) });
+}
+
+export async function listReports(token: string, offset = 0, limit = 20, status?: string): Promise<PaginatedReportsResponse> {
+  const params = new URLSearchParams({ offset: String(offset), limit: String(limit) });
+  if (status) params.set("status", status);
+  return request(`/reports?${params}`, { headers: { Authorization: `Bearer ${token}` } });
+}
+
+export async function getReport(token: string, id: string): Promise<ManualReportSchema> {
+  return request(`/reports/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+}
+
+export async function updateReport(token: string, id: string, data: ManualReportUpdate): Promise<ManualReportSchema> {
+  return request(`/reports/${id}`, { method: "PUT", headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify(data) });
+}
+
+export async function deleteReport(token: string, id: string): Promise<void> {
+  return request(`/reports/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+}
+
+export async function archiveReport(token: string, id: string): Promise<ManualReportSchema> {
+  return request(`/reports/${id}/archive`, { method: "PATCH", headers: { Authorization: `Bearer ${token}` } });
+}
+
+// ── System States ─────────────────────────────────────────────────────────────
+
+export async function createSystemState(token: string, data: SystemStateCreate): Promise<SystemStateSchema> {
+  return request(`/system-states`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify(data) });
+}
+
+export async function listSystemStates(token: string): Promise<SystemStateSchema[]> {
+  return request(`/system-states`, { headers: { Authorization: `Bearer ${token}` } });
+}
+
+export async function getActiveSystemState(token: string): Promise<SystemStateSchema | null> {
+  const res = await fetch(`${BASE}/system-states/active`, {
+    credentials: "omit",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Request failed ${res.status}: ${text}`);
+  }
+  const text = await res.text();
+  if (!text || text.trim() === "null") return null;
+  return JSON.parse(text) as SystemStateSchema;
+}
+
+export async function updateSystemState(token: string, id: string, data: SystemStateUpdate): Promise<SystemStateSchema> {
+  return request(`/system-states/${id}`, { method: "PUT", headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify(data) });
+}
+
+export async function deleteSystemState(token: string, id: string): Promise<void> {
+  return request(`/system-states/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+}
+
+export default {
+  login, me,
+  listTasks, createTask, updateTask, deleteTask,
+  getActiveSession, startSession, stopSession,
+  getFlowState,
+  createReport, listReports, getReport, updateReport, deleteReport, archiveReport,
+  createSystemState, listSystemStates, getActiveSystemState, updateSystemState, deleteSystemState,
+};
