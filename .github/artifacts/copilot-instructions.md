@@ -90,3 +90,24 @@ All feature/version/phase work must follow the master/step planning framework de
   - mark the step as blocked until the generating step merges, or
   - include a clearly documented, feature-flagged stub implementation plus automated tests that assert safe fallback behavior and add `Depends-On: <branch>` metadata to the PR.
 - **Branch and PR metadata:** Branches must follow `phase-<n>/step-<m>-short-desc`. If a PR depends on an unmerged step, include `Depends-On: <branch>` in the PR description and add a `depends` label. Reviewers must verify that `Depends-On` blockers are resolved before merging.
+
+## Hard-Won Lessons (Do Not Repeat)
+
+### `.env` paths must be relative to the service's working directory
+All paths in `code/backend/.env` must be relative to `code/backend/` — the directory uvicorn runs from. Never write project-root-relative paths (e.g. `./code/backend/data/dev.db`) in a subdirectory `.env` file. When the file was previously ignored (`env_file = None`) the wrong path was harmless; enabling `.env` loading activated it and broke startup with a silent `OperationalError`.
+
+### Enabling a previously disabled config mechanism requires auditing every value it loads
+Switching from `env_file = None` to `env_file = ".env"` is a behaviour change that activates **all** keys in the file. Before enabling, review every value for path correctness, origin count, and side effects. Do not assume existing values are safe just because they were inert before.
+
+### `pydantic-settings` v2 JSON-parses `List[str]` fields before validators run
+Declaring `frontend_cors_origins: List[str]` causes pydantic-settings to attempt JSON parsing of the raw env var string. A comma-separated value like `http://localhost:3000,http://127.0.0.1:3000` is not valid JSON, causing a `SettingsError` at startup. Always declare such fields as `str` and split them in a method or property (e.g. `get_cors_origins()`) rather than relying on a `@field_validator` with `mode="before"`.
+
+### `create_all` does not migrate existing tables — missing columns cause unhandled 500s that strip CORS headers
+When a SQLAlchemy model gains new columns, `metadata.create_all` only creates the table if it does not exist; it does not add columns to an existing table. If the live `dev.db` predates the model change, every query that references the new column raises `OperationalError: no such column`, which — if unhandled — propagates as a raw 500 response before CORSMiddleware can attach the `Access-Control-Allow-Origin` header, making the bug appear as a CORS error in the browser. Always run an explicit `ALTER TABLE ... ADD COLUMN` migration script (or use Alembic) when adding columns to an ORM model, and verify the live schema matches the model with `PRAGMA table_info(<table>)` before deploying.
+
+### Status code `(null)` in a browser CORS error means "connection refused" not a header problem
+When the browser reports `CORS request did not succeed` with `Status code: (null)`, the backend process is not responding at all — it has crashed or never started. Do not spend time debugging CORS headers; check that the server process is alive first (`curl /health`).
+
+### Silent `nohup` startup hides crashes
+The `make start` target uses `>/dev/null 2>&1`, so any crash at startup is swallowed. Always verify the process is alive and `/health` returns 200 after starting via `make dev` or `make start`. A startup smoke check (curl with retry) should be added to the `start` target to surface failures immediately.
+
