@@ -1,3 +1,0 @@
-login and password text input is white on white text box
-cannot actually submit reports, save button does nothing
-no way to add or edit tasks at the moment

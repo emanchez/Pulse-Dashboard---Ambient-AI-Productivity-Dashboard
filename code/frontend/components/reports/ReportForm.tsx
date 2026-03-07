@@ -211,12 +211,14 @@ export default function ReportForm({
           </button>
           {showTaskDropdown && (
             <div className="mt-1 bg-slate-900 border border-slate-600 rounded-lg max-h-48 overflow-y-auto">
-              {tasks.length === 0 ? (
+              {tasks.filter((t) => t.id != null).length === 0 ? (
                 <p className="px-4 py-3 text-slate-500 text-sm">
                   No tasks available
                 </p>
               ) : (
-                tasks.map((task) => (
+                tasks
+                  .filter((t): t is typeof t & { id: string } => t.id != null)
+                  .map((task) => (
                   <label
                     key={task.id}
                     className="flex items-center gap-3 px-4 py-2 hover:bg-slate-800 cursor-pointer text-sm"

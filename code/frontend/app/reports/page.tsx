@@ -35,6 +35,7 @@ export default function ReportsPage() {
   const [totalReports, setTotalReports] = useState(0)
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [editingReport, setEditingReport] = useState<ManualReportSchema | null>(null)
 
@@ -44,7 +45,8 @@ export default function ReportsPage() {
   }, [token])
 
   const handleAuthError = (err: any) => {
-    if (err?.message?.includes("401")) logout()
+    if (err?.message?.includes("401")) { logout(); return true }
+    return false
   }
 
   const refreshReports = async () => {
@@ -54,7 +56,9 @@ export default function ReportsPage() {
       setReports(res.items)
       setTotalReports(res.total)
     } catch (err: any) {
-      handleAuthError(err)
+      if (!handleAuthError(err)) {
+        setFetchError(`Could not refresh reports: ${err?.message ?? "Unknown error"}`)
+      }
     }
   }
 
@@ -93,19 +97,38 @@ export default function ReportsPage() {
     if (!token) return
 
     const fetchAll = async () => {
-      try {
-        const [reportsRes, taskList] = await Promise.all([
-          listReports(token, 0, 20),
-          listTasks(token),
-        ])
-        setReports(reportsRes.items)
-        setTotalReports(reportsRes.total)
-        setTasks(taskList)
-      } catch (err: any) {
-        handleAuthError(err)
-      } finally {
-        setLoading(false)
+      setLoading(true)
+      setFetchError(null)
+
+      const [reportsResult, tasksResult] = await Promise.allSettled([
+        listReports(token, 0, 20),
+        listTasks(token),
+      ])
+
+      const errors: string[] = []
+
+      if (reportsResult.status === "fulfilled") {
+        setReports(reportsResult.value.items)
+        setTotalReports(reportsResult.value.total)
+      } else {
+        const msg = reportsResult.reason?.message ?? "Unknown error"
+        if (msg.includes("401")) { logout(); return }
+        errors.push(`Could not load reports: ${msg}`)
       }
+
+      if (tasksResult.status === "fulfilled") {
+        setTasks(tasksResult.value)
+      } else {
+        const msg = tasksResult.reason?.message ?? "Unknown error"
+        if (msg.includes("401")) { logout(); return }
+        errors.push("Could not load tasks — task linking unavailable")
+      }
+
+      if (errors.length > 0) {
+        setFetchError(errors.join(" | "))
+      }
+
+      setLoading(false)
     }
 
     fetchAll()
@@ -127,6 +150,13 @@ export default function ReportsPage() {
         onLogout={logout}
       />
       <main className="max-w-5xl mx-auto px-6 py-8">
+        {/* Fetch error banner */}
+        {fetchError && (
+          <div className="bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg px-4 py-3 text-sm mb-4">
+            {fetchError}
+          </div>
+        )}
+
         {/* Page Header */}
         <div className="flex items-start justify-between mb-8">
           <div>

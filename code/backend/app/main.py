@@ -28,7 +28,7 @@ app = FastAPI(title="Ambient AI Productivity Dashboard", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.frontend_cors_origins,
+    allow_origins=settings.get_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

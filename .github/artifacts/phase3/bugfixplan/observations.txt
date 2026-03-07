@@ -1,0 +1,29 @@
+cannot select any tasks in the create/edit report modal
+cross origin error when attempting to save a report: 
+```
+[Fast Refresh] rebuilding hot-reloader-client.js:162:25
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://localhost:8000/reports?offset=0&limit=20. (Reason: CORS header ‘Access-Control-Allow-Origin’ missing). Status code: 500.
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://localhost:8000/reports. (Reason: CORS header ‘Access-Control-Allow-Origin’ missing). Status code: 500.
+Failed to save report: TypeError: NetworkError when attempting to fetch resource. <anonymous code>:1:147461
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://localhost:8000/reports. (Reason: CORS header ‘Access-Control-Allow-Origin’ missing). Status code: 500.
+Failed to save report: TypeError: NetworkError when attempting to fetch resource. <anonymous code>:1:147461
+    overrideMethod <anonymous code>:1
+    error app-index.js:31
+    error hydration-error-info.js:45
+    handleSubmit ReportForm.tsx:121
+Failed to save report: TypeError: NetworkError when attempting to fetch resource. <anonymous code>:1:147461
+[Fast Refresh] rebuilding hot-reloader-client.js:162:25
+Source map error: Error: request failed with status 404
+Stack in the worker:networkRequest@resource://devtools/client/shared/source-map-loader/utils/network-request.js:43:9
+
+Resource URL: http://localhost:3000/%3Canonymous%20code%3E
+Source Map URL: installHook.js.map
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://localhost:8000/reports?offset=0&limit=20. (Reason: CORS header ‘Access-Control-Allow-Origin’ missing). Status code: 500.
+Source map error: Error: request failed with status 404
+Stack in the worker:networkRequest@resource://devtools/client/shared/source-map-loader/utils/network-request.js:43:9
+
+Resource URL: http://localhost:3000/%3Canonymous%20code%3E
+Source Map URL: installHook.js.map
+
+```
+

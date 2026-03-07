@@ -4,8 +4,10 @@ Requires: running backend server (via conftest.py `server` fixture)
 Fixtures: client, auth_headers from conftest.py
 """
 import asyncio
+from unittest.mock import AsyncMock
 
 import pytest
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.session import async_session
 from app.models.action_log import ActionLog
@@ -234,3 +236,30 @@ def test_action_log_entries_created(client, auth_headers):
 
     logs = asyncio.get_event_loop().run_until_complete(_check())
     assert len(logs) >= 1
+
+
+# ---------------------------------------------------------------------------
+# Structured 500 on DB error (unit test — service layer)
+# ---------------------------------------------------------------------------
+
+def test_create_report_db_commit_error(client, auth_headers):
+    """When db.commit() raises SQLAlchemyError during report creation, the
+    service must raise HTTPException(500) with a structured detail message,
+    not an unhandled traceback."""
+    from app.services.report_service import create_report
+    from app.models.manual_report import ManualReportCreate
+
+    async def _run():
+        mock_session = AsyncMock(spec=["add", "commit", "refresh", "rollback"])
+        mock_session.commit.side_effect = SQLAlchemyError("simulated commit failure")
+
+        payload = ManualReportCreate(title="Boom", body="trigger error")
+
+        from fastapi import HTTPException as _HTTPException
+        with pytest.raises(_HTTPException) as exc_info:
+            await create_report(mock_session, "fake-user-id", payload)
+
+        assert exc_info.value.status_code == 500
+        assert "Database error" in exc_info.value.detail
+
+    asyncio.get_event_loop().run_until_complete(_run())
