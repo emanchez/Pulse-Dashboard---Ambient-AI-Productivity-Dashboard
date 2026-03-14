@@ -27,6 +27,18 @@ class Settings(BaseSettings):
         validation_alias="FRONTEND_CORS_ORIGINS",
     )
 
+    # ── OZ / AI settings ──────────────────────────────────────────────────
+    oz_api_key: str = Field("", validation_alias="OZ_API_KEY")
+    # Cost tip: claude-haiku-4 is cheapest; only upgrade model if output quality is insufficient
+    oz_model_id: str = Field("anthropic/claude-haiku-4", validation_alias="OZ_MODEL_ID")
+    ai_enabled: bool = Field(True, validation_alias="AI_ENABLED")
+    oz_max_wait_seconds: int = Field(90, validation_alias="OZ_MAX_WAIT_SECONDS")
+    oz_max_context_chars: int = Field(8000, validation_alias="OZ_MAX_CONTEXT_CHARS")
+    # Rate limit caps — enforced by AIRateLimiter (service layer, not SlowAPI)
+    oz_max_synthesis_per_week: int = Field(3, validation_alias="OZ_MAX_SYNTHESIS_PER_WEEK")
+    oz_max_suggestions_per_day: int = Field(5, validation_alias="OZ_MAX_SUGGESTIONS_PER_DAY")
+    oz_max_coplan_per_day: int = Field(3, validation_alias="OZ_MAX_COPLAN_PER_DAY")
+
     def get_cors_origins(self) -> list[str]:
         """Split the raw comma-separated origin string into a validated list.
 
@@ -42,6 +54,15 @@ class Settings(BaseSettings):
                         "Set FRONTEND_CORS_ORIGINS to the production domain."
                     )
         return origins
+
+    def validate_oz_config(self) -> None:
+        """Startup guard: OZ_API_KEY must be set when AI is enabled in non-dev mode."""
+        if self.app_env != "dev" and self.oz_api_key == "" and self.ai_enabled:
+            raise RuntimeError(
+                "OZ_API_KEY must be set when AI_ENABLED=true in non-dev environments. "
+                "Run `python scripts/setup_oz.py` to configure your API key, "
+                "or set AI_ENABLED=false to disable AI features."
+            )
 
 
 def get_settings() -> Settings:

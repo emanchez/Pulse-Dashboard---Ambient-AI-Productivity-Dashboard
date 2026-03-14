@@ -25,6 +25,7 @@ from app.models.session_log import SessionLog  # noqa: F401 — register table w
 from app.models.manual_report import ManualReport  # noqa: F401 — register table with Base.metadata
 from app.models.system_state import SystemState  # noqa: F401 — register table with Base.metadata
 from app.models.task import Task  # noqa: F401 — register table with Base.metadata
+from app.models.ai_usage import AIUsageLog  # noqa: F401 — register table with Base.metadata
 from app.core.security import get_password_hash
 
 

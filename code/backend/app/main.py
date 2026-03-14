@@ -86,6 +86,9 @@ async def lifespan(app: FastAPI):
             "Set the JWT_SECRET environment variable to a strong random secret."
         )
 
+    # Startup guard: OZ API key required when AI is enabled in non-dev mode.
+    settings.validate_oz_config()
+
     # Ensure all registered models have their tables created (idempotent).
     # This covers newly added models (e.g. session_logs) without requiring
     # a manual migration step in development.
@@ -139,6 +142,7 @@ from .middlewares.action_log import ActionLogMiddleware
 from .models.session_log import SessionLog as _SessionLog  # noqa: F401 — register with Base.metadata
 from .models.manual_report import ManualReport as _ManualReport  # noqa: F401 — register with Base.metadata
 from .models.system_state import SystemState as _SystemState  # noqa: F401 — register with Base.metadata
+from .models.ai_usage import AIUsageLog as _AIUsageLog  # noqa: F401 — register with Base.metadata
 
 app.include_router(auth_router.router)
 app.include_router(tasks_router.router)
@@ -146,6 +150,9 @@ app.include_router(stats_router.router)
 app.include_router(sessions_router.router, prefix="/sessions")
 app.include_router(reports_router.router)
 app.include_router(system_states_router.router)
+
+from .api import ai as ai_router
+app.include_router(ai_router.router)
 app.add_middleware(ActionLogMiddleware)
 # SlowAPIMiddleware enforces the default_limits=["200 per minute"] global cap (S-7).
 # _ContentSizeLimitMiddleware is outermost (added last) so it intercepts oversized
