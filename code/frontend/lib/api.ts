@@ -169,6 +169,127 @@ export async function deleteSystemState(token: string, id: string): Promise<void
   return request(`/system-states/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
 }
 
+// ── AI / Synthesis ────────────────────────────────────────────────────────
+
+export interface SuggestedTask {
+  name: string;
+  priority: string;
+  rationale: string;
+  isLowFriction: boolean;
+}
+
+export interface SynthesisResponse {
+  id: string;
+  summary: string;
+  theme: string;
+  commitmentScore: number;
+  suggestedTasks: SuggestedTask[];
+  status: string;
+  periodStart: string;
+  periodEnd: string;
+  createdAt: string;
+}
+
+export interface TaskSuggestionResponse {
+  suggestions: SuggestedTask[];
+  isReEntryMode: boolean;
+  rationale: string;
+}
+
+export interface CoPlanResponse {
+  hasConflict: boolean;
+  conflictDescription: string | null;
+  resolutionQuestion: string | null;
+  suggestedPriority: string | null;
+}
+
+export interface AIUsageBucket {
+  used: number;
+  limit: number;
+  resetsIn: string;
+}
+
+export interface AIUsageSummary {
+  synthesis: AIUsageBucket;
+  suggest: AIUsageBucket;
+  coplan: AIUsageBucket;
+}
+
+export interface GhostTask {
+  id: string;
+  name: string;
+  priority: string;
+  daysOpen: number;
+  actionCount: number;
+  lastActionAt: string | null;
+  ghostReason: string;
+}
+
+export interface GhostListResponse {
+  ghosts: GhostTask[];
+  total: number;
+}
+
+export interface WeeklySummaryResponse {
+  totalActions: number;
+  tasksCompleted: number;
+  tasksCreated: number;
+  reportsWritten: number;
+  sessionsCompleted: number;
+  longestSilenceHours: number;
+  activeDays: number;
+  periodStart: string;
+  periodEnd: string;
+}
+
+export async function triggerSynthesis(token: string): Promise<{ id: string; status: string }> {
+  return request(`/ai/synthesis`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify({}) });
+}
+
+export async function getLatestSynthesis(token: string): Promise<SynthesisResponse> {
+  return request(`/ai/synthesis/latest`, { headers: { Authorization: `Bearer ${token}` } });
+}
+
+export async function getSynthesis(token: string, id: string): Promise<SynthesisResponse> {
+  return request(`/ai/synthesis/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+}
+
+export async function suggestTasks(token: string, focusArea?: string): Promise<TaskSuggestionResponse> {
+  return request(`/ai/suggest-tasks`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ focusArea: focusArea || null }),
+  });
+}
+
+export async function acceptTasks(token: string, tasks: { name: string; priority: string; notes?: string }[]): Promise<{ createdTaskIds: string[] }> {
+  return request(`/ai/accept-tasks`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ tasks }),
+  });
+}
+
+export async function coPlan(token: string, reportId: string): Promise<CoPlanResponse> {
+  return request(`/ai/co-plan`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ reportId }),
+  });
+}
+
+export async function getAIUsage(token: string): Promise<AIUsageSummary> {
+  return request(`/ai/usage`, { headers: { Authorization: `Bearer ${token}` } });
+}
+
+export async function getGhostList(token: string): Promise<GhostListResponse> {
+  return request(`/stats/ghost-list`, { headers: { Authorization: `Bearer ${token}` } });
+}
+
+export async function getWeeklySummary(token: string): Promise<WeeklySummaryResponse> {
+  return request(`/stats/weekly-summary`, { headers: { Authorization: `Bearer ${token}` } });
+}
+
 export default {
   login, me,
   listTasks, createTask, updateTask, deleteTask,
@@ -176,4 +297,6 @@ export default {
   getFlowState,
   createReport, listReports, getReport, updateReport, deleteReport, archiveReport,
   createSystemState, listSystemStates, getActiveSystemState, updateSystemState, deleteSystemState,
+  triggerSynthesis, getLatestSynthesis, getSynthesis, suggestTasks, acceptTasks, coPlan,
+  getAIUsage, getGhostList, getWeeklySummary,
 };

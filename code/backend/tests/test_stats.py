@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import asyncio
 from sqlalchemy import delete
 
@@ -58,7 +58,7 @@ def test_pulse_no_actionlog_defaults_to_engaged(client, create_user):
 
 def test_pulse_engaged_recent_action(client, create_user):
     _clear_tables()
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     _insert_action(now - timedelta(minutes=30), user_id=create_user.id)
     headers = _auth_headers(client)
     r = client.get("/stats/pulse", headers=headers)
@@ -72,7 +72,7 @@ def test_pulse_engaged_recent_action(client, create_user):
 
 def test_pulse_stagnant_old_action(client, create_user):
     _clear_tables()
-    _insert_action(datetime.utcnow() - timedelta(hours=72), user_id=create_user.id)
+    _insert_action(datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=72), user_id=create_user.id)
     headers = _auth_headers(client)
     r = client.get("/stats/pulse", headers=headers)
     assert r.status_code == 200
@@ -83,9 +83,9 @@ def test_pulse_stagnant_old_action(client, create_user):
 
 def test_pulse_paused_by_system_state_overrides_stagnant(client, create_user):
     _clear_tables()
-    _insert_action(datetime.utcnow() - timedelta(hours=72), user_id=create_user.id)
-    end = datetime.utcnow() + timedelta(days=3)
-    _insert_system_state("Vacation", datetime.utcnow() - timedelta(days=1), end, user_id=create_user.id)
+    _insert_action(datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=72), user_id=create_user.id)
+    end = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=3)
+    _insert_system_state("Vacation", datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=1), end, user_id=create_user.id)
     headers = _auth_headers(client)
     r = client.get("/stats/pulse", headers=headers)
     data = r.json()
@@ -96,10 +96,10 @@ def test_pulse_paused_by_system_state_overrides_stagnant(client, create_user):
 
 def test_pulse_overlapping_systemstate_picks_latest_end_date(client, create_user):
     _clear_tables()
-    a_end = datetime.utcnow() + timedelta(days=1)
-    b_end = datetime.utcnow() + timedelta(days=5)
-    _insert_system_state("Vacation", datetime.utcnow() - timedelta(days=2), a_end, user_id=create_user.id)
-    _insert_system_state("Vacation", datetime.utcnow() - timedelta(days=3), b_end, user_id=create_user.id)
+    a_end = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=1)
+    b_end = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=5)
+    _insert_system_state("Vacation", datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=2), a_end, user_id=create_user.id)
+    _insert_system_state("Vacation", datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=3), b_end, user_id=create_user.id)
     headers = _auth_headers(client)
     r = client.get("/stats/pulse", headers=headers)
     data = r.json()

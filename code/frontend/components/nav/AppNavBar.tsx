@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Zap, Bell, WifiOff, CalendarOff } from "lucide-react"
+import { Zap, Bell, WifiOff, CalendarOff, Brain } from "lucide-react"
 
 interface AppNavBarProps {
   silenceState?: "engaged" | "stagnant" | "paused"
@@ -66,6 +66,9 @@ export default function AppNavBar({ silenceState, gapMinutes, onCreateReport, on
       <div className="flex items-center gap-6">
         <Link href="/tasks" className={tabClass("/tasks")}>
           Tasks
+        </Link>
+        <Link href="/synthesis" className={tabClass("/synthesis")}>
+          <span className="flex items-center gap-1"><Brain size={14} /> Synthesis</span>
         </Link>
         <Link href="/reports" className={tabClass("/reports")}>
           Reports

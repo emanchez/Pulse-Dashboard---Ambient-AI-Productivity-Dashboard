@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from pydantic import ConfigDict
-from sqlalchemy import DateTime, Integer, String
+from sqlalchemy import DateTime, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..db.base import TimestampedBase
@@ -12,6 +12,9 @@ from ..schemas.base import CamelModel
 
 class SessionLog(TimestampedBase):
     __tablename__ = "session_logs"
+    __table_args__ = (
+        Index('ix_session_logs_user_ended', 'user_id', 'ended_at'),
+    )
 
     user_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     task_id: Mapped[str | None] = mapped_column(String(36), nullable=True)

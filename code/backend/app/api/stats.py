@@ -7,12 +7,15 @@ from app.api.auth import get_current_user
 from app.db.session import get_async_session
 from app.models.action_log import ActionLog, AUTH_ACTION_TYPES
 from app.models.system_state import SystemState
-from app.schemas.stats import PulseStatsSchema
+from app.schemas.stats import PulseStatsSchema, GhostListResponse, WeeklySummaryResponse
 from app.schemas.flow_state import FlowStateSchema
 from app.services.flow_state import calculate_flow_state
+from app.services.ghost_list_service import GhostListService
 
 
 router = APIRouter(prefix="/stats")
+
+_ghost_service = GhostListService()
 
 
 @router.get("/pulse", response_model=PulseStatsSchema)
@@ -89,3 +92,21 @@ async def get_flow_state(
     db=Depends(get_async_session),
 ) -> FlowStateSchema:
     return await calculate_flow_state(db, user_id)
+
+
+@router.get("/ghost-list", response_model=GhostListResponse)
+async def ghost_list(
+    user_id: str = Depends(get_current_user),
+    db=Depends(get_async_session),
+):
+    """Return tasks showing signs of wheel-spinning or stagnation."""
+    return await _ghost_service.get_ghost_list(user_id, db)
+
+
+@router.get("/weekly-summary", response_model=WeeklySummaryResponse)
+async def weekly_summary(
+    user_id: str = Depends(get_current_user),
+    db=Depends(get_async_session),
+):
+    """Aggregate stats for the current week (Mon-Sun)."""
+    return await _ghost_service.get_weekly_summary(user_id, db)

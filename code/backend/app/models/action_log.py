@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from ..schemas.base import CamelModel
-from sqlalchemy import DateTime, String, Text
+from sqlalchemy import DateTime, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..db.base import TimestampedBase
@@ -28,6 +28,9 @@ class ActionLogSchema(CamelModel):
 
 class ActionLog(TimestampedBase):
     __tablename__ = "action_logs"
+    __table_args__ = (
+        Index('ix_action_logs_user_ts', 'user_id', 'timestamp'),
+    )
 
     timestamp: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
     task_id: Mapped[str | None] = mapped_column(String(36), nullable=True)

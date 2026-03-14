@@ -3,7 +3,7 @@ from __future__ import annotations
 import statistics
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select
+from sqlalchemy import Integer, func, select, cast, literal_column
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.action_log import ActionLog, AUTH_ACTION_TYPES
@@ -22,17 +22,34 @@ async def calculate_flow_state(db: AsyncSession, user_id: str) -> FlowStateSchem
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     window_start = now - timedelta(hours=_WINDOW_HOURS)
 
-    result = await db.execute(
-        select(ActionLog.timestamp)
+    # SQL aggregation: bucket actions into 30-minute intervals using strftime.
+    # Each bucket is identified by its floored timestamp string.
+    # This avoids materializing all timestamps into Python memory (M-3).
+    bucket_expr = func.strftime(
+        '%Y-%m-%d %H:',
+        ActionLog.timestamp,
+    ) + func.printf(
+        '%02d',
+        (cast(func.strftime('%M', ActionLog.timestamp), Integer) / _BUCKET_MINUTES) * _BUCKET_MINUTES,
+    )
+
+    stmt = (
+        select(
+            bucket_expr.label('bucket'),
+            func.count().label('action_count'),
+        )
         .where(ActionLog.user_id == user_id)
         .where(ActionLog.user_id.is_not(None))
         .where(ActionLog.timestamp >= window_start)
         .where(ActionLog.action_type.notin_(AUTH_ACTION_TYPES))
-        .order_by(ActionLog.timestamp.asc())
+        .group_by('bucket')
+        .order_by('bucket')
     )
-    rows = result.scalars().all()
 
-    if not rows:
+    result = await db.execute(stmt)
+    bucket_rows = result.all()
+
+    if not bucket_rows:
         return FlowStateSchema(
             flow_percent=0,
             change_percent=0,
@@ -40,17 +57,22 @@ async def calculate_flow_state(db: AsyncSession, user_id: str) -> FlowStateSchem
             series=[],
         )
 
-    # Build 12 buckets
-    counts: list[int] = [0] * _NUM_BUCKETS
+    # Build the 12 bucket slots
     bucket_starts: list[datetime] = [
         window_start + timedelta(minutes=_BUCKET_MINUTES * i)
         for i in range(_NUM_BUCKETS)
     ]
 
-    for ts in rows:
-        idx = int((ts - window_start).total_seconds() // (_BUCKET_MINUTES * 60))
-        idx = max(0, min(idx, _NUM_BUCKETS - 1))
-        counts[idx] += 1
+    # Map SQL bucket keys to counts
+    bucket_map: dict[str, int] = {}
+    for row in bucket_rows:
+        bucket_map[row.bucket] = row.action_count
+
+    # Fill the counts array
+    counts: list[int] = [0] * _NUM_BUCKETS
+    for i, bs in enumerate(bucket_starts):
+        key = bs.strftime('%Y-%m-%d %H:') + f'{(bs.minute // _BUCKET_MINUTES) * _BUCKET_MINUTES:02d}'
+        counts[i] = bucket_map.get(key, 0)
 
     max_count = max(counts) if max(counts) > 0 else 1
     scores: list[float] = [(c / max_count) * 100.0 for c in counts]
