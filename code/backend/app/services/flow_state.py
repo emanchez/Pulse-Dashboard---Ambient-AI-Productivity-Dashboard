@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.action_log import ActionLog
+from app.models.action_log import ActionLog, AUTH_ACTION_TYPES
 from app.schemas.flow_state import FlowPointSchema, FlowStateSchema
 
 _WINDOW_HOURS = 6
@@ -27,6 +27,7 @@ async def calculate_flow_state(db: AsyncSession, user_id: str) -> FlowStateSchem
         .where(ActionLog.user_id == user_id)
         .where(ActionLog.user_id.is_not(None))
         .where(ActionLog.timestamp >= window_start)
+        .where(ActionLog.action_type.notin_(AUTH_ACTION_TYPES))
         .order_by(ActionLog.timestamp.asc())
     )
     rows = result.scalars().all()

@@ -1,0 +1,17 @@
+features:
+    image slideshow widget
+    calendar events widget
+    gmail integration/widget
+    able to reposition and resize widgets
+fixes:
+    reports modal: 
+        ability to create a new task within the create/edit report modal
+        when selecting tasks to attach to report, add an option to hide completed tasks
+        add ability to search task list
+    tasks modal:
+        make deadline optional, it should have a checkbox that when ticked, reveals the date input field. in the database, null dates will simply be set at epoch time
+    nav bar (top):
+        rename Tasks to Dashboard.
+    Nav bar (right):
+        add new sidebar navigation when user icon is clicked. always hidden until profile icon is clicked
+        

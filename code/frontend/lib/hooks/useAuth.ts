@@ -26,6 +26,9 @@ export function useAuth() {
   }, [ready, token, pathname, router])
 
   const setToken = useCallback((t: string) => {
+    // TODO(deploy): S-2 — Migrate token storage from localStorage to httpOnly + Secure +
+    //               SameSite=Strict cookies. Remove this localStorage write and the corresponding
+    //               read below. Implement a /refresh endpoint for session renewal.
     localStorage.setItem(TOKEN_KEY, t)
     setTokenState(t)
   }, [])

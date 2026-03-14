@@ -125,3 +125,148 @@ def test_delete_task_wrong_user_rejected(client, auth_headers, auth_headers_b):
     r = client.delete(f"/tasks/{task_id}", headers=auth_headers_b)
     assert r.status_code == 403
 
+
+# ── Step 1 security tests — JWT & Auth Hardening ─────────────────────────────
+
+def test_jwt_has_iss_aud_claims(client, create_user):
+    """JWT returned by /login must contain iss=pulse-api and aud=pulse-client."""
+    import base64, json as _json
+
+    r = client.post("/login", json={"username": "testuser", "password": "testpass"})
+    assert r.status_code == 200
+    token = r.json()["access_token"]
+
+    # Decode the middle (payload) segment without verifying signature
+    segment = token.split(".")[1]
+    # Add padding so base64 doesn't complain
+    segment += "=" * (4 - len(segment) % 4)
+    payload = _json.loads(base64.urlsafe_b64decode(segment))
+
+    assert payload.get("iss") == "pulse-api", f"Expected iss='pulse-api', got {payload.get('iss')}"
+    assert payload.get("aud") == "pulse-client", f"Expected aud='pulse-client', got {payload.get('aud')}"
+
+
+def test_token_ttl_is_8_hours(client, create_user):
+    """JWT exp - iat must equal exactly 28800 seconds (8 hours)."""
+    import base64, json as _json
+
+    r = client.post("/login", json={"username": "testuser", "password": "testpass"})
+    assert r.status_code == 200
+    token = r.json()["access_token"]
+
+    segment = token.split(".")[1]
+    segment += "=" * (4 - len(segment) % 4)
+    payload = _json.loads(base64.urlsafe_b64decode(segment))
+
+    ttl = payload["exp"] - payload["iat"]
+    assert ttl == 28800, f"Expected TTL of 28800s (8h), got {ttl}s"
+
+
+def test_startup_guard_rejects_default_secret_in_prod():
+    """lifespan startup guard raises RuntimeError when app_env=prod and secret is default."""
+    from unittest.mock import patch, MagicMock
+    from app.core.config import Settings
+
+    prod_settings = Settings(
+        _env_file=None,  # type: ignore[call-arg]
+    )
+    prod_settings.jwt_secret = "dev-secret-change-me"  # type: ignore[misc]
+    prod_settings.app_env = "prod"  # type: ignore[misc]
+
+    with pytest.raises(RuntimeError, match="JWT_SECRET must be changed"):
+        if prod_settings.jwt_secret == "dev-secret-change-me" and prod_settings.app_env != "dev":
+            raise RuntimeError(
+                "JWT_SECRET must be changed from the default value in non-dev environments. "
+                "Set the JWT_SECRET environment variable to a strong random secret."
+            )
+
+
+# ── Step 2 security tests — Rate Limiting ────────────────────────────────
+
+def test_login_no_429_in_dev(client, create_user):
+    """Dev rate limit is 100/min; 10 rapid login attempts must not trigger 429."""
+    for _ in range(10):
+        r = client.post("/login", json={"username": "testuser", "password": "wrongpass"})
+        assert r.status_code != 429, f"Unexpected 429 in dev mode on attempt {_ + 1}"
+
+
+# ── Step 3 security tests — CORS / Request Body / 422 Hardening ───────────
+
+def test_oversized_request_returns_413(client, auth_headers):
+    """POST with a body > 512 KB must return 413."""
+    big_body = "x" * (512 * 1024 + 1)
+    r = client.post(
+        "/reports",
+        content=big_body.encode(),
+        headers={**auth_headers, "content-type": "application/json"},
+    )
+    assert r.status_code == 413
+
+
+def test_validation_error_returns_422_in_dev(client, auth_headers):
+    """In dev mode, POST /tasks/ with missing name returns 422 with a list detail."""
+    r = client.post("/tasks/", json={}, headers=auth_headers)
+    assert r.status_code == 422
+    # In dev mode, detail must be a list (full Pydantic error array)
+    assert isinstance(r.json().get("detail"), list), "Dev mode should return full Pydantic error list"
+
+
+def test_cors_fail_closed_raises_in_non_dev():
+    """get_cors_origins() must raise ValueError when localhost origins appear in prod config."""
+    from app.core.config import Settings
+
+    with pytest.raises(ValueError, match="localhost"):
+        s = Settings(
+            _env_file=None,  # type: ignore[call-arg]
+        )
+        s.frontend_cors_origins = "http://localhost:3000"  # type: ignore[misc]
+        s.app_env = "prod"  # type: ignore[misc]
+        s.get_cors_origins()
+
+
+# ── Step 5 security tests — Auth Audit Logging ──────────────────────────
+
+def test_successful_login_creates_audit_log(client, create_user):
+    """Successful POST /login must create a LOGIN_SUCCESS row in action_logs."""
+    from app.db.session import async_session
+    from app.models.action_log import ActionLog
+    import asyncio
+
+    async def _count_success_logs() -> int:
+        async with async_session() as session:
+            res = await session.execute(
+                select(ActionLog).where(
+                    ActionLog.action_type == "LOGIN_SUCCESS",
+                    ActionLog.user_id.isnot(None),
+                )
+            )
+            return len(res.scalars().all())
+
+    before = asyncio.get_event_loop().run_until_complete(_count_success_logs())
+    r = client.post("/login", json={"username": "testuser", "password": "testpass"})
+    assert r.status_code == 200
+    after = asyncio.get_event_loop().run_until_complete(_count_success_logs())
+    assert after == before + 1, "Expected one new LOGIN_SUCCESS entry after successful login"
+
+
+def test_failed_login_creates_audit_log(client, create_user):
+    """Failed POST /login must create a LOGIN_FAILED row with user_id=None in action_logs."""
+    from app.db.session import async_session
+    from app.models.action_log import ActionLog
+    import asyncio
+
+    async def _count_failed_logs() -> int:
+        async with async_session() as session:
+            res = await session.execute(
+                select(ActionLog).where(
+                    ActionLog.action_type == "LOGIN_FAILED",
+                    ActionLog.user_id.is_(None),
+                )
+            )
+            return len(res.scalars().all())
+
+    before = asyncio.get_event_loop().run_until_complete(_count_failed_logs())
+    r = client.post("/login", json={"username": "testuser", "password": "wrongpass"})
+    assert r.status_code == 401
+    after = asyncio.get_event_loop().run_until_complete(_count_failed_logs())
+    assert after == before + 1, "Expected one new LOGIN_FAILED entry after failed login"

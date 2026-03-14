@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 
 from app.api.auth import get_current_user
 from app.db.session import get_async_session
-from app.models.action_log import ActionLog
+from app.models.action_log import ActionLog, AUTH_ACTION_TYPES
 from app.models.system_state import SystemState
 from app.schemas.stats import PulseStatsSchema
 from app.schemas.flow_state import FlowStateSchema
@@ -30,10 +30,11 @@ async def get_pulse_stats(
     """
     now = datetime.now(timezone.utc).replace(tzinfo=None)
 
-    # Get last ActionLog scoped to current user
+    # Get last ActionLog scoped to current user, excluding auth events
     last_action_stmt = (
         select(ActionLog)
         .where(ActionLog.user_id == user_id)
+        .where(ActionLog.action_type.notin_(AUTH_ACTION_TYPES))
         .order_by(ActionLog.timestamp.desc())
         .limit(1)
     )

@@ -78,6 +78,67 @@ def test_create_with_invalid_task_ids(client, auth_headers):
     assert r.status_code == 400
 
 
+# ── Step 4 security tests — Input Sanitization ─────────────────────────
+
+def test_html_stripped_from_title(client, auth_headers):
+    """HTML tags in title must be stripped on create."""
+    r = client.post(
+        "/reports",
+        json={"title": "<b>hello</b>", "body": "body text"},
+        headers=auth_headers,
+    )
+    assert r.status_code == 201
+    assert r.json()["title"] == "hello"
+
+
+def test_html_stripped_from_body(client, auth_headers):
+    """HTML tags in body must be stripped on create.
+
+    bleach.clean(tags=[], strip=True) removes tag markers but preserves text
+    content between tags — '<script>alert(1)</script>text' becomes 'alert(1)text'.
+    The content cannot execute because the <script> tags are absent, and React
+    escapes all output by default.
+    """
+    r = client.post(
+        "/reports",
+        json={"title": "clean title", "body": "<script>alert(1)</script>safe text"},
+        headers=auth_headers,
+    )
+    assert r.status_code == 201
+    # bleach strips the <script>…</script> markers but keeps the inner text.
+    assert r.json()["body"] == "alert(1)safe text"
+    # Crucially, the stored body must NOT contain any HTML tag markers.
+    assert "<script>" not in r.json()["body"]
+    assert "</script>" not in r.json()["body"]
+
+
+def test_markdown_preserved_in_body(client, auth_headers):
+    """bleach must not strip markdown syntax — only HTML tags."""
+    markdown_body = "## heading\n- item one\n**bold** _italic_"
+    r = client.post(
+        "/reports",
+        json={"title": "markdown report", "body": markdown_body},
+        headers=auth_headers,
+    )
+    assert r.status_code == 201
+    assert r.json()["body"] == markdown_body
+
+
+def test_html_stripped_on_update(client, auth_headers):
+    """HTML tags in body must be stripped on update."""
+    create_r = _create(client, auth_headers)
+    assert create_r.status_code == 201
+    report_id = create_r.json()["id"]
+
+    update_r = client.put(
+        f"/reports/{report_id}",
+        json={"body": "<em>updated</em>"},
+        headers=auth_headers,
+    )
+    assert update_r.status_code == 200
+    assert update_r.json()["body"] == "updated"
+
+
 # ---------------------------------------------------------------------------
 # List
 # ---------------------------------------------------------------------------

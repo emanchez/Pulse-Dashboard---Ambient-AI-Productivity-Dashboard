@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import List
 
+import bleach
+
 from ..schemas.base import CamelModel, _to_camel
 from pydantic import ConfigDict, field_validator
 from sqlalchemy import Integer, Text, String, JSON
@@ -35,6 +37,14 @@ class ManualReportCreate(CamelModel):
     tags: List[str] | None = None
     status: str = "published"
 
+    @field_validator("title", "body", mode="before")
+    @classmethod
+    def strip_html(cls, v: object) -> object:
+        """Strip all HTML tags from title and body to prevent stored XSS."""
+        if isinstance(v, str):
+            return bleach.clean(v, tags=[], strip=True)
+        return v
+
     @field_validator("title")
     @classmethod
     def title_not_empty(cls, v: str) -> str:
@@ -67,6 +77,14 @@ class ManualReportUpdate(CamelModel):
     associated_task_ids: List[str] | None = None
     tags: List[str] | None = None
     status: str | None = None
+
+    @field_validator("title", "body", mode="before")
+    @classmethod
+    def strip_html(cls, v: object) -> object:
+        """Strip all HTML tags from title and body to prevent stored XSS."""
+        if isinstance(v, str):
+            return bleach.clean(v, tags=[], strip=True)
+        return v
 
     @field_validator("title")
     @classmethod
