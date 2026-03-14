@@ -13,7 +13,7 @@ from sqlalchemy import insert
 logger = logging.getLogger(__name__)
 
 # Paths whose mutations are action-logged.  Extend here for new resources.
-_LOGGED_PREFIXES = ("/tasks", "/reports", "/system-states")
+_LOGGED_PREFIXES = ("/tasks", "/reports", "/system-states", "/ai/accept-tasks")
 _LOGGED_METHODS = {"POST", "PUT", "DELETE", "PATCH"}
 
 

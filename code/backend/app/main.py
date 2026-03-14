@@ -143,6 +143,7 @@ from .models.session_log import SessionLog as _SessionLog  # noqa: F401 — regi
 from .models.manual_report import ManualReport as _ManualReport  # noqa: F401 — register with Base.metadata
 from .models.system_state import SystemState as _SystemState  # noqa: F401 — register with Base.metadata
 from .models.ai_usage import AIUsageLog as _AIUsageLog  # noqa: F401 — register with Base.metadata
+from .models.synthesis import SynthesisReport as _SynthesisReport  # noqa: F401 — register with Base.metadata
 
 app.include_router(auth_router.router)
 app.include_router(tasks_router.router)

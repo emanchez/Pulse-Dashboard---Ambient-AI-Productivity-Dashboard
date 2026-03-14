@@ -1,0 +1,5 @@
+[
+  {"title": "Write unit tests for auth module", "priority": "high", "rationale": "Auth coverage is below 80%."},
+  {"title": "Update API documentation", "priority": "medium", "rationale": "New endpoints added in Phase 4."},
+  {"title": "Refactor database session handling", "priority": "low", "rationale": "Minor code quality improvement."}
+]

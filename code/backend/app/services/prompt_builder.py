@@ -75,7 +75,7 @@ class PromptBuilder:
     def _build_compact_json(self, data: dict[str, Any]) -> str:
         """Serialize to compact JSON — no indentation, omit None values."""
         cleaned = {k: v for k, v in data.items() if v is not None}
-        return json.dumps(cleaned, separators=(",", ":"), ensure_ascii=False)
+        return json.dumps(cleaned, separators=(",", ":"), ensure_ascii=False, default=str)
 
     def _truncate_to_budget(self, prompt: str) -> str:
         """Hard-truncate to settings.oz_max_context_chars. Log a warning if triggered."""
