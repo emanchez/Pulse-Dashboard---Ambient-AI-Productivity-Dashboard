@@ -13,6 +13,8 @@ interface ReportListProps {
   onLoadMore: () => void
   onDelete?: (id: string) => void
   onArchive?: (id: string) => void
+  token?: string
+  coPlanUsage?: { used: number; limit: number } | null
 }
 
 export default function ReportList({
@@ -23,6 +25,8 @@ export default function ReportList({
   onLoadMore,
   onDelete,
   onArchive,
+  token,
+  coPlanUsage,
 }: ReportListProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
     () => new Set(reports.length > 0 ? [reports[0].id] : [])
@@ -60,6 +64,8 @@ export default function ReportList({
           onToggle={() => toggleExpanded(report.id)}
           onDelete={onDelete}
           onArchive={onArchive}
+          token={token}
+          coPlanUsage={coPlanUsage}
         />
       ))}
 

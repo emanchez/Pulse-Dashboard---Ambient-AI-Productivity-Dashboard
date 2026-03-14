@@ -1,8 +1,10 @@
 "use client"
 
-import React from "react"
-import { ChevronRight, Pencil, Tag, Archive, Trash2 } from "lucide-react"
-import type { ManualReportSchema } from "../../lib/api"
+import React, { useState } from "react"
+import { ChevronRight, Pencil, Tag, Archive, Trash2, GitBranch, Loader2 } from "lucide-react"
+import type { ManualReportSchema, CoPlanResponse, AIUsageSummary } from "../../lib/api"
+import { coPlan } from "../../lib/api"
+import InferenceCard from "../dashboard/InferenceCard"
 
 function formatDateExpanded(dateStr: string): string {
   const d = new Date(dateStr)
@@ -35,9 +37,40 @@ interface ReportCardProps {
   onToggle?: () => void
   onDelete?: (id: string) => void
   onArchive?: (id: string) => void
+  token?: string
+  coPlanUsage?: { used: number; limit: number } | null
 }
 
-export default function ReportCard({ report, expanded, onEdit, onToggle, onDelete, onArchive }: ReportCardProps) {
+export default function ReportCard({ report, expanded, onEdit, onToggle, onDelete, onArchive, token, coPlanUsage }: ReportCardProps) {
+  const [coPlanResult, setCoPlanResult] = useState<CoPlanResponse | null>(null)
+  const [coPlanLoading, setCoPlanLoading] = useState(false)
+  const [coPlanError, setCoPlanError] = useState<string | null>(null)
+  const [coPlanDismissed, setCoPlanDismissed] = useState(false)
+
+  const coPlanAtLimit = coPlanUsage ? coPlanUsage.used >= coPlanUsage.limit : false
+
+  const handleAnalyze = async () => {
+    if (!token || coPlanAtLimit) return
+    setCoPlanLoading(true)
+    setCoPlanError(null)
+    setCoPlanDismissed(false)
+    try {
+      const result = await coPlan(token, report.id)
+      setCoPlanResult(result)
+    } catch (err: any) {
+      const msg = err?.message || ""
+      if (msg.includes("429")) {
+        setCoPlanError("Daily co-plan limit reached. Try again tomorrow.")
+      } else if (msg.includes("503")) {
+        setCoPlanError("AI features are currently disabled.")
+      } else {
+        setCoPlanError("Failed to analyze report.")
+      }
+    } finally {
+      setCoPlanLoading(false)
+    }
+  }
+
   if (expanded) {
     return (
       <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 border-l-4 border-l-accent-primary accent-transition">
@@ -50,6 +83,17 @@ export default function ReportCard({ report, expanded, onEdit, onToggle, onDelet
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleAnalyze}
+              disabled={coPlanLoading || coPlanAtLimit}
+              className={`flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-white text-sm px-3 py-1.5 rounded-md transition-colors ${
+                coPlanAtLimit ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              title={coPlanAtLimit ? "Daily co-plan limit reached" : "Analyze report for conflicts"}
+            >
+              {coPlanLoading ? <Loader2 size={14} className="animate-spin" /> : <GitBranch size={14} />}
+              Analyze
+            </button>
             <button
               onClick={() => onEdit(report)}
               className="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-white text-sm px-3 py-1.5 rounded-md transition-colors"
@@ -118,6 +162,38 @@ export default function ReportCard({ report, expanded, onEdit, onToggle, onDelet
             </div>
           </div>
         </div>
+
+        {/* Co-plan result */}
+        {coPlanError && !coPlanDismissed && (
+          <div className="mt-4">
+            <InferenceCard
+              type="warning"
+              title="Analysis Failed"
+              body={coPlanError}
+              onDismiss={() => setCoPlanDismissed(true)}
+            />
+          </div>
+        )}
+        {coPlanResult && !coPlanError && !coPlanDismissed && (
+          <div className="mt-4">
+            {coPlanResult.hasConflict ? (
+              <InferenceCard
+                type="question"
+                title="Conflict Detected"
+                body={coPlanResult.conflictDescription || "A potential conflict was found in this report."}
+                detail={coPlanResult.resolutionQuestion}
+                onDismiss={() => setCoPlanDismissed(true)}
+              />
+            ) : (
+              <InferenceCard
+                type="insight"
+                title="No Conflicts Found"
+                body="Report analysis complete — no ambiguity or conflicting goals detected."
+                onDismiss={() => setCoPlanDismissed(true)}
+              />
+            )}
+          </div>
+        )}
       </div>
     )
   }

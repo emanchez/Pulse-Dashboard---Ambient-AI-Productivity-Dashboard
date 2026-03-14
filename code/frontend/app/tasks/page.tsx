@@ -12,6 +12,7 @@ import CurrentSessionCard from "../../components/dashboard/CurrentSessionCard"
 import DailyGoalsCard from "../../components/dashboard/DailyGoalsCard"
 import TaskQueueTable from "../../components/dashboard/TaskQueueTable"
 import TaskForm from "../../components/tasks/TaskForm"
+import ReasoningSidebar from "../../components/dashboard/ReasoningSidebar"
 import { useSilenceState } from "../../components/SilenceStateProvider"
 import { getFlowState, getActiveSession, listTasks, updateTask, deleteTask } from "../../lib/api"
 import type { FlowStateSchema, SessionLogSchema, Task, TaskUpdate } from "../../lib/api"
@@ -180,6 +181,7 @@ export default function TasksPage() {
               onToggleComplete={handleToggleComplete}
             />
           }
+          zoneC={<ReasoningSidebar token={token} />}
         />
       </main>
 

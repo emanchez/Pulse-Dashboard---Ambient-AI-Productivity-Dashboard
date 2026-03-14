@@ -13,6 +13,8 @@ interface BentoGridProps {
   row2B?: React.ReactNode
   row2C?: React.ReactNode
   row3?: React.ReactNode
+  // Zone C — Reasoning Sidebar (desktop: right column, mobile: bottom section)
+  zoneC?: React.ReactNode
 }
 
 export default function BentoGrid({
@@ -26,25 +28,36 @@ export default function BentoGrid({
   row2B,
   row2C,
   row3,
+  zoneC,
 }: BentoGridProps) {
   if (variant === "tasks-dashboard") {
     return (
-      <div className="space-y-4">
-        {/* Row 1 — 12-column split */}
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-12 md:col-span-8">{row1Left}</div>
-          <div className="col-span-12 md:col-span-4">{row1Right}</div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Main content — Zones A & B */}
+        <div className={`${zoneC ? "lg:col-span-9" : "lg:col-span-12"} space-y-4`}>
+          {/* Row 1 — 12-column split */}
+          <div className="grid grid-cols-12 gap-4">
+            <div className="col-span-12 md:col-span-8">{row1Left}</div>
+            <div className="col-span-12 md:col-span-4">{row1Right}</div>
+          </div>
+
+          {/* Row 2 — 3-column */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>{row2A}</div>
+            <div>{row2B}</div>
+            <div>{row2C}</div>
+          </div>
+
+          {/* Row 3 — full width */}
+          <div className="w-full">{row3}</div>
         </div>
 
-        {/* Row 2 — 3-column */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>{row2A}</div>
-          <div>{row2B}</div>
-          <div>{row2C}</div>
-        </div>
-
-        {/* Row 3 — full width */}
-        <div className="w-full">{row3}</div>
+        {/* Zone C — Reasoning Sidebar (desktop: right column, mobile: bottom) */}
+        {zoneC && (
+          <div className="lg:col-span-3">
+            {zoneC}
+          </div>
+        )}
       </div>
     )
   }

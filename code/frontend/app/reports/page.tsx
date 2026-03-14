@@ -9,10 +9,11 @@ import ReportList from "../../components/reports/ReportList"
 import ReportForm from "../../components/reports/ReportForm"
 import SystemStateManager from "../../components/system-state/SystemStateManager"
 import { useSilenceState } from "../../components/SilenceStateProvider"
-import { listReports, listTasks, deleteReport, archiveReport } from "../../lib/api"
+import { listReports, listTasks, deleteReport, archiveReport, getAIUsage } from "../../lib/api"
 import type {
   ManualReportSchema,
   Task,
+  AIUsageSummary,
 } from "../../lib/api"
 
 function relativeTime(dateStr: string): string {
@@ -38,6 +39,7 @@ export default function ReportsPage() {
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [editingReport, setEditingReport] = useState<ManualReportSchema | null>(null)
+  const [aiUsage, setAiUsage] = useState<AIUsageSummary | null>(null)
 
   const tokenRef = useRef(token)
   useEffect(() => {
@@ -104,6 +106,9 @@ export default function ReportsPage() {
         listReports(token, 0, 20),
         listTasks(token),
       ])
+
+      // Fetch AI usage in background (non-blocking)
+      getAIUsage(token).then(setAiUsage).catch(() => {})
 
       const errors: string[] = []
 
@@ -185,6 +190,8 @@ export default function ReportsPage() {
           onLoadMore={handleLoadMore}
           onDelete={handleDeleteReport}
           onArchive={handleArchiveReport}
+          token={token}
+          coPlanUsage={aiUsage ? { used: aiUsage.coplan.used, limit: aiUsage.coplan.limit } : null}
         />
 
         {/* === SYSTEM PAUSES SECTION === */}
