@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import statistics
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import Integer, func, select, cast, literal_column
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.action_log import ActionLog, AUTH_ACTION_TYPES
@@ -19,43 +20,26 @@ def _safe_mean(values: list[float]) -> float:
 
 
 async def calculate_flow_state(db: AsyncSession, user_id: str) -> FlowStateSchema:
+    """Calculate flow state using portable SQL + Python-side bucketing.
+
+    Instead of SQLite-specific ``strftime``/``printf``, we fetch raw timestamps
+    within the 6-hour window and bucket them in Python. With a single user and
+    a 6-hour window the row count is bounded (~360 max at 1 action/min).
+    """
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     window_start = now - timedelta(hours=_WINDOW_HOURS)
 
-    # SQL aggregation: bucket actions into 30-minute intervals using strftime.
-    # Each bucket is identified by its floored timestamp string.
-    # This avoids materializing all timestamps into Python memory (M-3).
-    bucket_expr = func.strftime(
-        '%Y-%m-%d %H:',
-        ActionLog.timestamp,
-    ) + func.printf(
-        '%02d',
-        (cast(func.strftime('%M', ActionLog.timestamp), Integer) / _BUCKET_MINUTES) * _BUCKET_MINUTES,
-    )
-
+    # Portable SQL: fetch only timestamps within the window
     stmt = (
-        select(
-            bucket_expr.label('bucket'),
-            func.count().label('action_count'),
-        )
+        select(ActionLog.timestamp)
         .where(ActionLog.user_id == user_id)
         .where(ActionLog.user_id.is_not(None))
         .where(ActionLog.timestamp >= window_start)
         .where(ActionLog.action_type.notin_(AUTH_ACTION_TYPES))
-        .group_by('bucket')
-        .order_by('bucket')
     )
 
     result = await db.execute(stmt)
-    bucket_rows = result.all()
-
-    if not bucket_rows:
-        return FlowStateSchema(
-            flow_percent=0,
-            change_percent=0,
-            window_label="Last 6 hours",
-            series=[],
-        )
+    timestamps: list[datetime] = list(result.scalars().all())
 
     # Build the 12 bucket slots
     bucket_starts: list[datetime] = [
@@ -63,16 +47,22 @@ async def calculate_flow_state(db: AsyncSession, user_id: str) -> FlowStateSchem
         for i in range(_NUM_BUCKETS)
     ]
 
-    # Map SQL bucket keys to counts
-    bucket_map: dict[str, int] = {}
-    for row in bucket_rows:
-        bucket_map[row.bucket] = row.action_count
+    if not timestamps:
+        return FlowStateSchema(
+            flow_percent=0,
+            change_percent=0,
+            window_label="Last 6 hours",
+            series=[],
+        )
 
-    # Fill the counts array
+    # Bucket timestamps in Python: assign each to a 30-minute slot
     counts: list[int] = [0] * _NUM_BUCKETS
-    for i, bs in enumerate(bucket_starts):
-        key = bs.strftime('%Y-%m-%d %H:') + f'{(bs.minute // _BUCKET_MINUTES) * _BUCKET_MINUTES:02d}'
-        counts[i] = bucket_map.get(key, 0)
+    for ts in timestamps:
+        offset_minutes = (ts - window_start).total_seconds() / 60
+        bucket_idx = int(offset_minutes // _BUCKET_MINUTES)
+        # Clamp to valid range (timestamps exactly at window boundary edge)
+        if 0 <= bucket_idx < _NUM_BUCKETS:
+            counts[bucket_idx] += 1
 
     max_count = max(counts) if max(counts) > 0 else 1
     scores: list[float] = [(c / max_count) * 100.0 for c in counts]
@@ -84,6 +74,7 @@ async def calculate_flow_state(db: AsyncSession, user_id: str) -> FlowStateSchem
     preceding_mean = _safe_mean(scores[-6:-3])
     change_percent = int(_safe_mean(scores[-3:])) - int(preceding_mean)
 
+    # NOTE: %-I is POSIX (Linux/macOS). On Windows use %#I.
     series = [
         FlowPointSchema(
             time=bucket_starts[i].strftime("%-I:%M %p"),

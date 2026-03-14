@@ -11,6 +11,21 @@ def test_missing_sub_claim_returns_401(client):
     assert r.status_code == 401
 
 
+def test_deleted_user_token_returns_401(client, create_user):
+    """JWT for a non-existent user_id must return 401 (get_current_user DB verify)."""
+    from app.core.security import create_access_token
+
+    fake_token = create_access_token(subject="00000000-0000-0000-0000-000000000000")
+    r = client.get("/tasks/", headers={"Authorization": f"Bearer {fake_token}"})
+    assert r.status_code == 401
+
+
+def test_settings_cached():
+    """get_settings() must return the same object identity on consecutive calls."""
+    from app.core.config import get_settings
+    assert get_settings() is get_settings()
+
+
 def test_login_and_tasks_flow(client, create_user):
     # login
     r = client.post("/login", json={"username": "testuser", "password": "testpass"})
@@ -44,7 +59,7 @@ def test_login_and_tasks_flow(client, create_user):
         async with async_session() as session:
             res = await session.execute(select(ActionLog))
             logs = res.scalars().all()
-            return any(log.action_type.startswith("POST /tasks") or log.task_id == task_id for log in logs)
+            return any(log.action_type == "TASK_CREATE" or log.task_id == task_id for log in logs)
 
     import asyncio
 
@@ -86,6 +101,78 @@ def test_create_task_valid_priorities_accepted(client, auth_headers):
     for priority in ("High", "Medium", "Low"):
         r = client.post("/tasks/", json={"name": f"Task {priority}", "priority": priority}, headers=auth_headers)
         assert r.status_code == 201, f"Expected 201 for priority={priority}, got {r.status_code}"
+
+
+# ── Task update nullable field clearing tests ─────────────────────────────────
+
+def test_task_update_clears_deadline(client, auth_headers):
+    """PUT /tasks/{id} with {\"deadline\": null} clears the deadline."""
+    r = client.post("/tasks/", json={"name": "Deadline Test", "deadline": "2026-12-31T00:00:00"}, headers=auth_headers)
+    assert r.status_code == 201
+    task_id = r.json()["id"]
+    assert r.json()["deadline"] is not None
+
+    r = client.put(f"/tasks/{task_id}", json={"deadline": None}, headers=auth_headers)
+    assert r.status_code == 200
+    assert r.json()["deadline"] is None
+
+
+def test_task_update_clears_notes(client, auth_headers):
+    """PUT /tasks/{id} with {\"notes\": null} clears the notes."""
+    r = client.post("/tasks/", json={"name": "Notes Test", "notes": "Important"}, headers=auth_headers)
+    assert r.status_code == 201
+    task_id = r.json()["id"]
+
+    r = client.put(f"/tasks/{task_id}", json={"notes": None}, headers=auth_headers)
+    assert r.status_code == 200
+    assert r.json()["notes"] is None
+
+
+def test_task_update_clears_tags(client, auth_headers):
+    """PUT /tasks/{id} with {\"tags\": null} clears the tags."""
+    r = client.post("/tasks/", json={"name": "Tags Test", "tags": "frontend"}, headers=auth_headers)
+    assert r.status_code == 201
+    task_id = r.json()["id"]
+
+    r = client.put(f"/tasks/{task_id}", json={"tags": None}, headers=auth_headers)
+    assert r.status_code == 200
+    assert r.json()["tags"] is None
+
+
+def test_task_update_clears_priority(client, auth_headers):
+    """PUT /tasks/{id} with {\"priority\": null} clears the priority."""
+    r = client.post("/tasks/", json={"name": "Priority Test", "priority": "High"}, headers=auth_headers)
+    assert r.status_code == 201
+    task_id = r.json()["id"]
+
+    r = client.put(f"/tasks/{task_id}", json={"priority": None}, headers=auth_headers)
+    assert r.status_code == 200
+    assert r.json()["priority"] is None
+
+
+def test_task_update_preserves_unset_fields(client, auth_headers):
+    """PUT /tasks/{id} with only name preserves other fields unchanged."""
+    r = client.post("/tasks/", json={"name": "Preserve Test", "priority": "High", "notes": "Keep"}, headers=auth_headers)
+    assert r.status_code == 201
+    task_id = r.json()["id"]
+
+    r = client.put(f"/tasks/{task_id}", json={"name": "Renamed"}, headers=auth_headers)
+    assert r.status_code == 200
+    data = r.json()
+    assert data["name"] == "Renamed"
+    assert data["priority"] == "High"
+    assert data["notes"] == "Keep"
+
+
+def test_task_update_null_name_ignored(client, auth_headers):
+    """PUT /tasks/{id} with {\"name\": null} preserves existing name (protected from null)."""
+    r = client.post("/tasks/", json={"name": "Original Name"}, headers=auth_headers)
+    assert r.status_code == 201
+    task_id = r.json()["id"]
+
+    r = client.put(f"/tasks/{task_id}", json={"name": None}, headers=auth_headers)
+    assert r.status_code == 200
+    assert r.json()["name"] == "Original Name"
 
 
 # ── User-scoping tests ────────────────────────────────────────────────────────

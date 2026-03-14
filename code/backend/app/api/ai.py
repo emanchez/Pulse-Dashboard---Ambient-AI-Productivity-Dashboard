@@ -5,6 +5,8 @@ Rate limiting is enforced at the service layer (AIRateLimiter), not by SlowAPI.
 """
 from __future__ import annotations
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,7 +24,10 @@ from ..schemas.synthesis import (
 )
 from ..services.ai_rate_limiter import AIRateLimiter
 from ..services.ai_service import AIService
+from ..services.oz_client import CircuitBreakerOpen, ServiceDisabledError
 from ..services.synthesis_service import SynthesisService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
@@ -30,6 +35,28 @@ _settings = get_settings()
 _rate_limiter = AIRateLimiter()
 _synthesis_service = SynthesisService()
 _ai_service = AIService()
+
+# ── Exception → HTTP mapping ──────────────────────────────────────────────
+_OZ_EXCEPTION_MAP: dict[type[Exception], tuple[int, str]] = {
+    ServiceDisabledError: (503, "AI features are currently disabled."),
+    CircuitBreakerOpen: (503, "AI service temporarily unavailable. Please try again later."),
+    TimeoutError: (504, "AI service timed out. Please try again later."),
+    ValueError: (422, "AI service returned an unparsable response."),
+    RuntimeError: (502, "AI service returned an error."),
+}
+
+
+def _handle_ai_exception(exc: Exception) -> HTTPException:
+    """Convert OZ/AI exceptions to structured HTTP errors.
+
+    Sanitizes internal error details — only generic messages are exposed.
+    """
+    for exc_type, (status_code, message) in _OZ_EXCEPTION_MAP.items():
+        if isinstance(exc, exc_type):
+            logger.error("AI exception mapped to HTTP %d: %s", status_code, exc)
+            return HTTPException(status_code=status_code, detail=message)
+    logger.error("Unhandled AI exception: %s", exc, exc_info=True)
+    return HTTPException(status_code=500, detail="An unexpected error occurred with the AI service.")
 
 
 def _check_ai_enabled() -> None:
@@ -108,7 +135,12 @@ async def suggest_tasks(
 ):
     """Generate 3-5 AI task suggestions. Rate limit: 5/day (429 if exceeded)."""
     _check_ai_enabled()
-    return await _ai_service.suggest_tasks(user_id, db, body.focus_area)
+    try:
+        return await _ai_service.suggest_tasks(user_id, db, body.focus_area)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise _handle_ai_exception(exc)
 
 
 # ---------------------------------------------------------------------------
@@ -126,7 +158,12 @@ async def co_plan(
     Short reports (< 20 words) return hasConflict=false without consuming a slot.
     """
     _check_ai_enabled()
-    return await _ai_service.co_plan(user_id, body.report_id, db)
+    try:
+        return await _ai_service.co_plan(user_id, body.report_id, db)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise _handle_ai_exception(exc)
 
 
 # ---------------------------------------------------------------------------

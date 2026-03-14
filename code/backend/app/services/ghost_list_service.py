@@ -19,9 +19,11 @@ from app.schemas.stats import GhostTask, GhostListResponse, WeeklySummaryRespons
 # Task-related action types — only these are meaningful for ghost detection.
 # Other action types (e.g. LOGIN_SUCCESS, REPORT_*) may share the task_id column
 # but are irrelevant when measuring task-specific activity.
+# Note: TASK_COMPLETE is not needed here — completed tasks are already filtered
+# out by the Task.is_completed == False WHERE clause. Sessions are tracked via
+# SessionLog, not ActionLog.
 _TASK_ACTION_TYPES = (
-    "TASK_CREATE", "TASK_UPDATE", "TASK_COMPLETE", "TASK_DELETE",
-    "SESSION_START", "SESSION_STOP",
+    "TASK_CREATE", "TASK_UPDATE", "TASK_DELETE",
 )
 
 GHOST_STALE_DAYS: int = 14

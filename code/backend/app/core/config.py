@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import lru_cache
 from pathlib import Path
 from typing import List
 
@@ -65,5 +66,12 @@ class Settings(BaseSettings):
             )
 
 
+@lru_cache
 def get_settings() -> Settings:
+    """Return a cached Settings instance.
+
+    The Settings object is created once and reused. Tests that need to
+    override settings should call ``get_settings.cache_clear()`` after
+    patching environment variables.
+    """
     return Settings()

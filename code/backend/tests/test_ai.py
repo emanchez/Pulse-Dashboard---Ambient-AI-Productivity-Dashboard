@@ -529,11 +529,11 @@ class TestAcceptTasks:
                 result = await session.execute(stmt)
                 logs = result.scalars().all()
                 return any(
-                    "accept-tasks" in (l.action_type or "")
+                    l.action_type == "AI_ACCEPT_TASKS"
                     for l in logs
                 )
         has_log = _run(_check())
-        assert has_log, "Expected ActionLog entry for POST /ai/accept-tasks"
+        assert has_log, "Expected ActionLog entry for POST /ai/accept-tasks (AI_ACCEPT_TASKS)"
 
         # Cleanup
         for tid in created_ids:

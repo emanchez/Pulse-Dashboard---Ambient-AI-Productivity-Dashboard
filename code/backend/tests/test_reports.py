@@ -56,8 +56,15 @@ def test_create_report_title_whitespace(client, auth_headers):
 
 
 def test_create_report_invalid_status(client, auth_headers):
-    r = _create(client, auth_headers, status="archived")
+    r = _create(client, auth_headers, status="nonexistent")
     assert r.status_code == 422
+
+
+def test_create_report_archived_status(client, auth_headers):
+    """Creating a report with status='archived' is now valid."""
+    r = _create(client, auth_headers, status="archived")
+    assert r.status_code == 201
+    assert r.json()["status"] == "archived"
 
 
 def test_create_report_draft_status(client, auth_headers):
@@ -291,7 +298,7 @@ def test_action_log_entries_created(client, auth_headers):
     async def _check():
         async with async_session() as session:
             result = await session.execute(
-                select(ActionLog).where(ActionLog.action_type.like("%/reports%"))
+                select(ActionLog).where(ActionLog.action_type.like("REPORT_%"))
             )
             return result.scalars().all()
 

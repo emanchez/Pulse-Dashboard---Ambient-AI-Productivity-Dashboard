@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 from typing import Any
 
 from fastapi import HTTPException
@@ -115,12 +114,12 @@ class AIService:
         except HTTPException:
             raise  # re-raise rate limit 429s
         except Exception as e:
-            logger.error("Task suggestion failed for user %s: %s", user_id, e)
+            logger.error("Task suggestion failed for user %s: %s", user_id, e, exc_info=True)
             # Return empty on failure — don't consume a slot
             return TaskSuggestionResponse(
                 suggestions=[],
                 is_re_entry_mode=context.is_returning_from_leave,
-                rationale=f"Unable to generate suggestions: {str(e)}",
+                rationale="Unable to generate suggestions. Please try again later.",
             )
 
     # ------------------------------------------------------------------
@@ -186,10 +185,10 @@ class AIService:
         except HTTPException:
             raise  # re-raise rate limit 429s
         except Exception as e:
-            logger.error("Co-planning failed for user %s report %s: %s", user_id, report_id, e)
+            logger.error("Co-planning failed for user %s report %s: %s", user_id, report_id, e, exc_info=True)
             return CoPlanResponse(
                 has_conflict=False,
-                conflict_description=f"Analysis failed: {str(e)}",
+                conflict_description="Analysis could not be completed. Please try again later.",
                 resolution_question=None,
                 suggested_priority=None,
             )
@@ -276,15 +275,12 @@ class AIService:
             except (json.JSONDecodeError, ValueError):
                 pass
 
-            # Regex fallback: find JSON array
-            match = re.search(r"\[[\s\S]*\]", raw)
-            if match:
-                try:
-                    return json.loads(match.group())
-                except (json.JSONDecodeError, ValueError):
-                    pass
+            # Bracket-balanced fallback: find first valid JSON array
+            arr = self._extract_json_array(raw)
+            if arr is not None:
+                return arr
 
-        raise ValueError(f"Could not parse suggestions from OZ response: {str(result)[:200]}")
+        raise ValueError("Could not parse suggestions from OZ response")
 
     def _parse_coplan_response(self, result: dict) -> dict:
         """Extract co-planning JSON from OZ response."""
@@ -301,14 +297,82 @@ class AIService:
             except (json.JSONDecodeError, ValueError):
                 pass
 
-            match = re.search(r"\{[\s\S]*\}", raw)
-            if match:
-                try:
-                    return json.loads(match.group())
-                except (json.JSONDecodeError, ValueError):
-                    pass
+            # Bracket-balanced fallback: find first valid JSON object
+            obj = self._extract_json_object(raw)
+            if obj is not None:
+                return obj
 
-        raise ValueError(f"Could not parse co-plan response: {str(result)[:200]}")
+        raise ValueError("Could not parse co-plan response")
+
+    # ------ Bracket-balanced JSON extractors ------
+
+    @staticmethod
+    def _extract_json_object(raw: str) -> dict | None:
+        """Extract the first valid JSON object from a string using bracket balancing."""
+        for i, ch in enumerate(raw):
+            if ch == '{':
+                depth = 0
+                in_string = False
+                escape = False
+                for j in range(i, len(raw)):
+                    c = raw[j]
+                    if escape:
+                        escape = False
+                        continue
+                    if c == '\\':
+                        if in_string:
+                            escape = True
+                        continue
+                    if c == '"' and not escape:
+                        in_string = not in_string
+                        continue
+                    if in_string:
+                        continue
+                    if c == '{':
+                        depth += 1
+                    elif c == '}':
+                        depth -= 1
+                        if depth == 0:
+                            candidate = raw[i:j + 1]
+                            try:
+                                return json.loads(candidate)
+                            except (json.JSONDecodeError, ValueError):
+                                break  # this opening brace didn't lead to valid JSON, try next
+        return None
+
+    @staticmethod
+    def _extract_json_array(raw: str) -> list | None:
+        """Extract the first valid JSON array from a string using bracket balancing."""
+        for i, ch in enumerate(raw):
+            if ch == '[':
+                depth = 0
+                in_string = False
+                escape = False
+                for j in range(i, len(raw)):
+                    c = raw[j]
+                    if escape:
+                        escape = False
+                        continue
+                    if c == '\\':
+                        if in_string:
+                            escape = True
+                        continue
+                    if c == '"' and not escape:
+                        in_string = not in_string
+                        continue
+                    if in_string:
+                        continue
+                    if c == '[':
+                        depth += 1
+                    elif c == ']':
+                        depth -= 1
+                        if depth == 0:
+                            candidate = raw[i:j + 1]
+                            try:
+                                return json.loads(candidate)
+                            except (json.JSONDecodeError, ValueError):
+                                break
+        return None
 
     def _build_suggestions(
         self, parsed: list[dict], is_re_entry: bool

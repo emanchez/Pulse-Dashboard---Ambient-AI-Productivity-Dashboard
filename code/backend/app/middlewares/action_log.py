@@ -16,6 +16,32 @@ logger = logging.getLogger(__name__)
 _LOGGED_PREFIXES = ("/tasks", "/reports", "/system-states", "/ai/accept-tasks")
 _LOGGED_METHODS = {"POST", "PUT", "DELETE", "PATCH"}
 
+# Semantic action type mapping: (HTTP method, resource prefix) → action type.
+# Non-task routes get their own types but don't affect ghost list.
+_ACTION_TYPE_MAP: dict[tuple[str, str], str] = {
+    ("POST", "/tasks"): "TASK_CREATE",
+    ("PUT", "/tasks"): "TASK_UPDATE",
+    ("DELETE", "/tasks"): "TASK_DELETE",
+    ("POST", "/reports"): "REPORT_CREATE",
+    ("PUT", "/reports"): "REPORT_UPDATE",
+    ("DELETE", "/reports"): "REPORT_DELETE",
+    ("PATCH", "/reports"): "REPORT_ARCHIVE",
+    ("POST", "/system-states"): "SYSTEM_STATE_CREATE",
+    ("PUT", "/system-states"): "SYSTEM_STATE_UPDATE",
+    ("DELETE", "/system-states"): "SYSTEM_STATE_DELETE",
+    ("POST", "/ai"): "AI_ACCEPT_TASKS",
+}
+
+
+def _resolve_action_type(method: str, path: str) -> str:
+    """Map HTTP method + path prefix to a semantic action type.
+
+    Falls back to the raw "METHOD /path" format for unrecognised routes.
+    """
+    parts = [p for p in path.split("/") if p]
+    resource = f"/{parts[0]}" if parts else path
+    return _ACTION_TYPE_MAP.get((method, resource), f"{method} {path}")
+
 
 def _extract_entity_id(parts: list[str]) -> str | None:
     """Return the second URL segment as a generic entity reference, if present."""
@@ -57,10 +83,11 @@ class ActionLogMiddleware(BaseHTTPMiddleware):
                         pass
 
                 async with async_session() as session:
+                    resolved_type = _resolve_action_type(method, path)
                     stmt = insert(ActionLog.__table__).values(
                         task_id=task_id,
-                        action_type=f"{method} {path}",
-                        change_summary=f"{method} on {path} returned {response.status_code}",
+                        action_type=resolved_type,
+                        change_summary=f"{resolved_type} on {path} returned {response.status_code}",
                         user_id=user_id,
                     )
                     await session.execute(stmt)

@@ -10,6 +10,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from ..db.base import TimestampedBase
 
+# Canonical set of allowed report statuses. Used by Create/Update validators.
+REPORT_STATUSES = {"draft", "published", "archived"}
+
 
 class ManualReportSchema(CamelModel):
     model_config = ConfigDict(
@@ -65,9 +68,8 @@ class ManualReportCreate(CamelModel):
     @field_validator("status")
     @classmethod
     def status_valid(cls, v: str) -> str:
-        allowed = {"draft", "published"}
-        if v not in allowed:
-            raise ValueError(f"status must be one of {allowed}")
+        if v not in REPORT_STATUSES:
+            raise ValueError(f"status must be one of {REPORT_STATUSES}")
         return v
 
 
@@ -110,9 +112,8 @@ class ManualReportUpdate(CamelModel):
     def status_valid(cls, v: str | None) -> str | None:
         if v is None:
             return v
-        allowed = {"draft", "published"}
-        if v not in allowed:
-            raise ValueError(f"status must be one of {allowed}")
+        if v not in REPORT_STATUSES:
+            raise ValueError(f"status must be one of {REPORT_STATUSES}")
         return v
 
 

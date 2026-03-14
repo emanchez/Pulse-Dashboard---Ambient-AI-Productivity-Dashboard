@@ -15,21 +15,30 @@ logger = logging.getLogger(__name__)
 
 
 async def _validate_task_ids(db: AsyncSession, task_ids: list[str]) -> None:
-    """Raise 400 if any task ID does not exist, or 500 on DB error."""
-    for task_id in task_ids:
-        try:
-            result = await db.get(Task, task_id)
-        except SQLAlchemyError as exc:
-            logger.exception("Database error while validating task %s", task_id)
-            raise HTTPException(
-                status_code=500,
-                detail="Database error while validating linked tasks",
-            ) from exc
-        if result is None:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Task '{task_id}' does not exist",
-            )
+    """Raise 400 if any task ID does not exist, or 500 on DB error.
+
+    Uses a single batch query instead of N individual lookups.
+    """
+    if not task_ids:
+        return
+    unique_ids = set(task_ids)
+    try:
+        result = await db.execute(
+            select(Task.id).where(Task.id.in_(unique_ids))
+        )
+        found_ids = set(result.scalars().all())
+    except SQLAlchemyError as exc:
+        logger.exception("Database error while validating task IDs")
+        raise HTTPException(
+            status_code=500,
+            detail="Database error while validating linked tasks",
+        ) from exc
+    missing = unique_ids - found_ids
+    if missing:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Task(s) not found: {', '.join(sorted(missing))}",
+        )
 
 
 async def create_report(
