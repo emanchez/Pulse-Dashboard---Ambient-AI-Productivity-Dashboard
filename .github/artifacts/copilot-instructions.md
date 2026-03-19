@@ -27,7 +27,11 @@ You are an expert Full-Stack Developer assisting in the creation of a "Local-Fir
 
 - **No External AI APIs:** Do not suggest OpenAI or Anthropic SDKs. All inference is local via ollama.
 - **Auth First:** All API endpoints (except /login and /health) must be guarded by JWT Authentication.
-- **Single User Assumption:** The app is currently single-user, but code should rely on user_id from the JWT token to ensure future scalability.
+- **Single User Assumption:** The app is currently single-user, but code should rely on `user_id` from the JWT token to ensure future scalability. Every DB query that touches user-owned data MUST include a `WHERE user_id = <jwt_sub>` filter. Never return unscoped rows.
+- **user_id is sacred:** `user_id` is the primary key link for all application data. Never delete and re-create a user record. Never change a user's `id`. Any operation that would orphan rows (detach them from their owner user) is forbidden. Use upsert patterns for all seeding and user-management scripts.
+- **Migrations over `create_all`:** `Base.metadata.create_all` must never be used as a migration tool in any environment that stores real data. It only creates missing tables — it does not add columns, add constraints, or fix data. Any schema change to an existing table requires an explicit Alembic migration. See architecture.md §5.
+- **Seeding scripts must be idempotent:** All scripts in `code/backend/scripts/` must be safe to re-run without side effects. If a record already exists, update it in place — never delete and re-insert. Auto-generated PKs (UUIDs) must never be regenerated for existing records.
+- **No unscoped data access in AI prompts:** AI inference context (prompts sent to Ollama/OZ) must only include data belonging to the authenticated user. Cross-user data must never appear in an inference payload, even inadvertently. See agents.md §4.
 
 ## Project Directory Structure
 
@@ -110,4 +114,13 @@ When the browser reports `CORS request did not succeed` with `Status code: (null
 
 ### Silent `nohup` startup hides crashes
 The `make start` target uses `>/dev/null 2>&1`, so any crash at startup is swallowed. Always verify the process is alive and `/health` returns 200 after starting via `make dev` or `make start`. A startup smoke check (curl with retry) should be added to the `start` target to surface failures immediately.
+
+### Seeding scripts that delete + re-create users orphan all related data
+`scripts/create_dev_user.py` previously deleted and re-inserted devuser on every run, generating a new UUID each time. All tasks, reports, action logs, and system states retained the old `user_id` and became invisible to the API (which scopes every query by `user_id`). The data was intact in the DB but unreachable. Fix: always upsert — if the user exists, update only mutable fields (e.g. password) and preserve the `id`. This applies to all seeding scripts for any entity with auto-generated PKs.
+
+### JWT claim additions are a breaking change for stored tokens
+Adding `iss`/`aud` claims to `create_access_token` (or any other new required claim) immediately invalidates all tokens minted before the change. Clients holding a stored token in `localStorage` or cookies will receive 401 on every request with no redirect, since the frontend has no mechanism to detect the claim mismatch. Whenever JWT structure changes: (1) bump a token `version` claim or key ID (`kid`), (2) implement server-side token validation on the frontend at mount (call `/me` and clear the stored token on 401), and (3) document the change as a breaking auth event in the phase summary.
+
+### `user_id` filters must be explicit — never rely on joined ownership
+All API endpoints that return user-owned data must include an explicit `WHERE user_id = <sub>` clause in the SQLAlchemy query. Never infer ownership through a join (e.g. "tasks linked to reports owned by this user") — always filter the root table directly. Missed filters expose other users' data in multi-tenant deployments and cause silent empty results in single-user dev when the user ID changes.
 

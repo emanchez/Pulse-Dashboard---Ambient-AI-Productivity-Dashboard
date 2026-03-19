@@ -1,0 +1,21 @@
+
+> personaldash-frontend@0.1.0 dev
+> next dev
+
+   ▲ Next.js 14.0.0
+   - Local:        http://localhost:3000
+
+ ✓ Ready in 1245ms
+ ○ Compiling /page ...
+ ✓ Compiled /page in 2.4s (443 modules)
+ ○ Compiling /tasks/page ...
+ ✓ Compiled /tasks/page in 2.3s (1611 modules)
+ ○ Compiling /login/page ...
+ ✓ Compiled /login/page in 572ms (1589 modules)
+ ✓ Compiled /page in 110ms (803 modules)
+ ○ Compiling /reports/page ...
+ ✓ Compiled /reports/page in 736ms (1635 modules)
+ ✓ Compiled /page in 194ms (827 modules)
+ ○ Compiling /synthesis/page ...
+ ✓ Compiled /synthesis/page in 506ms (1655 modules)
+ ✓ Compiled in 837ms (1669 modules)

@@ -45,14 +45,22 @@ stop:
 
 restart:
 	@$(MAKE) stop
-	@sleep 1
+	@echo "Waiting for ports to be released..."
+	@for i in 1 2 3 4 5; do \
+		sleep 1; \
+		if ! lsof -ti :8000 >/dev/null 2>&1 && ! lsof -ti :3000 >/dev/null 2>&1; then \
+			echo "Ports clear — proceeding."; \
+			break; \
+		fi; \
+	done
 	@$(MAKE) dev
 
 clean-cache:
 	@$(MAKE) -C $(FRONTEND_DIR) clean-cache
 
 start:
-	@$(MAKE) -C $(BACKEND_DIR) start & $(MAKE) -C $(FRONTEND_DIR) start
+	@$(MAKE) -C $(BACKEND_DIR) start
+	@$(MAKE) -C $(FRONTEND_DIR) start-dev
 
 deps:
 	@$(MAKE) -C $(BACKEND_DIR) deps

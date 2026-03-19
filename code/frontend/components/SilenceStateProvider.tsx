@@ -24,7 +24,7 @@ export function useSilenceState() {
 }
 
 export default function SilenceStateProvider({ children }: { children: React.ReactNode }) {
-  const { token, ready } = useAuth()
+  const { token, ready, logout } = useAuth()
   const [pulse, setPulse] = useState<PulseStats | null>(null)
 
   const tokenRef = useRef(token)
@@ -37,10 +37,15 @@ export default function SilenceStateProvider({ children }: { children: React.Rea
     if (!t) return
     try {
       setPulse(await getPulse(t))
-    } catch {
-      /* ignore — auth errors handled by page-level guards */
+    } catch (e) {
+      // If the token was rejected by the server, log the user out so they
+      // are redirected to /login rather than stuck in a silent 401 loop.
+      if (e instanceof Error && e.message.includes("401")) {
+        logout()
+      }
+      // Other errors (network down, 5xx) are ignored — page-level guards handle them.
     }
-  }, [])
+  }, [logout])
 
   // Initial fetch + 30s polling
   useEffect(() => {

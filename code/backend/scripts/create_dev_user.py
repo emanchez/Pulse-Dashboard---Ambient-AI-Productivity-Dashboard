@@ -20,19 +20,21 @@ async def main():
         await conn.run_sync(Base.metadata.create_all)
 
     async with async_session() as session:
-        # Remove existing devuser if present
         from sqlalchemy import select
         q = await session.execute(select(User).where(User.username == "devuser"))
         existing = q.scalars().first()
         if existing:
-            await session.delete(existing)
+            # Preserve the existing user ID so orphaned data is never created.
+            # Only reset the password so the script remains idempotent.
+            existing.hashed_password = get_password_hash("devpass")
             await session.commit()
-
-        user = User(username="devuser", hashed_password=get_password_hash("devpass"))
-        session.add(user)
-        await session.commit()
-        await session.refresh(user)
-        print("Created user devuser / devpass")
+            print(f"devuser already exists (id={existing.id}) — password reset to devpass. ID preserved.")
+        else:
+            user = User(username="devuser", hashed_password=get_password_hash("devpass"))
+            session.add(user)
+            await session.commit()
+            await session.refresh(user)
+            print(f"Created user devuser / devpass (id={user.id})")
 
 if __name__ == '__main__':
     asyncio.get_event_loop().run_until_complete(main())

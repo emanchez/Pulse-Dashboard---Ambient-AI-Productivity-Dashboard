@@ -19,8 +19,21 @@ dev:
 
 start:
 	@if [ ! -x .venv/bin/python ]; then echo "No .venv found — run 'make deps' to create virtualenv and install dependencies"; exit 1; fi
-	@echo "Starting backend (background) using $(PYTHON)"
-	PYTHONPATH=$(PWD) nohup $(PYTHON) -m uvicorn app.main:app --reload --host 127.0.0.1 --port $(PORT) >/dev/null 2>&1 & echo $$! > ./.dev.pid && echo "PID saved to ./.dev.pid"
+	@mkdir -p logs
+	@echo "Starting backend (background, no --reload) using $(PYTHON)"
+	@PYTHONPATH=$(PWD) nohup $(PYTHON) -m uvicorn app.main:app --host 127.0.0.1 --port $(PORT) >logs/backend.log 2>&1 & echo $$! > ./.dev.pid
+	@echo "PID $$(cat ./.dev.pid) saved to ./.dev.pid — logs at logs/backend.log"
+	@echo "Waiting for backend to become ready..."
+	@for i in 1 2 3 4 5 6 7 8 9 10; do \
+		sleep 1; \
+		if curl -sf http://127.0.0.1:$(PORT)/health >/dev/null 2>&1; then \
+			echo "Backend is up on :$(PORT)"; \
+			exit 0; \
+		fi; \
+	done; \
+	echo "ERROR: Backend did not start within 10s — check logs/backend.log:"; \
+	cat logs/backend.log 2>/dev/null || true; \
+	exit 1
 
 stop:
 	@# Kill by PID file if available

@@ -66,3 +66,89 @@
 2. Generate a question to resolve it.
 
 **Output:** "I noticed you want to do X and Y. Which is the priority for Monday?"
+
+---
+
+## 4. Data Privacy & Inference Isolation
+
+### 4.1 The Golden Rule
+
+**An inference payload must only ever contain data belonging to the authenticated user.** This is a hard constraint with no exceptions, regardless of whether the app is currently single-user. If this rule is violated at scale, it constitutes a data breach.
+
+### 4.2 How Context is Assembled (Required Pattern)
+
+All inference context (tasks, reports, action logs, system states, silence gaps) MUST be fetched using the `user_id` extracted from the JWT `sub` claim:
+
+```python
+# CORRECT — always scope queries by user_id before sending to Ollama
+tasks = await session.execute(
+    select(Task)
+    .where(Task.user_id == user_id)       # explicit user scope
+    .where(Task.is_completed == False)
+    .limit(50)
+)
+
+# NEVER do this — unscoped fetch
+tasks = await session.execute(select(Task).limit(50))
+```
+
+The `inference_context.py` service is the single authorised builder of inference payloads. Any route that calls the inference engine MUST go through this service — never build a prompt inline in a route handler.
+
+### 4.3 Context Size & Truncation
+
+The model context window is 8k tokens. The `oz_max_context_chars` config cap (default 8000) enforces this at the service layer. When assembling context:
+
+1. Prioritise recent data: last 7 days of action logs, 3 most recent reports.
+2. Truncate oldest entries first when over the character budget.
+3. Log the final character count at DEBUG level before dispatch.
+4. Never silently drop data — if the context is truncated, include a metadata note (e.g. `"[N older actions omitted]"`) so the model knows the view is partial.
+
+### 4.4 Audit Requirements for Multi-User
+
+When the app is extended to multiple users, the following MUST be enforced per inference request:
+
+| Check | How |
+|-------|-----|
+| Context rows belong to authenticated user | Assert `all(row.user_id == sub for row in context_rows)` before building prompt |
+| No cross-user task/report IDs in the payload | Validate task IDs in synthesis input against the user's own task list |
+| Inference result stored with correct `user_id` | `SynthesisReport.user_id = sub` on every write |
+| Model response never echoed to a different user | Response is always returned only to the requesting user's session |
+
+### 4.5 Sensitive Data Handling in Prompts
+
+- **Reports and task names may contain personal/private content** (health issues, personal goals, financial data). Treat all inference inputs as sensitive PII.
+- Never log the full prompt text at INFO or higher — log only metadata (user_id, context char count, model, timestamp).
+- In production, ensure the Ollama inference endpoint is not exposed publicly (bind to localhost only, or use an internal network).
+- If switching to a cloud model in the future, require explicit user consent and document that data leaves the device in the product UI and privacy policy.
+
+---
+
+## 5. Inference Rate Limiting & Abuse Prevention
+
+### 5.1 Per-User Rate Caps
+
+Rate limits are enforced at the service layer (`AIRateLimiter`) and tracked in `ai_usage_logs`, scoped by `user_id`. Current defaults:
+
+| Feature | Cap | Window |
+|---------|-----|--------|
+| Sunday Synthesis | 3 | per week |
+| Task Suggestions | 5 | per day |
+| Co-Planning | 3 | per day |
+
+### 5.2 Circuit Breaker
+
+`OzClient` implements a circuit breaker that opens after repeated failures (timeout or 5xx from the model backend). When open:
+- Return a `ServiceUnavailableError` rather than hanging.
+- Surface a user-friendly message in the UI (not raw exception text).
+- Log the failure reason server-side at ERROR level.
+
+### 5.3 Multi-User Fairness (Future)
+
+When multiple users are present, rate limits must be per-user (already the case via `user_id` scoping in `ai_usage_logs`). Add a global daily cap to prevent a single user from monopolising model capacity:
+
+```python
+# Example: global cap across all users
+GLOBAL_SYNTHESIS_DAILY_CAP = 50  # adjust based on hardware
+```
+
+Add this as a configurable setting (`OZ_GLOBAL_DAILY_CAP`) and enforce it in `AIRateLimiter` before the per-user check.
