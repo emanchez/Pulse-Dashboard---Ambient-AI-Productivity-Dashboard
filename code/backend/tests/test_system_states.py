@@ -15,7 +15,7 @@ import pytest
 from app.db.session import async_session
 from app.models.action_log import ActionLog
 from app.models.system_state import SystemState
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, text
 
 
 # ---------------------------------------------------------------------------
@@ -292,17 +292,32 @@ def test_pulse_reverts_after_delete(client, auth_headers):
 # ---------------------------------------------------------------------------
 
 def test_action_log_entries_created(client, auth_headers):
+    """POST /system-states must produce an ActionLog entry with semantic type SYSTEM_STATE_CREATE.
+
+    After Step 1 (Phase 4.1), action types are semantic strings (e.g. SYSTEM_STATE_CREATE)
+    rather than the old HTTP-path format (e.g. POST /system-states).  Query accordingly.
+
+    WAL checkpoint is required: the uvicorn subprocess writes the ActionLog row;
+    the pytest process reads it via a direct async_session.  Without checkpointing,
+    the subprocess’s WAL writes may not be visible to the test’s DB connection.
+    """
     _create_at(client, auth_headers, 900, 907)
 
     async def _check():
         async with async_session() as session:
+            # Checkpoint WAL so subprocess-written rows are visible to this connection.
+            await session.execute(text("PRAGMA wal_checkpoint(FULL)"))
             result = await session.execute(
-                select(ActionLog).where(ActionLog.action_type.like("%/system-states%"))
+                select(ActionLog).where(ActionLog.action_type.like("SYSTEM_STATE%"))
             )
             return result.scalars().all()
 
     logs = asyncio.get_event_loop().run_until_complete(_check())
-    assert len(logs) >= 1
+    assert len(logs) >= 1, (
+        f"Expected at least one SYSTEM_STATE* ActionLog entry but found 0. "
+        f"Check that ActionLogMiddleware is writing action_type='SYSTEM_STATE_CREATE' "
+        f"and that the WAL checkpoint flushed the subprocess's writes."
+    )
 
 
 

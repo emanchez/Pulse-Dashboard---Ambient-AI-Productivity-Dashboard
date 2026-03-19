@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import asyncio
-from sqlalchemy import delete
+from sqlalchemy import delete, text
 
 from app.db.session import async_session
 from app.models.action_log import ActionLog
@@ -10,32 +10,39 @@ from app.models.user import User
 
 def _auth_headers(client):
     r = client.post("/login", json={"username": "testuser", "password": "testpass"})
+    assert "access_token" in r.json(), f"Login failed: {r.text}"
     token = r.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
 
 
 def _clear_tables():
+    """Delete test rows and checkpoint WAL so subprocess sees clean state."""
     async def _c():
         async with async_session() as s:
             await s.execute(delete(ActionLog))
             await s.execute(delete(SystemState))
             await s.commit()
+            await s.execute(text("PRAGMA wal_checkpoint(FULL)"))
     return asyncio.get_event_loop().run_until_complete(_c())
 
 
 def _insert_action(timestamp, user_id: str | None = None):
+    """Insert an ActionLog row and checkpoint WAL so subprocess sees it."""
     async def _i():
         async with async_session() as s:
             s.add(ActionLog(timestamp=timestamp, action_type="TEST", user_id=user_id))
             await s.commit()
+            await s.execute(text("PRAGMA wal_checkpoint(FULL)"))
     return asyncio.get_event_loop().run_until_complete(_i())
 
 
 def _insert_system_state(mode_type, start_date, end_date, user_id: str | None = None):
+    """Insert a SystemState row and checkpoint WAL so subprocess sees it."""
     async def _i():
         async with async_session() as s:
             s.add(SystemState(mode_type=mode_type, start_date=start_date, end_date=end_date, user_id=user_id))
             await s.commit()
+            await s.execute(text("PRAGMA wal_checkpoint(FULL)"))
     return asyncio.get_event_loop().run_until_complete(_i())
 
 

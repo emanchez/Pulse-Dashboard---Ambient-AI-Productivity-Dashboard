@@ -1,6 +1,6 @@
 import pytest
 import asyncio
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 
 def test_e2e_login_and_tasks_flow(client, create_user):
@@ -29,13 +29,21 @@ def test_e2e_login_and_tasks_flow(client, create_user):
     task_id = data["id"]
 
     # verify ActionLog entry exists for this action
+    # WAL checkpoint required: the uvicorn subprocess writes ActionLog rows;
+    # this direct async_session read must checkpoint first to see them.
+    # After Step 1, action types are semantic (TASK_CREATE), not HTTP-path based.
     from app.db.session import async_session
     from app.models.action_log import ActionLog
 
     async def _check():
         async with async_session() as session:
+            await session.execute(text("PRAGMA wal_checkpoint(FULL)"))
             res = await session.execute(select(ActionLog))
             logs = res.scalars().all()
-            return any(log.action_type.startswith("POST /tasks") or log.task_id == task_id for log in logs)
+            return any(
+                log.action_type == "TASK_CREATE" or log.task_id == task_id
+                for log in logs
+            )
 
     assert asyncio.get_event_loop().run_until_complete(_check())
+
