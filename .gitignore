@@ -6,6 +6,9 @@ build/
 __pycache__/
 *.pyc
 .env
+code/backend/.env
+code/frontend/.env
+*/.env
 .vscode/
 .DS_Store
 coverage/
