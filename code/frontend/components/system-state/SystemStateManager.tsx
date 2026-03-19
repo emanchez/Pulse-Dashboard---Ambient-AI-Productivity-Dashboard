@@ -41,19 +41,19 @@ export default function SystemStateManager({ token, onStateChange }: SystemState
 
   const active = states
     .filter((s) => {
-      const start = new Date(s.startDate)
+      const start = new Date(s.startDate ?? "")
       const end = s.endDate ? new Date(s.endDate) : null
       return start <= now && (!end || end >= now)
     })
-    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+    .sort((a, b) => new Date(a.startDate ?? "").getTime() - new Date(b.startDate ?? "").getTime())
 
   const upcoming = states
-    .filter((s) => new Date(s.startDate) > now)
-    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+    .filter((s) => new Date(s.startDate ?? "") > now)
+    .sort((a, b) => new Date(a.startDate ?? "").getTime() - new Date(b.startDate ?? "").getTime())
 
   const past = states
     .filter((s) => s.endDate && new Date(s.endDate) < now)
-    .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+    .sort((a, b) => new Date(b.startDate ?? "").getTime() - new Date(a.startDate ?? "").getTime())
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this pause?")) return

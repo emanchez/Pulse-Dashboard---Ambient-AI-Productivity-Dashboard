@@ -64,7 +64,8 @@ export default function TaskQueueTable({
           )}
         </div>
       </div>
-      <table className="w-full mt-4 text-sm">
+      <div className="overflow-x-auto -mx-1">
+        <table className="w-full mt-4 text-sm min-w-[560px]">
         <thead>
           <tr>
             <th className="text-slate-500 text-xs uppercase tracking-wider text-left w-6" />
@@ -160,6 +161,7 @@ export default function TaskQueueTable({
           })}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }

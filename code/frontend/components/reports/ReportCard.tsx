@@ -55,10 +55,10 @@ export default function ReportCard({ report, expanded, onEdit, onToggle, onDelet
     setCoPlanError(null)
     setCoPlanDismissed(false)
     try {
-      const result = await coPlan(token, report.id)
+      const result = await coPlan(token, report.id ?? "")
       setCoPlanResult(result)
-    } catch (err: any) {
-      const msg = err?.message || ""
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : ""
       if (msg.includes("429")) {
         setCoPlanError("Daily co-plan limit reached. Try again tomorrow.")
       } else if (msg.includes("503")) {
@@ -102,7 +102,7 @@ export default function ReportCard({ report, expanded, onEdit, onToggle, onDelet
               Edit Report
             </button>
             <button
-              onClick={() => onArchive?.(report.id)}
+              onClick={() => onArchive?.(report.id ?? "")}
               className="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white text-sm px-3 py-1.5 rounded-md transition-colors"
             >
               <Archive size={14} />
@@ -111,7 +111,7 @@ export default function ReportCard({ report, expanded, onEdit, onToggle, onDelet
             <button
               onClick={() => {
                 if (window.confirm("Delete this report? This cannot be undone.")) {
-                  onDelete?.(report.id)
+                  onDelete?.(report.id ?? "")
                 }
               }}
               className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1.5 rounded-md transition-colors"
@@ -124,7 +124,7 @@ export default function ReportCard({ report, expanded, onEdit, onToggle, onDelet
 
         {/* Date row */}
         <p className="text-slate-400 text-sm mb-4">
-          {formatDateExpanded(report.createdAt)}
+          {formatDateExpanded(report.createdAt ?? "")}
         </p>
 
         {/* Content area */}
@@ -209,7 +209,7 @@ export default function ReportCard({ report, expanded, onEdit, onToggle, onDelet
         <div className="flex-shrink-0 min-w-0">
           <h3 className="text-white font-semibold text-sm truncate">{report.title}</h3>
           <p className="text-slate-500 text-xs mt-0.5">
-            {formatDateCollapsed(report.createdAt)}
+            {formatDateCollapsed(report.createdAt ?? "")}
           </p>
         </div>
 

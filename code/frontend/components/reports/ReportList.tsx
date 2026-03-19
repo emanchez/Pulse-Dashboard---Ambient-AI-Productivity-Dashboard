@@ -29,7 +29,7 @@ export default function ReportList({
   coPlanUsage,
 }: ReportListProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
-    () => new Set(reports.length > 0 ? [reports[0].id] : [])
+    () => new Set(reports.length > 0 && reports[0].id ? [reports[0].id] : [])
   )
 
   const toggleExpanded = (id: string) => {
@@ -59,9 +59,9 @@ export default function ReportList({
         <ReportCard
           key={report.id}
           report={report}
-          expanded={expandedIds.has(report.id)}
+          expanded={expandedIds.has(report.id ?? "")}
           onEdit={onEdit}
-          onToggle={() => toggleExpanded(report.id)}
+          onToggle={() => toggleExpanded(report.id ?? "")}
           onDelete={onDelete}
           onArchive={onArchive}
           token={token}

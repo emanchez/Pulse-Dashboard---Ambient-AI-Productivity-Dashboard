@@ -15,6 +15,8 @@ import {
   getSynthesis,
   acceptTasks,
   getAIUsage,
+  listSystemStates,
+  ApiError,
 } from "../../lib/api"
 import type {
   SynthesisResponse,
@@ -40,8 +42,8 @@ export default function SynthesisPage() {
   const tokenRef = useRef(token)
   useEffect(() => { tokenRef.current = token }, [token])
 
-  const handleAuthError = useCallback((err: any) => {
-    if (err?.message?.includes("401")) { logout(); return true }
+  const handleAuthError = useCallback((err: unknown) => {
+    if (err instanceof ApiError && err.isUnauthorized) { logout(); return true }
     return false
   }, [logout])
 
@@ -51,24 +53,40 @@ export default function SynthesisPage() {
 
     const fetchInitial = async () => {
       try {
-        const [latestSynthesis, usageData] = await Promise.allSettled([
+        const [latestSynthesis, usageData, statesData] = await Promise.allSettled([
           getLatestSynthesis(token),
           getAIUsage(token),
+          listSystemStates(token),
         ])
 
         if (latestSynthesis.status === "fulfilled") {
           setSynthesis(latestSynthesis.value)
           setSuggestions(latestSynthesis.value.suggestedTasks || [])
+        } else if (latestSynthesis.status === "rejected") {
+          const err: unknown = latestSynthesis.reason
+          if (err instanceof ApiError && err.status === 503) {
+            setAiDisabled(true)
+          } else {
+            handleAuthError(err)
+            // 404 is fine — no synthesis yet
+          }
         }
         if (usageData.status === "fulfilled") {
           setUsage(usageData.value)
         }
-      } catch (err: any) {
-        if (err?.message?.includes("503")) {
-          setAiDisabled(true)
-        } else if (!handleAuthError(err)) {
-          // 404 is fine — no synthesis yet
+        if (statesData.status === "fulfilled") {
+          const now = Date.now()
+          const cutoff = 48 * 60 * 60 * 1000
+          const reEntry = statesData.value.some((s) => {
+            if (!s.requiresRecovery) return false
+            if (!s.endDate) return false
+            const end = new Date(s.endDate).getTime()
+            return end <= now && now - end < cutoff
+          })
+          setIsReEntryMode(reEntry)
         }
+      } catch (err: unknown) {
+        handleAuthError(err)
       } finally {
         setLoading(false)
       }
@@ -105,7 +123,7 @@ export default function SynthesisPage() {
           // still pending — poll again
           setTimeout(poll, 5000)
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (cancelled) return
         if (!handleAuthError(err)) {
           setError("Failed to check synthesis status.")
@@ -129,16 +147,16 @@ export default function SynthesisPage() {
     try {
       const result = await triggerSynthesis(token)
       setPollingId(result.id)
-    } catch (err: any) {
+    } catch (err: unknown) {
       setTriggering(false)
-      if (err?.message?.includes("429")) {
-        // Extract the message from the error
-        const match = err.message.match(/:\s*(.+)/)
+      if (err instanceof ApiError && err.status === 429) {
+        // Extract the message from the error body
+        const match = err.body.match(/:\s*(.+)/)
         setRateLimitMsg(match ? match[1] : "Synthesis limit reached. Please try again later.")
-      } else if (err?.message?.includes("503")) {
+      } else if (err instanceof ApiError && err.status === 503) {
         setAiDisabled(true)
       } else if (!handleAuthError(err)) {
-        setError(err?.message || "Failed to trigger synthesis.")
+        setError(err instanceof Error ? err.message : "Failed to trigger synthesis.")
       }
     }
   }
@@ -161,7 +179,7 @@ export default function SynthesisPage() {
   return (
     <div className="bg-slate-900 min-h-screen">
       <AppNavBar
-        silenceState={silenceState}
+        silenceState={silenceState ?? undefined}
         gapMinutes={gapMinutes}
         onLogout={logout}
       />

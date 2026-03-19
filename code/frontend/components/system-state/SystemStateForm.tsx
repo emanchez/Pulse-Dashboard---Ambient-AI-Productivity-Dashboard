@@ -51,7 +51,7 @@ export default function SystemStateForm({ mode, state, token, onClose, onSave }:
     setSaving(true)
     try {
       if (mode === "edit" && state) {
-        await updateSystemState(token, state.id, payload as SystemStateUpdate)
+        await updateSystemState(token, state.id ?? "", payload as SystemStateUpdate)
       } else {
         await createSystemState(token, payload)
       }

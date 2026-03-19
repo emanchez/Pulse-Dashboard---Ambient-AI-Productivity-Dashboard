@@ -9,7 +9,7 @@ import ReportList from "../../components/reports/ReportList"
 import ReportForm from "../../components/reports/ReportForm"
 import SystemStateManager from "../../components/system-state/SystemStateManager"
 import { useSilenceState } from "../../components/SilenceStateProvider"
-import { listReports, listTasks, deleteReport, archiveReport, getAIUsage } from "../../lib/api"
+import { listReports, listTasks, deleteReport, archiveReport, getAIUsage, ApiError } from "../../lib/api"
 import type {
   ManualReportSchema,
   Task,
@@ -46,8 +46,8 @@ export default function ReportsPage() {
     tokenRef.current = token
   }, [token])
 
-  const handleAuthError = (err: any) => {
-    if (err?.message?.includes("401")) { logout(); return true }
+  const handleAuthError = (err: unknown) => {
+    if (err instanceof ApiError && err.isUnauthorized) { logout(); return true }
     return false
   }
 
@@ -57,9 +57,10 @@ export default function ReportsPage() {
       const res = await listReports(token, 0, Math.max(reports.length, 20))
       setReports(res.items)
       setTotalReports(res.total)
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (!handleAuthError(err)) {
-        setFetchError(`Could not refresh reports: ${err?.message ?? "Unknown error"}`)
+        const msg = err instanceof Error ? err.message : "Unknown error"
+        setFetchError(`Could not refresh reports: ${msg}`)
       }
     }
   }
@@ -70,7 +71,7 @@ export default function ReportsPage() {
       const next = await listReports(token, reports.length, 20)
       setReports((prev) => [...prev, ...next.items])
       setTotalReports(next.total)
-    } catch (err: any) {
+    } catch (err: unknown) {
       handleAuthError(err)
     }
   }
@@ -80,7 +81,7 @@ export default function ReportsPage() {
     try {
       await deleteReport(token, id)
       await refreshReports()
-    } catch (err: any) {
+    } catch (err: unknown) {
       handleAuthError(err)
     }
   }
@@ -90,7 +91,7 @@ export default function ReportsPage() {
     try {
       await archiveReport(token, id)
       await refreshReports()
-    } catch (err: any) {
+    } catch (err: unknown) {
       handleAuthError(err)
     }
   }
@@ -116,16 +117,17 @@ export default function ReportsPage() {
         setReports(reportsResult.value.items)
         setTotalReports(reportsResult.value.total)
       } else {
-        const msg = reportsResult.reason?.message ?? "Unknown error"
-        if (msg.includes("401")) { logout(); return }
+        const err: unknown = reportsResult.reason
+        if (err instanceof ApiError && err.isUnauthorized) { logout(); return }
+        const msg = err instanceof Error ? err.message : "Unknown error"
         errors.push(`Could not load reports: ${msg}`)
       }
 
       if (tasksResult.status === "fulfilled") {
         setTasks(tasksResult.value)
       } else {
-        const msg = tasksResult.reason?.message ?? "Unknown error"
-        if (msg.includes("401")) { logout(); return }
+        const err: unknown = tasksResult.reason
+        if (err instanceof ApiError && err.isUnauthorized) { logout(); return }
         errors.push("Could not load tasks — task linking unavailable")
       }
 
@@ -146,7 +148,7 @@ export default function ReportsPage() {
   return (
     <>
       <AppNavBar
-        silenceState={silenceState}
+        silenceState={silenceState ?? undefined}
         gapMinutes={gapMinutes}
         onCreateReport={() => {
           setEditingReport(null)
@@ -173,7 +175,7 @@ export default function ReportsPage() {
           {reports.length > 0 && (
             <div className="flex items-center gap-2 text-slate-400 text-sm">
               <Calendar size={14} />
-              <span>Last updated {relativeTime(reports[0].createdAt)}</span>
+              <span>Last updated {relativeTime(reports[0].createdAt ?? "")}</span>
             </div>
           )}
         </div>

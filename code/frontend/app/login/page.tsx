@@ -29,8 +29,8 @@ export default function LoginPage() {
       const data = await login(username, password)
       setToken(data.access_token)
       router.push("/")
-    } catch (err: any) {
-      setError(err?.message ?? "Login failed")
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Login failed")
     } finally {
       setLoading(false)
     }

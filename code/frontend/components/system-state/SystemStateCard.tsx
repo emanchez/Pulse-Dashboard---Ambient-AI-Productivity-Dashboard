@@ -11,7 +11,7 @@ interface SystemStateCardProps {
 
 function getStateStatus(state: SystemStateSchema): "active" | "upcoming" | "expired" {
   const now = new Date()
-  const start = new Date(state.startDate)
+  const start = new Date(state.startDate ?? "")
   const end = state.endDate ? new Date(state.endDate) : null
   if (start > now) return "upcoming"
   if (end && end < now) return "expired"
@@ -69,7 +69,7 @@ export default function SystemStateCard({ state, onEdit, onDelete }: SystemState
           </span>
 
           <span className="text-slate-300 text-sm">
-            {formatShortDate(state.startDate)} →{" "}
+            {formatShortDate(state.startDate ?? "")} →{" "}
             {state.endDate ? formatShortDate(state.endDate) : "Ongoing"}
           </span>
 
@@ -91,7 +91,7 @@ export default function SystemStateCard({ state, onEdit, onDelete }: SystemState
             <Pencil size={14} />
           </button>
           <button
-            onClick={() => onDelete(state.id)}
+            onClick={() => onDelete(state.id ?? "")}
             className="text-slate-400 hover:text-rose-400 cursor-pointer transition-colors"
             aria-label="Delete"
           >

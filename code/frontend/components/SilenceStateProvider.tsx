@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from "react"
 import { useAuth } from "../lib/hooks/useAuth"
-import { getPulse } from "../lib/api"
+import { getPulse, ApiError } from "../lib/api"
 import type { PulseStats } from "../lib/api"
 
 interface SilenceStateContextValue {
@@ -40,7 +40,7 @@ export default function SilenceStateProvider({ children }: { children: React.Rea
     } catch (e) {
       // If the token was rejected by the server, log the user out so they
       // are redirected to /login rather than stuck in a silent 401 loop.
-      if (e instanceof Error && e.message.includes("401")) {
+      if (e instanceof ApiError && e.isUnauthorized) {
         logout()
       }
       // Other errors (network down, 5xx) are ignored — page-level guards handle them.

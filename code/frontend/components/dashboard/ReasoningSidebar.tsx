@@ -76,8 +76,8 @@ export default function ReasoningSidebar({ token }: ReasoningSidebarProps) {
       try {
         const res = await getGhostList(token)
         setGhosts(res.ghosts)
-      } catch (err: any) {
-        setGhostsError(err?.message || "Failed to load")
+      } catch (err: unknown) {
+        setGhostsError(err instanceof Error ? err.message : "Failed to load")
       } finally {
         setGhostsLoading(false)
       }

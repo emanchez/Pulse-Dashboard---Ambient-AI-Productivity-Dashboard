@@ -128,7 +128,7 @@ export default function CurrentSessionCard({
               >
                 <option value="">Select a task…</option>
                 {tasks.map((t) => (
-                  <option key={t.id} value={t.id}>
+                  <option key={t.id} value={t.id ?? ""}>
                     {t.name}
                   </option>
                 ))}

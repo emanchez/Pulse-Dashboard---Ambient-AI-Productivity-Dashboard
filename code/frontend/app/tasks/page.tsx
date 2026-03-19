@@ -15,6 +15,7 @@ import TaskForm from "../../components/tasks/TaskForm"
 import ReasoningSidebar from "../../components/dashboard/ReasoningSidebar"
 import { useSilenceState } from "../../components/SilenceStateProvider"
 import { getFlowState, getActiveSession, listTasks, updateTask, deleteTask } from "../../lib/api"
+import { ApiError } from "../../lib/api"
 import type { FlowStateSchema, SessionLogSchema, Task, TaskUpdate } from "../../lib/api"
 
 export default function TasksPage() {
@@ -38,50 +39,63 @@ export default function TasksPage() {
     if (!tokenRef.current) return
     try {
       setTasks(await listTasks(tokenRef.current))
-    } catch (err: any) {
-      if (err?.message?.includes("401")) logout()
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.isUnauthorized) logout()
     }
   }
 
   useEffect(() => {
     if (!token) return
 
-    const handleAuthError = (err: any) => {
-      if (err?.message?.includes("401")) logout()
+    const handleAuthError = (err: unknown) => {
+      if (err instanceof ApiError && err.isUnauthorized) logout()
     }
 
     const fetchAll = async () => {
-      try {
-        const [flow, session, taskList] = await Promise.all([
-          getFlowState(token),
-          getActiveSession(token),
-          listTasks(token),
-        ])
-        setFlowState(flow)
-        setActiveSession(session)
-        setTasks(taskList)
-      } catch (err: any) {
-        handleAuthError(err)
-      } finally {
-        setLoading(false)
+      // Use Promise.allSettled so a single API failure does not crash the entire load
+      const [flowResult, sessionResult, tasksResult] = await Promise.allSettled([
+        getFlowState(token),
+        getActiveSession(token),
+        listTasks(token),
+      ])
+
+      if (flowResult.status === "fulfilled") {
+        setFlowState(flowResult.value)
+      } else {
+        handleAuthError(flowResult.reason)
+        // Flow state failure is non-fatal — dashboard still usable
       }
+
+      if (sessionResult.status === "fulfilled") {
+        setActiveSession(sessionResult.value)
+      } else {
+        handleAuthError(sessionResult.reason)
+      }
+
+      if (tasksResult.status === "fulfilled") {
+        setTasks(tasksResult.value)
+      } else {
+        handleAuthError(tasksResult.reason)
+      }
+
+      setLoading(false)
     }
 
     fetchAll()
 
     const sessTimer = setInterval(async () => {
       try { setActiveSession(await getActiveSession(tokenRef.current!)) }
-      catch (err: any) { handleAuthError(err) }
+      catch (err: unknown) { handleAuthError(err) }
     }, 30_000)
 
     const flowTimer = setInterval(async () => {
       try { setFlowState(await getFlowState(tokenRef.current!)) }
-      catch (err: any) { handleAuthError(err) }
+      catch (err: unknown) { handleAuthError(err) }
     }, 60_000)
 
     const taskTimer = setInterval(async () => {
       try { setTasks(await listTasks(tokenRef.current!)) }
-      catch (err: any) { handleAuthError(err) }
+      catch (err: unknown) { handleAuthError(err) }
     }, 60_000)
 
     return () => {
@@ -106,7 +120,7 @@ export default function TasksPage() {
     try {
       await deleteTask(token, task.id)
       await refreshTasks()
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Failed to delete task:", err)
     }
   }
@@ -117,7 +131,7 @@ export default function TasksPage() {
       const update: TaskUpdate = { isCompleted: !task.isCompleted }
       await updateTask(token, task.id, update)
       await refreshTasks()
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Failed to toggle task:", err)
     }
   }
@@ -135,7 +149,7 @@ export default function TasksPage() {
   return (
     <>
       <AppNavBar
-        silenceState={silenceState}
+        silenceState={silenceState ?? undefined}
         gapMinutes={gapMinutes}
         onLogout={logout}
       />

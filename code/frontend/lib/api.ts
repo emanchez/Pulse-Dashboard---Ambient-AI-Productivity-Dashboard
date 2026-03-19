@@ -1,5 +1,23 @@
 const BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
+// ── Structured API error ──────────────────────────────────────────────────────
+
+export class ApiError extends Error {
+  status: number;
+  body: string;
+
+  constructor(status: number, body: string) {
+    super(`Request failed ${status}: ${body}`);
+    this.status = status;
+    this.body = body;
+    this.name = "ApiError";
+  }
+
+  get isUnauthorized(): boolean {
+    return this.status === 401;
+  }
+}
+
 // Re-export all generated API-contract types.
 // PulseStats + getPulse live in the hand-written generated/pulseClient (preserved alongside generated files).
 // Task, SessionLog, FlowState types come from the @hey-api/openapi-ts generated barrel.
@@ -45,7 +63,7 @@ async function request(path: string, opts: RequestInit = {}) {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Request failed ${res.status}: ${text}`);
+    throw new ApiError(res.status, text);
   }
   if (res.status === 204) return undefined;
   return res.json();
@@ -84,7 +102,7 @@ export async function getActiveSession(token: string): Promise<SessionLogSchema 
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Request failed ${res.status}: ${text}`);
+    throw new ApiError(res.status, text);
   }
   const text = await res.text();
   if (!text || text.trim() === "null") return null;
@@ -154,7 +172,7 @@ export async function getActiveSystemState(token: string): Promise<SystemStateSc
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Request failed ${res.status}: ${text}`);
+    throw new ApiError(res.status, text);
   }
   const text = await res.text();
   if (!text || text.trim() === "null") return null;

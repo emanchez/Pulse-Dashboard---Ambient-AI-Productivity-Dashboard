@@ -114,7 +114,7 @@ export default function ReportForm({
           tags,
           status,
         }
-        await updateReport(token, report.id, data)
+        await updateReport(token, report.id ?? "", data)
       }
       onSave()
     } catch (err) {
