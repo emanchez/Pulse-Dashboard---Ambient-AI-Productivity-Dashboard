@@ -1,162 +1,189 @@
-# PersonalDash Frontend (scaffold)
+# Pulse Dashboard — Frontend
 
-Requirements
-- Node: 20.x recommended
-- npm: 8+
+Next.js 14 (App Router) frontend for the Ambient AI Productivity Dashboard. Features a dark-themed bento-grid layout with real-time productivity telemetry, task management, manual reports, system state (vacation/leave) management, and AI-powered weekly synthesis.
 
-Quick start (local)
+## Tech Stack
 
-1. Install backend deps and start the backend (from repo root):
+- **Framework:** Next.js 14 (App Router)
+- **Language:** TypeScript (strict mode)
+- **Styling:** Tailwind CSS 3.4 + `@tailwindcss/forms`
+- **Charts:** Recharts
+- **Icons:** Lucide React
+- **Type Sync:** `@hey-api/openapi-ts` — auto-generates TypeScript clients from the backend OpenAPI spec
 
-```bash
-cd code/backend
-python -m pip install -r requirements.txt
-export PYTHONPATH=$(pwd)
-uvicorn app.main:app --host 127.0.0.1 --port 8000 &
+## Pages & Routes
+
+| Route | Page | Description |
+|-------|------|-------------|
+| `/` | — | Redirects to `/tasks` |
+| `/login` | Login | Username/password form → JWT stored in localStorage |
+| `/tasks` | Dashboard | Bento-grid main view — focus header, pulse card, sessions, daily goals, task table, AI reasoning sidebar |
+| `/reports` | Reports | CRUD for manual "brain dump" reports with task linking + system state management |
+| `/synthesis` | Synthesis | AI-generated weekly narrative, commitment gauge, task suggestions with accept/dismiss |
+
+## Directory Structure
+
+```
+app/                         # Next.js pages (App Router)
+├── layout.tsx               # Root layout (dark theme, SilenceStateProvider)
+├── page.tsx                 # Redirect → /tasks
+├── login/page.tsx           # Login form
+├── tasks/page.tsx           # Main dashboard (bento grid)
+├── reports/page.tsx         # Reports + system state management
+└── synthesis/page.tsx       # AI synthesis + suggestions
+components/
+├── BentoGrid.tsx            # Responsive grid layout (mobile-first)
+├── SilenceStateProvider.tsx # React context for silence/engagement state
+├── dashboard/
+│   ├── FocusHeader.tsx      # Silence indicator + engagement badge
+│   ├── ProductivityPulseCard.tsx  # Flow state metrics
+│   ├── CurrentSessionCard.tsx     # Active focus session controls
+│   ├── DailyGoalsCard.tsx         # Daily task completion progress
+│   ├── QuickAccessCard.tsx        # Quick actions panel
+│   ├── TaskQueueTable.tsx         # Full task list with inline editing
+│   ├── ReasoningSidebar.tsx       # AI reasoning panel
+│   ├── GhostListPanel.tsx         # Wheel-spinning task detection
+│   ├── InferenceCard.tsx          # AI inference result display
+│   └── ReEntryBanner.tsx          # Post-vacation re-entry mode banner
+├── nav/
+│   └── AppNavBar.tsx        # Top nav (tabs, silence badge, logout)
+├── reports/
+│   ├── ReportCard.tsx       # Single report display
+│   ├── ReportForm.tsx       # Report create/edit modal
+│   └── ReportList.tsx       # Paginated report list
+├── synthesis/
+│   ├── SynthesisTrigger.tsx # Button to trigger AI synthesis
+│   ├── SynthesisCard.tsx    # Weekly synthesis display
+│   ├── CommitmentGauge.tsx  # Commitment score visualization
+│   └── TaskSuggestionList.tsx # AI-suggested tasks with accept/dismiss
+├── system-state/
+│   ├── SystemStateCard.tsx  # Single state display
+│   ├── SystemStateForm.tsx  # State create/edit form
+│   └── SystemStateManager.tsx # System state list + CRUD
+└── tasks/
+    └── TaskForm.tsx         # Task create/edit modal
+lib/
+├── api.ts                   # API client (fetch wrapper, auth headers, type exports)
+├── generate-client.sh       # OpenAPI TypeScript client generator script
+├── generated/               # Auto-generated types + client (do not edit)
+│   ├── types.gen.ts         # Generated Pydantic → TypeScript types
+│   ├── pulseClient.ts       # Generated pulse/stats client
+│   └── index.ts             # Barrel export
+└── hooks/
+    └── useAuth.ts           # JWT auth hook (localStorage, /me validation, auto-redirect)
 ```
 
-2. Generate the TypeScript client (defaults to http://localhost:8000/openapi.json):
+## Quick Start
+
+### Prerequisites
+
+- Node.js 20.x
+- npm 8+
+- Backend running on `http://localhost:8000` (see backend README)
+
+### Install & Run
 
 ```bash
-cd code/frontend
-npm ci
-./lib/generate-client.sh http://localhost:8000/openapi.json ./lib/generated
+# Install dependencies
+make deps     # or: npm ci
+
+# Start dev server
+make dev      # or: npm run dev
 ```
 
-3. Start the frontend dev server:
+Frontend will be available at **http://localhost:3000**.
+
+### From the Project Root
 
 ```bash
-npm run dev
-```
-
-Makefile (developer shortcuts)
-
-The repository includes simple Makefiles to speed local development:
-
-- `make deps` — install backend Python deps and frontend npm packages
-- `make dev` — start backend (127.0.0.1:8000) and frontend (localhost:3000) in background; PIDs stored under `.tmp/`
-- `make stop` — stop background dev servers started with `make dev`
-- `make test` — runs backend tests (pytest); frontend currently has no test runner
-- `make generate-api` — runs the TypeScript client generator
-- `make build` — builds the frontend
-
-Examples:
-
-```bash
-# install both services' deps
-make deps
-
-# start dev servers (background)
+# Start both backend + frontend:
 make dev
 
-# stop dev servers
+# Stop both:
 make stop
-
-# run backend tests
-make test
-
-# regenerate the frontend API client
-make generate-api
 ```
 
-Notes
-- The generator script accepts an optional OPENAPI URL and output dir: `./lib/generate-client.sh [OPENAPI_URL] [OUT_DIR]`.
-- CI runs the generator and build; ensure your local Node version matches CI (Node 20 recommended).
+## Makefile Reference
 
----
+| Command | Description |
+|---------|-------------|
+| `make deps` | `npm ci` |
+| `make dev` | `npm run dev` (foreground) |
+| `make start-dev` | Start in background (PID saved to `.dev.pid`) |
+| `make stop` | Stop background server, clear `.next` cache |
+| `make build` | `npm run build` (production) |
+| `make generate-api` | Regenerate TypeScript client from OpenAPI spec |
+| `make clean-cache` | Clear `.next` build cache |
+
+## Auth Flow
+
+1. App boots → `useAuth` hook reads `pulse_token` from `localStorage`.
+2. Validates token against `GET /me` on the backend.
+3. Invalid/expired → clears token, redirects to `/login`.
+4. User submits credentials → `POST /login` → receives JWT → stores in localStorage → redirects to `/tasks`.
+5. All API calls include `Authorization: Bearer <token>`. On 401, `logout()` clears state and redirects.
+
+> **Note:** Token is stored in `localStorage` (XSS risk). Migration to httpOnly cookies is planned for production deployment.
 
 ## Regenerating the API Client
 
-Run this whenever a backend schema or endpoint changes (including `/stats/pulse` or any Task field):
+Run whenever backend schemas or endpoints change:
 
 ```bash
-# 1. Start the backend (repo root)
-cd code/backend
-export PYTHONPATH=$(pwd)
-nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 &
-until curl -sS http://127.0.0.1:8000/openapi.json > /dev/null; do sleep 1; done
+# 1. Ensure the backend is running
+cd code/backend && make start
 
-# 2. Regenerate from code/frontend
+# 2. Regenerate the client
 cd code/frontend
-npm ci
-npm run generate:api          # writes to lib/generated (pinned output path)
+npm run generate:api     # or: make generate-api
 
 # 3. Commit the updated stubs
 git add lib/generated
 git commit -m "chore(frontend): regenerate API client"
 ```
 
-`lib/generated/types.ts` holds the `Task` type; `lib/generated/pulseClient.ts` holds `PulseStats` and `getPulse`. Both are **canonical** — do not edit them by hand after running the generator. `lib/api.ts` re-exports them so components import from a single stable path.
+The generator reads `http://localhost:8000/openapi.json` and writes to `lib/generated/`. These files are **canonical** — do not edit by hand. `lib/api.ts` re-exports them so components import from a single stable path.
 
-> **CI note:** the CI workflow runs `npm run generate:api` before `npm run build`. If the backend contract changes and the stubs are not updated, the build step will fail as a safety gate.
+> **CI note:** CI runs `npm run generate:api` before `npm run build`. If the backend contract changes and stubs aren't updated, the build fails as a safety gate.
 
----
+## UI Patterns
 
-## Manual Save Workflow
+### Bento Grid Layout
 
-The `TaskBoard` component uses a **deferred save** pattern:
+The dashboard uses a responsive "bento box" grid system (`BentoGrid.tsx`). Zones are arranged mobile-first with responsive breakpoints (`md:col-span-2`, etc.).
 
-1. Every field edit (name, priority, deadline, notes, completion) is stored in an in-memory `Map<id, Partial<Task>>` — no API call is made.
-2. Rows with pending changes display an amber **Unsaved** pill. The "Save changes" button is active only while the map is non-empty.
-3. Clicking **Save changes** iterates the map and issues a `PUT /tasks/:id` for each dirty row. On full success, the unsaved map is cleared and the task list re-fetched.
-4. Mid-session browser refresh discards all pending edits by design — unsaved state is intentionally ephemeral.
+### Deferred Save (Tasks)
 
-This pattern prevents accidental partial saves and keeps the action log clean (one log entry per intentional user commit).
+Task edits are stored in an in-memory `Map<id, Partial<Task>>` — no API call until the user clicks **Save changes**. Unsaved rows show an amber pill. Browser refresh discards pending edits by design. This keeps the ActionLog clean (one entry per intentional commit).
 
----
+### Priority Colors
 
-## Priority Color Rules
+| Priority | Border | Background | Text |
+|----------|--------|------------|------|
+| **High** | Rose | `bg-rose-50` | `text-rose-600` |
+| **Medium** | Amber | `bg-amber-50` | `text-amber-700` |
+| **Low** | Sky Blue | `bg-sky-50` | `text-sky-700` |
+| *(none)* | Gray | `bg-white` | `text-gray-600` |
 
-Task rows in the `TaskBoard` component are tinted by priority using a left-border + background + text color scheme defined in `PRIORITY_STYLES` ([components/TaskBoard.tsx](components/TaskBoard.tsx)):
+### Silence Indicator
 
-| Priority | Border | Background | Text | Visual colour |
-|----------|----------------------|-------------------|-------------------|---------------|
-| **High** | `border-l-rose-500` | `bg-rose-50` | `text-rose-600` | Rose / Red |
-| **Medium** | `border-l-amber-500` | `bg-amber-50` | `text-amber-700` | Amber / Orange|
-| **Low** | `border-l-sky-500` | `bg-sky-50` | `text-sky-700` | Sky Blue |
-| *(none)* | `border-l-gray-300` | `bg-white` | `text-gray-600` | Gray |
+The `FocusHeader` displays real-time engagement state via `GET /stats/pulse` (polled every 30s):
 
-**Implementation notes:**
+| State | Badge | Meaning |
+|-------|-------|---------|
+| `engaged` | Emerald | Last action ≤ 48 hours ago, no active pause |
+| `stagnant` | Amber | No action for > 48 hours, no active pause |
+| `paused` | Sky Blue | Active vacation/leave system state (overrides stagnant) |
 
-- The backend stores `priority` as a free-form `String(32)` column, not a database enum. The frontend `<select>` restricts values to `High`, `Medium`, and `Low`. Any unrecognised or empty value falls back to the gray style.
-- The compact `TaskQueueTable` on the dashboard does **not** show priority colours — it displays *status* colours (emerald/blue/slate) instead. This is intentional to keep the dashboard view minimal.
-- Do **not** confuse this palette with the Silence Indicator palette (Emerald / Amber / Sky Blue), which maps to *engagement states* (`engaged` / `stagnant` / `paused`) and is documented in the next section.
+## Environment Variables
 
----
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `NEXT_PUBLIC_API_BASE` | `http://localhost:8000` | Backend API base URL |
 
-## Silence Indicator States
+## Development Notes
 
-The `PulseCard` polls `GET /stats/pulse` every 30 seconds and displays one of three states:
-
-| State | Badge colour | Meaning |
-|----------|-------------|----------------------------------------------------------|
-| `engaged` | Emerald | Last action was ≤ 48 hours ago and no active pause. |
-| `stagnant` | Amber | No action logged for > 48 hours (gap > 2 880 minutes) and no active pause. |
-| `paused` | Sky blue | A `SystemState` record with `modeType` of **Vacation** or **Leave** covers the current timestamp. Overrides stagnant regardless of gap size. |
-
-`pausedUntil` is populated only in the `paused` state and shows the `SystemState.endDate`. A null `pausedUntil` means the pause has no scheduled end.
-
-Zero action logs → `gapMinutes = 0`, state is `engaged` (system is fresh, not stagnant).
-
-Commit policy for generated client
-
-- Current policy: a canonical generated client is committed to the repo under `code/frontend/lib/generated` to avoid blocking frontend work. Regenerate when the API surface changes.
-- Regeneration steps:
-
-```bash
-# Start backend (from repo root)
-cd code/backend
-python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.txt
-export PYTHONPATH=$(pwd)
-.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 &
-
-# Generate client (from code/frontend)
-cd code/frontend
-npm ci
-./lib/generate-client.sh http://127.0.0.1:8000/openapi.json ./lib/generated
-
-# Commit if acceptable
-git add code/frontend/lib/generated && git commit -m "chore(frontend): update generated API client"
-```
-
-- CI policy: CI runs `npm run generate:api` before `npm run build` as a verification step; CI Node is set to 20.
+- **Dark theme** is the default (`bg-slate-950 text-white`).
+- **No frontend test runner** is configured yet. Add Vitest or Jest to enable `make test`.
+- The TypeScript compiler runs with `"strict": true`.
+- Generated types in `lib/generated/` are committed to the repo to avoid blocking frontend work when the backend isn't running.
