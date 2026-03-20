@@ -5,9 +5,9 @@
    ▲ Next.js 14.0.0
    - Local:        http://localhost:3000
 
- ✓ Ready in 1429ms
+ ✓ Ready in 1334ms
  ○ Compiling /page ...
- ✓ Compiled /page in 1930ms (443 modules)
+ ✓ Compiled /page in 2.1s (443 modules)
  ○ Compiling /tasks/page ...
- ✓ Compiled /tasks/page in 1967ms (1613 modules)
- ✓ Compiled /reports/page in 231ms (1645 modules)
+ ✓ Compiled /tasks/page in 2.5s (1613 modules)
+ ✓ Compiled /reports/page in 238ms (1645 modules)

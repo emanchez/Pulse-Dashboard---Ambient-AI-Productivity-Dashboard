@@ -9,18 +9,27 @@ __pycache__/
 **/__pycache__/
 *.pyc
 *.pyo
+# Active env files (may contain secrets) — ignored
 .env
-code/backend/.env
-code/frontend/.env
 */.env
 **/.env
+# Environment-specific files with real secrets — ignored
+.env.prod
+*/.env.prod
+**/.env.prod
+# Safe to commit (no secrets):
+# .env.dev       ← committed (SQLite, localhost, no secrets)
+# .env.prod.example  ← committed (template with placeholders only)
+!.env.dev
+!**/.env.dev
+!.env.prod.example
+!**/.env.prod.example
 .vscode/
 .DS_Store
 coverage/
 # Next.js build output
 .next/
 **/.next/
-# Python bytecode
-*.pyo
+# pytest cache
 .pytest_cache/
 **/.pytest_cache/

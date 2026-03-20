@@ -2,17 +2,34 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import List
+import os
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-_ENV_FILE = Path(__file__).resolve().parent.parent.parent / ".env"
+_BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+
+def _resolve_env_file() -> str | None:
+    """Return the env file path to load, in priority order:
+
+    1. .env.{APP_ENV}  (e.g. .env.dev or .env.prod) — environment-specific
+    2. .env            — legacy fallback / CI override
+    3. None            — rely entirely on real environment variables
+    """
+    app_env = os.environ.get("APP_ENV", "dev")
+    specific = _BASE_DIR / f".env.{app_env}"
+    if specific.exists():
+        return str(specific)
+    legacy = _BASE_DIR / ".env"
+    if legacy.exists():
+        return str(legacy)
+    return None
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=str(_ENV_FILE) if _ENV_FILE.exists() else None,
+        env_file=_resolve_env_file(),
         env_file_encoding="utf-8",
     )
 
@@ -63,6 +80,21 @@ class Settings(BaseSettings):
                 "OZ_API_KEY must be set when AI_ENABLED=true in non-dev environments. "
                 "Run `python scripts/setup_oz.py` to configure your API key, "
                 "or set AI_ENABLED=false to disable AI features."
+            )
+
+    def validate_database_config(self) -> None:
+        """Startup guard: prevent SQLite from being used in production.
+
+        In prod, DATABASE_URL must be explicitly set to a PostgreSQL connection
+        string. Falling back to the SQLite default in production would silently
+        use a local file that is not appropriate for a deployed environment.
+        """
+        if self.app_env != "dev" and self.database_url.startswith("sqlite"):
+            raise RuntimeError(
+                "DATABASE_URL is set to SQLite but APP_ENV is not 'dev'. "
+                "Set DATABASE_URL to a PostgreSQL connection string in .env.prod "
+                "(e.g. postgresql+asyncpg://user:pass@host/db). "
+                "See .env.prod.example for the required format."
             )
 
 
