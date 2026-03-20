@@ -33,3 +33,22 @@ coverage/
 # pytest cache
 .pytest_cache/
 **/.pytest_cache/
+
+# Database files (dev.db lives in backend/data/ but must not be committed)
+code/backend/data/*.db
+code/backend/data/*.db-*
+code/backend/data/*.bak
+
+# Log files
+*.log
+**/*.log
+
+# PID files
+*.pid
+**/*.pid
+
+# TypeScript build info
+*.tsbuildinfo
+
+# pip install typo artifacts (e.g. pip install =0.1.9)
+=*
