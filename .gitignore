@@ -1,14 +1,26 @@
 .tmp/
 node_modules/
+**/node_modules/
 .venv/
+**/.venv/
 dist/
 build/
 __pycache__/
+**/__pycache__/
 *.pyc
+*.pyo
 .env
 code/backend/.env
 code/frontend/.env
 */.env
+**/.env
 .vscode/
 .DS_Store
 coverage/
+# Next.js build output
+.next/
+**/.next/
+# Python bytecode
+*.pyo
+.pytest_cache/
+**/.pytest_cache/
