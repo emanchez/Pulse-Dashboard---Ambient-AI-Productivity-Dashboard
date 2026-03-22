@@ -1,0 +1,11 @@
+[build]
+# Uses railpack.json (Nixpacks/Railpack) at project root for build steps.
+# Dockerfile at code/backend/Dockerfile is available for local testing only.
+# See code/backend/scripts/entrypoint.sh for the container startup sequence.
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+startCommand = "cd code/backend && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1 --log-level info"
