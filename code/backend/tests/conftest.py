@@ -65,8 +65,12 @@ async def _wal_checkpoint(session) -> None:
 
     Call this after any direct-DB write in the pytest process that must be
     immediately visible to the running uvicorn subprocess.
+
+    No-op for non-SQLite databases (PRAGMA is SQLite-only).
     """
-    await session.execute(text("PRAGMA wal_checkpoint(FULL)"))
+    db_url = os.environ.get("DATABASE_URL", "")
+    if "sqlite" in db_url:
+        await session.execute(text("PRAGMA wal_checkpoint(FULL)"))
 
 
 # ---------------------------------------------------------------------------

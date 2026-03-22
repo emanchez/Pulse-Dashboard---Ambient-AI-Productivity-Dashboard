@@ -35,6 +35,10 @@ class Settings(BaseSettings):
         extra="ignore",  # silently discard unknown env vars (e.g. stale keys during migration)
     )
 
+    # Dev  (SQLite):   sqlite+aiosqlite:///./data/dev.db
+    # Prod (Neon/PG):  postgresql+asyncpg://user:pass@host/db?ssl=require
+    # Note: bare postgresql:// and postgres:// schemes are auto-normalized to postgresql+asyncpg://
+    #       and libpq-only params (sslmode, channel_binding) are stripped/converted by the validator.
     database_url: str = Field("sqlite+aiosqlite:///./data/dev.db", validation_alias="DATABASE_URL")
 
     @field_validator("database_url", mode="after")

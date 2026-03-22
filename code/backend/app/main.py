@@ -104,6 +104,15 @@ async def lifespan(app: FastAPI):
             "Skipping create_all in %s mode — use `alembic upgrade head` for schema changes",
             settings.app_env,
         )
+        # Verify database connectivity at startup — surfaces misconfigured DATABASE_URL early.
+        from sqlalchemy import text as _text
+        try:
+            async with engine.connect() as conn:
+                await conn.execute(_text("SELECT 1"))
+            logger.info("Database connection verified (%s)", settings.app_env)
+        except Exception as _e:
+            logger.error("Database connection failed at startup: %s", _e)
+            raise
     yield
 
 
