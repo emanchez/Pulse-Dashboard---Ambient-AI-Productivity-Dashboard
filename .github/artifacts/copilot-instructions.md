@@ -12,7 +12,7 @@ You are an expert Full-Stack Developer assisting in the creation of a "Local-Fir
 
 **Database:** SQLAlchemy (Async), SQLite (Dev) / PostgreSQL (Prod).
 
-**AI/LLM:** Ollama (Local inference), running Llama 3 or Mistral.
+**AI/LLM:** OZ (Warp cloud agent platform) via `dashboard-assistant` Skill.
 
 **Type Sync:** openapi-ts for generating TypeScript clients from FastAPI openapi.json.
 
@@ -25,13 +25,13 @@ You are an expert Full-Stack Developer assisting in the creation of a "Local-Fir
 
 ## Critical Rules (Do Not Break)
 
-- **No External AI APIs:** Do not suggest OpenAI or Anthropic SDKs. All inference is local via ollama.
+- **OZ-Only Inference:** All AI inference runs through OZ (Warp's cloud agent platform). Do not suggest OpenAI, Anthropic, or Ollama SDKs directly. The `dashboard-assistant` Skill in `.agents/skills/` defines the agent behavior.
 - **Auth First:** All API endpoints (except /login and /health) must be guarded by JWT Authentication.
 - **Single User Assumption:** The app is currently single-user, but code should rely on `user_id` from the JWT token to ensure future scalability. Every DB query that touches user-owned data MUST include a `WHERE user_id = <jwt_sub>` filter. Never return unscoped rows.
 - **user_id is sacred:** `user_id` is the primary key link for all application data. Never delete and re-create a user record. Never change a user's `id`. Any operation that would orphan rows (detach them from their owner user) is forbidden. Use upsert patterns for all seeding and user-management scripts.
 - **Migrations over `create_all`:** `Base.metadata.create_all` must never be used as a migration tool in any environment that stores real data. It only creates missing tables — it does not add columns, add constraints, or fix data. Any schema change to an existing table requires an explicit Alembic migration. See architecture.md §5.
 - **Seeding scripts must be idempotent:** All scripts in `code/backend/scripts/` must be safe to re-run without side effects. If a record already exists, update it in place — never delete and re-insert. Auto-generated PKs (UUIDs) must never be regenerated for existing records.
-- **No unscoped data access in AI prompts:** AI inference context (prompts sent to Ollama/OZ) must only include data belonging to the authenticated user. Cross-user data must never appear in an inference payload, even inadvertently. See agents.md §4.
+- **No unscoped data access in AI prompts:** AI inference context (prompts sent to OZ) must only include data belonging to the authenticated user. Cross-user data must never appear in an inference payload, even inadvertently. See agents.md §4.
 
 ## Project Directory Structure
 

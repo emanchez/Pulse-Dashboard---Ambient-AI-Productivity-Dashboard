@@ -18,7 +18,7 @@ The MVP is **feature-complete** across all 4 phases:
 **Current status:**
 - Backend: core test suite passes (136/136 for non-server-fixture tests)
 - Frontend: production build succeeds and all routes compile
-- No Ollama references remain (OZ migration complete)
+- No Ollama references remain in source code or active context docs (OZ migration complete)
 
 **Critical blockers remain** and must be addressed before any production deployment.
 

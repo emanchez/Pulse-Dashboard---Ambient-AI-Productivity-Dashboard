@@ -52,6 +52,17 @@ class Settings(BaseSettings):
     ai_enabled: bool = Field(True, validation_alias="AI_ENABLED")
     oz_max_wait_seconds: int = Field(90, validation_alias="OZ_MAX_WAIT_SECONDS")
     oz_max_context_chars: int = Field(8000, validation_alias="OZ_MAX_CONTEXT_CHARS")
+
+    # OZ Cloud Environment — UID of the environment to run agents in.
+    # Create one at https://app.warp.dev → Environments. Required for non-mock runs.
+    oz_environment_id: str = Field("", validation_alias="OZ_ENVIRONMENT_ID")
+
+    # OZ Skill Spec — identifies the dashboard-assistant skill in the repo.
+    # Format: "owner/repo:skill_name" e.g. "myuser/my-repo:dashboard-assistant"
+    # When set, Oz uses `.agents/skills/dashboard-assistant/SKILL.md` as the
+    # agent's system instructions. Leave empty to send prompts without a skill.
+    oz_skill_spec: str = Field("", validation_alias="OZ_SKILL_SPEC")
+
     # Rate limit caps — enforced by AIRateLimiter (service layer, not SlowAPI)
     oz_max_synthesis_per_week: int = Field(3, validation_alias="OZ_MAX_SYNTHESIS_PER_WEEK")
     oz_max_suggestions_per_day: int = Field(5, validation_alias="OZ_MAX_SUGGESTIONS_PER_DAY")
@@ -74,13 +85,32 @@ class Settings(BaseSettings):
         return origins
 
     def validate_oz_config(self) -> None:
-        """Startup guard: OZ_API_KEY must be set when AI is enabled in non-dev mode."""
+        """Startup guard: OZ_API_KEY must be set when AI is enabled in non-dev mode.
+
+        Also warns if OZ_ENVIRONMENT_ID or OZ_SKILL_SPEC are missing, since
+        cloud agent runs need an environment and skill reference.
+        """
         if self.app_env != "dev" and self.oz_api_key == "" and self.ai_enabled:
             raise RuntimeError(
                 "OZ_API_KEY must be set when AI_ENABLED=true in non-dev environments. "
                 "Run `python scripts/setup_oz.py` to configure your API key, "
                 "or set AI_ENABLED=false to disable AI features."
             )
+        if self.ai_enabled and self.oz_api_key:
+            import logging
+            _log = logging.getLogger(__name__)
+            if not self.oz_environment_id:
+                _log.warning(
+                    "OZ_ENVIRONMENT_ID is not set. Cloud agent runs require an "
+                    "environment. Create one at https://app.warp.dev → Environments "
+                    "and set OZ_ENVIRONMENT_ID in .env."
+                )
+            if not self.oz_skill_spec:
+                _log.warning(
+                    "OZ_SKILL_SPEC is not set. Without a skill spec, prompts are "
+                    "sent without the dashboard-assistant skill instructions. "
+                    "Set OZ_SKILL_SPEC=owner/repo:dashboard-assistant in .env."
+                )
 
     def validate_database_config(self) -> None:
         """Startup guard: prevent SQLite from being used in production.

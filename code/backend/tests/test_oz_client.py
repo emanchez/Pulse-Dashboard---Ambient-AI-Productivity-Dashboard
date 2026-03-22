@@ -63,8 +63,8 @@ class TestOZClientMockMode:
             mock_http.assert_not_called()
             # Result is a valid dict with expected keys
             assert isinstance(result, dict)
-            assert result.get("status") == "SUCCEEDED"
-            assert "id" in result or "result" in result
+            assert result.get("state") == "SUCCEEDED" or result.get("status") == "SUCCEEDED"
+            assert "run_id" in result or "result" in result
 
     def test_submit_run_mock(self, oz_client):
         """submit_run in mock mode returns a mock run ID without HTTP."""
@@ -80,7 +80,8 @@ class TestOZClientMockMode:
         result = asyncio.get_event_loop().run_until_complete(
             oz_client.run_prompt("weekly synthesis")
         )
-        assert result["status"] == "SUCCEEDED"
+        # Oz API uses "state" but mock includes both for backward compat
+        assert result.get("state") == "SUCCEEDED" or result.get("status") == "SUCCEEDED"
         # Parse the nested result JSON
         inner = json.loads(result["result"])
         assert "summary" in inner
@@ -107,6 +108,8 @@ class TestOZClientHTTPMocked:
         client._settings.oz_model_id = "anthropic/claude-haiku-4"
         client._settings.oz_max_wait_seconds = 10
         client._settings.oz_max_context_chars = 8000
+        client._settings.oz_environment_id = "test-env-id"
+        client._settings.oz_skill_spec = "testuser/testrepo:dashboard-assistant"
         return client
 
     def test_submit_run_success(self):
@@ -114,7 +117,7 @@ class TestOZClientHTTPMocked:
         client = self._make_client_with_key()
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {"id": "run-abc-123"}
+        mock_response.json.return_value = {"run_id": "run-abc-123", "state": "QUEUED"}
         mock_response.raise_for_status = MagicMock()
 
         mock_http_client = AsyncMock()
@@ -132,9 +135,9 @@ class TestOZClientHTTPMocked:
         """Mock polling sequence (QUEUED → INPROGRESS → SUCCEEDED) → returns result."""
         client = self._make_client_with_key()
         statuses = [
-            {"status": "QUEUED", "id": "run-1"},
-            {"status": "INPROGRESS", "id": "run-1"},
-            {"status": "SUCCEEDED", "id": "run-1", "result": '{"summary": "done"}'},
+            {"state": "QUEUED", "run_id": "run-1"},
+            {"state": "INPROGRESS", "run_id": "run-1"},
+            {"state": "SUCCEEDED", "run_id": "run-1", "result": '{"summary": "done"}'},
         ]
         call_count = 0
 
@@ -150,7 +153,7 @@ class TestOZClientHTTPMocked:
             result = asyncio.get_event_loop().run_until_complete(
                 client.wait_for_completion("run-1", timeout=30)
             )
-        assert result["status"] == "SUCCEEDED"
+        assert result["state"] == "SUCCEEDED"
 
     def test_wait_for_completion_timeout(self):
         """Perpetual INPROGRESS → raises TimeoutError."""
@@ -158,7 +161,7 @@ class TestOZClientHTTPMocked:
         client._settings.oz_max_wait_seconds = 0  # Zero second timeout → immediate timeout
 
         async def mock_get_status(run_id):
-            return {"status": "INPROGRESS", "id": run_id}
+            return {"state": "INPROGRESS", "run_id": run_id}
 
         client.get_run_status = mock_get_status
 
@@ -198,6 +201,8 @@ class TestOZClientCircuitBreaker:
         client._settings.oz_model_id = "anthropic/claude-haiku-4"
         client._settings.oz_max_wait_seconds = 10
         client._settings.oz_max_context_chars = 8000
+        client._settings.oz_environment_id = ""
+        client._settings.oz_skill_spec = ""
 
         # Simulate 3 failures
         client._consecutive_failures = 3
@@ -483,6 +488,12 @@ class TestConfigDefaults:
 
     def test_default_coplan_limit(self):
         assert get_settings().oz_max_coplan_per_day == 3
+
+    def test_default_environment_id_empty(self):
+        assert get_settings().oz_environment_id == ""
+
+    def test_default_skill_spec_empty(self):
+        assert get_settings().oz_skill_spec == ""
 
     def test_prod_no_key_raises(self):
         """APP_ENV=prod + AI_ENABLED=true + OZ_API_KEY="" → RuntimeError."""

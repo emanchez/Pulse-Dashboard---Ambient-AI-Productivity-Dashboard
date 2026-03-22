@@ -1,3 +1,8 @@
+---
+name: dashboard-assistant
+description: Reads activity log weekly and registers productivity score, then recommends activities/tasks for users to complete based on data logged.
+---
+
 # Skill: dashboard-assistant
 
 ## Purpose
@@ -141,7 +146,7 @@ Return a single JSON object:
 
 ## Constraints
 
-- **No external API calls.** Inference runs through the local Ollama instance only (`oz_client`).
+- **OZ-only inference.** All inference runs through the OZ (Warp) cloud agent platform. No local model setup required.
 - **Context window budget:** Keep the assembled prompt under 8,000 characters. Truncate oldest `action_logs` first. Prepend `"[N older actions omitted]"` if truncation occurs.
 - **Never log prompt contents** at INFO or higher — log only metadata (`user_id`, char count, model, timestamp).
 - **No cross-user data.** If a query returns rows for more than one `user_id`, abort and raise a `SecurityError` before dispatch.

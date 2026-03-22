@@ -17,12 +17,12 @@ The primary objective is to transition from Active Data Entry (high friction) to
 | Frontend   | Next.js (TypeScript)| Hybrid UI utilizing Progressive Disclosure. |
 | Backend    | FastAPI (Python)    | High-performance orchestration of Pydantic AI agents. |
 | Database   | SQLAlchemy          | Local event-sourcing via SQLite/Postgres. |
-| Intelligence| Ollama             | Local-first LLM to prioritize privacy and zero latency/cost. |
+| Intelligence| OZ (Warp)          | Cloud agent platform for AI inference via Skills. |
 | Type Sync  | @hey-api/openapi-ts | Prevents "Maintenance Madness" by automating FE/BE parity. |
 
 ### 2.1 Architectural Decision Records (ADRs)
 
-- **ADR-001: Local-First AI (Ollama).** Context: Privacy and cost. Decision: Use Ollama. Consequence: Reduced cloud dependencies; requires local GPU/CPU resources.
+- **ADR-001: OZ Cloud Agent Platform.** Context: Privacy (zero-data-retention policy) and operational simplicity. Decision: Use OZ (Warp) as the inference backend via the `dashboard-assistant` Skill. Consequence: No local GPU required; inference is credit-billed. Supersedes the original Ollama decision.
 - **ADR-002: Event Logging (ActionLog).** Context: Need for ambient sensing. Decision: Every task update triggers an immutable log entry. Consequence: Enables deep historical analysis for Sunday Synthesis.
 
 ## 3. Core Data Models
@@ -75,7 +75,7 @@ Manages scheduled inactivity to distinguish intentional rest from stagnation.
 ### 4.1 Silence Gap Analysis
 
 - **Metrics:** If $T_{gap} > 48$ hours, the AI flags a "Commitment Warning."
-- **Inference:** Ollama reviews gaps to detect drive loss.
+- **Inference:** The AI agent reviews gaps to detect drive loss.
 
 ### 4.2 Dynamic Ambiguity Guard (HITL)
 
@@ -86,7 +86,7 @@ The system employs a "Proactive Pause" when faced with ambiguity:
 
 ### 4.3 Sunday Synthesis
 
-- **Reasoning:** Ollama looks for the "Ghost in the Machine"—patterns where tasks move without logs or reports lacks density.
+- **Reasoning:** The AI agent looks for the "Ghost in the Machine"—patterns where tasks move without logs or reports lacks density.
 - **Output:** Strategic narrative and grounded Commitment Assumption.
 
 ## 5. UI/UX Strategy: The "Pulse" Dashboard
@@ -117,6 +117,6 @@ The system employs a "Proactive Pause" when faced with ambiguity:
 
 ### Phase 4: Sunday Synthesis & Co-Planning
 
-- **Backend:** Ollama orchestration for Synthesis and Ambiguity Guard.
+- **Backend:** OZ agent orchestration for Synthesis and Ambiguity Guard.
 - **Frontend:** Sunday Modal and Reasoning Sidebar for Inference Cards.
 - **UI/UX:** Implement Ghost List to visualize wheel-spinning tasks.

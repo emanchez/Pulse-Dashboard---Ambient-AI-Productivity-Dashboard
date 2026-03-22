@@ -1,5 +1,10 @@
 """Async wrapper around the OZ (Warp) Agent API.
 
+Aligned with the Oz REST API reference (https://docs.warp.dev/reference/api-and-sdk/agent):
+  - POST /agent/runs   — create a run (preferred endpoint)
+  - GET  /agent/runs/{runId} — get run details
+  - POST /agent/runs/{runId}/cancel — cancel a run
+
 COST WARNING: Every call to run_prompt() / submit_run() consumes OZ credits.
 - Always use mock mode in tests (oz_api_key == "" in dev).
 - Default model is claude-haiku-4 (cheapest capable model).
@@ -25,6 +30,12 @@ OZ_BASE_URL = "https://app.warp.dev/api/v1"
 # Path to the mock fixture returned when oz_api_key is empty (dev/test mode)
 _MOCK_FIXTURE_PATH = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures" / "mock_oz_synthesis.json"
 
+# Oz API run states (from docs):
+# QUEUED, PENDING, CLAIMED, INPROGRESS, SUCCEEDED, FAILED, BLOCKED, ERROR, CANCELLED
+_TERMINAL_FAILURE_STATES = frozenset({"FAILED", "ERROR", "CANCELLED"})
+_TERMINAL_SUCCESS_STATES = frozenset({"SUCCEEDED"})
+_BLOCKED_STATES = frozenset({"BLOCKED"})
+
 
 class ServiceDisabledError(Exception):
     """Raised when AI features are disabled via AI_ENABLED=false."""
@@ -35,7 +46,21 @@ class CircuitBreakerOpen(Exception):
 
 
 class OZClient:
-    """Async OZ Agent API client with mock mode, circuit breaker, and prompt guard."""
+    """Async OZ Agent API client with mock mode, circuit breaker, and prompt guard.
+
+    Request body for POST /agent/runs:
+    {
+      "prompt": "...",               # The user-data prompt (always sent)
+      "skill": "owner/repo:name",    # Top-level skill spec (takes precedence)
+      "config": {
+        "model_id": "...",           # LLM model
+        "environment_id": "...",     # Cloud environment UID
+        "skill_spec": "...",         # Fallback skill spec (if top-level absent)
+        "name": "...",               # Label for grouping/filtering runs
+      },
+      "title": "...",                # Human-readable run title
+    }
+    """
 
     # Circuit breaker settings
     _CB_THRESHOLD = 3  # failures before opening
@@ -64,24 +89,26 @@ class OZClient:
         self._check_circuit_breaker()
         self._check_prompt_length(prompt)
 
-        body: dict[str, Any] = {
-            "prompt": prompt,
-            "config": {"model_id": self._settings.oz_model_id},
-        }
-        if title:
-            body["title"] = title
+        body = self._build_run_body(prompt, title=title)
 
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
                 resp = await client.post(
-                    f"{OZ_BASE_URL}/agent/run",
+                    f"{OZ_BASE_URL}/agent/runs",
                     headers=self._auth_headers(),
                     json=body,
                 )
                 resp.raise_for_status()
                 data = resp.json()
-                run_id = data.get("id") or data.get("run_id") or data.get("runId", "")
-                logger.info("OZ run submitted: run_id=%s model=%s prompt_chars=%d", run_id, self._settings.oz_model_id, len(prompt))
+                run_id = data.get("run_id") or data.get("id") or data.get("runId", "")
+                state = data.get("state", "UNKNOWN")
+                at_capacity = data.get("at_capacity", False)
+                logger.info(
+                    "OZ run submitted: run_id=%s state=%s at_capacity=%s model=%s prompt_chars=%d",
+                    run_id, state, at_capacity, self._settings.oz_model_id, len(prompt),
+                )
+                if self._settings.oz_skill_spec:
+                    logger.info("OZ run using skill: %s", self._settings.oz_skill_spec)
                 self._record_success()
                 return str(run_id)
         except Exception as exc:
@@ -89,9 +116,16 @@ class OZClient:
             raise exc
 
     async def get_run_status(self, run_id: str) -> dict:
-        """Get current run status. GET — does NOT consume run credits."""
+        """Get current run details. GET — does NOT consume run credits.
+
+        Returns the full run details dict. Key fields:
+          - state: QUEUED|PENDING|CLAIMED|INPROGRESS|SUCCEEDED|FAILED|BLOCKED|ERROR|CANCELLED
+          - prompt: the submitted prompt
+          - agent_config: resolved config
+          - session_link: URL to view the agent session (when available)
+        """
         if self._is_mock_mode():
-            return {"status": "SUCCEEDED", "id": run_id}
+            return {"state": "SUCCEEDED", "run_id": run_id, "status": "SUCCEEDED"}
 
         async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.get(
@@ -99,11 +133,17 @@ class OZClient:
                 headers=self._auth_headers(),
             )
             resp.raise_for_status()
-            return resp.json()
+            data = resp.json()
+            # Normalize: the Oz API uses "state" but we also set "status" for
+            # backward compatibility with existing callers that check "status"
+            if "state" in data and "status" not in data:
+                data["status"] = data["state"]
+            return data
 
     async def wait_for_completion(self, run_id: str, timeout: int | None = None) -> dict:
-        """Poll every 5s until SUCCEEDED/FAILED. Raises TimeoutError if exceeded.
+        """Poll every 5s until SUCCEEDED/FAILED/ERROR/CANCELLED/BLOCKED.
 
+        Raises TimeoutError if exceeded. Raises RuntimeError on terminal failure.
         Polling GET calls are lightweight and do not consume run credits.
         """
         if self._is_mock_mode():
@@ -113,12 +153,32 @@ class OZClient:
         start = time.monotonic()
         while True:
             status_data = await self.get_run_status(run_id)
-            status = (status_data.get("status") or "").upper()
-            if status == "SUCCEEDED":
+            # Oz API returns "state" field
+            state = (status_data.get("state") or status_data.get("status") or "").upper()
+
+            if state in _TERMINAL_SUCCESS_STATES:
                 logger.info("OZ run completed: run_id=%s", run_id)
                 return status_data
-            if status in ("FAILED", "CANCELLED", "ERROR"):
-                raise RuntimeError(f"OZ run {run_id} ended with status: {status}")
+
+            if state in _TERMINAL_FAILURE_STATES:
+                status_msg = status_data.get("status_message", {})
+                error_detail = status_msg.get("message", "") if isinstance(status_msg, dict) else ""
+                raise RuntimeError(
+                    f"OZ run {run_id} ended with state: {state}"
+                    + (f" — {error_detail}" if error_detail else "")
+                )
+
+            if state in _BLOCKED_STATES:
+                logger.warning(
+                    "OZ run %s is BLOCKED (may need user input/approval). "
+                    "Treating as failure for automated pipeline.",
+                    run_id,
+                )
+                raise RuntimeError(
+                    f"OZ run {run_id} is BLOCKED — may require manual approval "
+                    "on the Warp dashboard at https://app.warp.dev"
+                )
+
             if time.monotonic() - start > max_wait:
                 raise TimeoutError(f"OZ run {run_id} did not complete within {max_wait}s")
             await asyncio.sleep(5)
@@ -140,6 +200,41 @@ class OZClient:
         return await self.wait_for_completion(run_id)
 
     # ── Internal helpers ───────────────────────────────────────────────
+
+    def _build_run_body(self, prompt: str, title: str | None = None) -> dict[str, Any]:
+        """Construct the POST /agent/runs request body per Oz API spec.
+
+        Body structure:
+          prompt  — the user-data context (always sent)
+          skill   — top-level skill spec (if configured)
+          config  — AmbientAgentConfig with model_id, environment_id, name
+          title   — human-readable run title
+        """
+        config: dict[str, Any] = {
+            "model_id": self._settings.oz_model_id,
+        }
+
+        # Environment — required for cloud agent runs
+        if self._settings.oz_environment_id:
+            config["environment_id"] = self._settings.oz_environment_id
+
+        # Name — for grouping/filtering runs in the Warp dashboard
+        config["name"] = "dashboard-assistant"
+
+        body: dict[str, Any] = {
+            "prompt": prompt,
+            "config": config,
+        }
+
+        # Skill spec — tells Oz to use the SKILL.md as agent system instructions.
+        # Top-level "skill" takes precedence over config.skill_spec per Oz docs.
+        if self._settings.oz_skill_spec:
+            body["skill"] = self._settings.oz_skill_spec
+
+        if title:
+            body["title"] = title
+
+        return body
 
     def _check_enabled(self) -> None:
         if not self._settings.ai_enabled:
@@ -166,8 +261,9 @@ class OZClient:
                 return json.load(f)
         # Inline fallback if fixture file is missing
         return {
+            "state": "SUCCEEDED",
             "status": "SUCCEEDED",
-            "id": "mock-run-id-00000",
+            "run_id": "mock-run-id-00000",
             "result": json.dumps({
                 "summary": "Mock synthesis: A productive week focused on backend development.",
                 "theme": "Infrastructure & Foundation",

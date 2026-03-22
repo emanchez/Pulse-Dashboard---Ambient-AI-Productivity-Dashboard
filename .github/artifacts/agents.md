@@ -1,10 +1,12 @@
 # Agentic Reasoning & Prompts
 
-## 1. The Inference Engine (Ollama)
+## 1. The Inference Engine (OZ)
 
-**Model:** Llama 3 (8B) or Mistral (7B) optimized for instruction following.
+**Platform:** OZ (Warp cloud agent platform) via the `dashboard-assistant` Skill.
 
-**Context Window:** 8k tokens (sufficient for 1 week of logs).
+**Default Model:** claude-haiku-4 (cheapest capable model; configurable via `OZ_MODEL_ID`).
+
+**Context Window:** ~8k characters (enforced by `oz_max_context_chars` config cap).
 
 ## 2. Inferred Commitment Analysis
 
@@ -80,7 +82,7 @@
 All inference context (tasks, reports, action logs, system states, silence gaps) MUST be fetched using the `user_id` extracted from the JWT `sub` claim:
 
 ```python
-# CORRECT — always scope queries by user_id before sending to Ollama
+# CORRECT — always scope queries by user_id before sending to OZ
 tasks = await session.execute(
     select(Task)
     .where(Task.user_id == user_id)       # explicit user scope
@@ -118,8 +120,8 @@ When the app is extended to multiple users, the following MUST be enforced per i
 
 - **Reports and task names may contain personal/private content** (health issues, personal goals, financial data). Treat all inference inputs as sensitive PII.
 - Never log the full prompt text at INFO or higher — log only metadata (user_id, context char count, model, timestamp).
-- In production, ensure the Ollama inference endpoint is not exposed publicly (bind to localhost only, or use an internal network).
-- If switching to a cloud model in the future, require explicit user consent and document that data leaves the device in the product UI and privacy policy.
+- In production, ensure the OZ API key is stored securely and never committed to version control. Use environment variables or a secrets manager.
+- If switching to a different cloud model provider in the future, require explicit user consent and document that data handling may change in the product UI and privacy policy.
 
 ---
 

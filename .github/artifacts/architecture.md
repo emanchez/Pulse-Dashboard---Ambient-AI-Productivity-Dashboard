@@ -50,7 +50,7 @@
 
 ### Reports & AI
 - POST /reports: Submit manual report.
-- POST /ai/synthesize: Trigger on-demand Sunday Report (calls Ollama).
+- POST /ai/synthesize: Trigger on-demand Sunday Report (calls OZ agent).
 - GET /ai/suggestions: Get AI-generated task list.
 
 ## 3. Synchronization (Type Sync)
