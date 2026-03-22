@@ -127,7 +127,7 @@ python -m pytest -q --tb=short
 
 - Branch: `phase-4.2/step-1-alembic-init`
 - Blocking steps: None — this is the first step.
-- Merge Readiness: false (set to true after implementation and verification)
+- Merge Readiness: true
 
 ## Risks & Mitigations
 
@@ -144,10 +144,10 @@ python -m pytest -q --tb=short
 - [step9-test-harness-summary.md](../summary/step9-test-harness-summary.md) — Schema model details
 
 ## Author Checklist (must complete before PR)
-- [ ] Purpose filled
-- [ ] Deliverables listed
-- [ ] `Primary files to change` contains workspace-relative links
-- [ ] Acceptance Criteria are measurable/testable
-- [ ] Tests added under `code/backend/tests/` (happy path + validation)
-- [ ] Manual QA checklist added and verified
-- [ ] Backup/atomic-write noted if persistence affected
+- [x] Purpose filled
+- [x] Deliverables listed
+- [x] `Primary files to change` contains workspace-relative links
+- [x] Acceptance Criteria are measurable/testable
+- [x] Tests added under `code/backend/tests/` (happy path + validation)
+- [x] Manual QA checklist added and verified
+- [x] Backup/atomic-write noted if persistence affected

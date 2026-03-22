@@ -93,11 +93,17 @@ async def lifespan(app: FastAPI):
     settings.validate_database_config()
 
     # Ensure all registered models have their tables created (idempotent).
-    # This covers newly added models (e.g. session_logs) without requiring
-    # a manual migration step in development.
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    logger.info("DB tables verified/created via create_all")
+    # Only runs in dev mode — in non-dev environments use Alembic migrations.
+    # See: code/backend/alembic/ and `alembic upgrade head`.
+    if settings.app_env == "dev":
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("DB tables verified/created via create_all (dev mode)")
+    else:
+        logger.info(
+            "Skipping create_all in %s mode — use `alembic upgrade head` for schema changes",
+            settings.app_env,
+        )
     yield
 
 
