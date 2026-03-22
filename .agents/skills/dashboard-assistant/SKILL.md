@@ -1,3 +1,8 @@
+---
+name: dashboard-assistant
+description: Reads activity log weekly and registers productivity score, then recommends activities/tasks for users to complete based on data logged.
+---
+
 # Skill: dashboard-assistant
 
 ## Purpose
