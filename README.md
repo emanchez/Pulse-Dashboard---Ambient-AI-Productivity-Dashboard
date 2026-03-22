@@ -204,3 +204,5 @@ Detailed design documents live in `.github/artifacts/`:
 ---
 
 **Built as a personal tool for ambient productivity tracking.** Not accepting external contributions at this time.
+
+Author: Emmanuel Sanchez
