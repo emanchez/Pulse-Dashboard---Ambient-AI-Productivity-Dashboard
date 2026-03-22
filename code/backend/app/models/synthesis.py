@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Integer, String, Text, JSON
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, JSON
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..db.base import TimestampedBase
@@ -16,7 +16,7 @@ from ..db.base import TimestampedBase
 class SynthesisReport(TimestampedBase):
     __tablename__ = "synthesis_reports"
 
-    user_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     summary: Mapped[str] = mapped_column(Text, nullable=False, default="")
     theme: Mapped[str] = mapped_column(String(200), nullable=False, default="")
     commitment_score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

@@ -5,7 +5,7 @@ import bleach
 
 from ..schemas.base import CamelModel, _to_camel
 from pydantic import ConfigDict, field_validator
-from sqlalchemy import Integer, Text, String, JSON
+from sqlalchemy import ForeignKey, Integer, Text, String, JSON
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..db.base import TimestampedBase
@@ -131,6 +131,6 @@ class ManualReport(TimestampedBase):
     body: Mapped[str] = mapped_column(Text, nullable=False)
     word_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     associated_task_ids: Mapped[list | None] = mapped_column(JSON, nullable=True)
-    user_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="published")
     tags: Mapped[list | None] = mapped_column(JSON, nullable=True)

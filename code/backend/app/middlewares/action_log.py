@@ -4,6 +4,8 @@ from starlette.responses import Response
 from typing import Callable
 import logging
 import json
+import re
+import uuid
 
 from ..db.session import async_session
 from ..models.action_log import ActionLog
@@ -44,8 +46,20 @@ def _resolve_action_type(method: str, path: str) -> str:
 
 
 def _extract_entity_id(parts: list[str]) -> str | None:
-    """Return the second URL segment as a generic entity reference, if present."""
-    return parts[1] if len(parts) >= 2 else None
+    """Return the second URL segment ONLY if it looks like a UUID entity reference.
+
+    For paths like /tasks/<uuid> this returns the UUID.  For paths like
+    /ai/accept-tasks (where the second segment is part of the endpoint name,
+    not an entity id) this returns None, preventing spurious FK violations.
+    """
+    if len(parts) < 2:
+        return None
+    candidate = parts[1]
+    try:
+        uuid.UUID(candidate)  # validates UUID format (8-4-4-4-12 hex)
+        return candidate
+    except ValueError:
+        return None
 
 
 class ActionLogMiddleware(BaseHTTPMiddleware):

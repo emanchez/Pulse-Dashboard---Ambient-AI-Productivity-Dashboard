@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from ..schemas.base import CamelModel
-from sqlalchemy import DateTime, Index, String, Text
+from sqlalchemy import DateTime, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..db.base import TimestampedBase
@@ -33,8 +33,8 @@ class ActionLog(TimestampedBase):
     )
 
     timestamp: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
-    task_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    task_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("tasks.id"), nullable=True)
     action_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
     change_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
-    user_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    user_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
     client_host: Mapped[str | None] = mapped_column(String(45), nullable=True)

@@ -2,7 +2,7 @@ from datetime import datetime
 
 from ..schemas.base import CamelModel, _to_camel
 from pydantic import ConfigDict, field_validator, model_validator
-from sqlalchemy import String, DateTime, Boolean, Text
+from sqlalchemy import ForeignKey, String, DateTime, Boolean, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..db.base import TimestampedBase
@@ -77,8 +77,8 @@ class SystemState(TimestampedBase):
     __tablename__ = "system_states"
 
     mode_type: Mapped[str] = mapped_column(String(64), nullable=False)
-    start_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    start_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     end_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     requires_recovery: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    user_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False, index=True)
