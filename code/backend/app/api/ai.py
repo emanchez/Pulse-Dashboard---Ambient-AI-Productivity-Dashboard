@@ -24,7 +24,7 @@ from ..schemas.synthesis import (
 )
 from ..services.ai_rate_limiter import AIRateLimiter
 from ..services.ai_service import AIService
-from ..services.oz_client import CircuitBreakerOpen, ServiceDisabledError
+from ..services.llm_client import CircuitBreakerOpen, ServiceDisabledError
 from ..services.synthesis_service import SynthesisService
 
 logger = logging.getLogger(__name__)

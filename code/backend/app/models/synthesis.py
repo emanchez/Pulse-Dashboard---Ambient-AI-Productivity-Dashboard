@@ -21,7 +21,7 @@ class SynthesisReport(TimestampedBase):
     theme: Mapped[str] = mapped_column(String(200), nullable=False, default="")
     commitment_score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     suggested_tasks: Mapped[str] = mapped_column(Text, nullable=True)  # JSON array
-    oz_run_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    llm_run_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")  # pending | completed | failed
     raw_response: Mapped[str | None] = mapped_column(Text, nullable=True)
     period_start: Mapped[datetime] = mapped_column(DateTime, nullable=False)

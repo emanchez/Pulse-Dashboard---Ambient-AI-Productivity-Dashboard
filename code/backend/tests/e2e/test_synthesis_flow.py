@@ -71,7 +71,7 @@ def _insert_usage_logs(user_id: str, endpoint: str, count: int):
                 log = AIUsageLog(
                     user_id=user_id,
                     endpoint=endpoint,
-                    oz_run_id=f"fake-e2e-run-{endpoint}-{i}",
+                    llm_run_id=f"fake-e2e-run-{endpoint}-{i}",
                     prompt_chars=100,
                     was_mocked=False,
                     week_number=now.strftime("%G-W%V"),

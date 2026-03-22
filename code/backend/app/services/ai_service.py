@@ -5,7 +5,7 @@ Pipeline order (mandatory — see master.md Rate Limiting section):
     1. check_limit()   — FIRST
     2. build_context()
     3. build_prompt()
-    4. oz_client.run()
+    4. llm_client.run()
     5. parse_response()
     6. record_usage()  — LAST, only after real successful parse
 
@@ -13,12 +13,12 @@ Pipeline order (mandatory — see master.md Rate Limiting section):
     0. Short-report check (< 20 words) — BEFORE rate limit (no slot consumed)
     1. check_limit()
     2. build_prompt()
-    3. oz_client.run()
+    3. llm_client.run()
     4. parse_response()
     5. record_usage()  — LAST, only after real successful parse
 
   For accept_tasks:
-    No OZ call, no rate limit. Creates Task rows directly.
+    No LLM call, no rate limit. Creates Task rows directly.
 """
 from __future__ import annotations
 
@@ -41,7 +41,7 @@ from ..schemas.synthesis import (
 )
 from ..services.ai_rate_limiter import AIRateLimiter, SUGGEST, COPLAN
 from ..services.inference_context import InferenceContextBuilder
-from ..services.oz_client import OZClient
+from ..services.llm_client import LLMClient
 from ..services.prompt_builder import PromptBuilder
 
 logger = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ class AIService:
         self._rate_limiter = AIRateLimiter()
         self._context_builder = InferenceContextBuilder()
         self._prompt_builder = PromptBuilder()
-        self._oz_client = OZClient()
+        self._oz_client = LLMClient()
 
     # ------------------------------------------------------------------
     # Task Suggester (Prompt B)
@@ -97,7 +97,7 @@ class AIService:
             await self._rate_limiter.record_usage(
                 user_id=user_id,
                 endpoint=SUGGEST,
-                oz_run_id=result.get("id") or result.get("run_id"),
+                llm_run_id=result.get("provider"),
                 prompt_chars=len(prompt),
                 was_mocked=was_mocked,
                 db=db,
@@ -169,7 +169,7 @@ class AIService:
             await self._rate_limiter.record_usage(
                 user_id=user_id,
                 endpoint=COPLAN,
-                oz_run_id=result.get("id") or result.get("run_id"),
+                llm_run_id=result.get("provider"),
                 prompt_chars=len(prompt),
                 was_mocked=was_mocked,
                 db=db,

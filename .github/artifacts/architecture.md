@@ -50,7 +50,7 @@
 
 ### Reports & AI
 - POST /reports: Submit manual report.
-- POST /ai/synthesize: Trigger on-demand Sunday Report (calls OZ agent).
+- POST /ai/synthesize: Trigger on-demand Sunday Report (calls LLMClient inference).
 - GET /ai/suggestions: Get AI-generated task list.
 
 ## 3. Synchronization (Type Sync)

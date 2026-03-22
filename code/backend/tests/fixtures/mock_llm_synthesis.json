@@ -1,0 +1,4 @@
+{
+  "result": "{\"summary\":\"Mock synthesis: A productive week focused on backend development. You completed 5 tasks including API endpoints and database migrations. There was one 48-hour silence gap mid-week that aligned with your system state update.\",\"theme\":\"Infrastructure & Foundation\",\"commitmentScore\":7,\"suggestedTasks\":[{\"title\":\"Write unit tests for new endpoints\",\"priority\":\"high\"},{\"title\":\"Update API documentation\",\"priority\":\"medium\"},{\"title\":\"Refactor database queries\",\"priority\":\"low\"}]}",
+  "provider": "mock"
+}

@@ -1,7 +1,7 @@
 """Constructs minimal prompts with strict token budgeting.
 
 Cost minimization strategy:
-- Hard cap: MAX_CONTEXT_CHARS = settings.oz_max_context_chars (default: 8000 chars ~ 2000 tokens)
+- Hard cap: MAX_CONTEXT_CHARS = settings.llm_max_context_chars (default: 8000 chars ~ 2000 tokens)
 - Include only essential fields — no raw log text, no full report bodies
 - Use compact JSON (no indentation, no null fields)
 - System prompt is short and instruction-focused; no lengthy preambles
@@ -78,11 +78,11 @@ class PromptBuilder:
         return json.dumps(cleaned, separators=(",", ":"), ensure_ascii=False, default=str)
 
     def _truncate_to_budget(self, prompt: str) -> str:
-        """Hard-truncate to settings.oz_max_context_chars. Log a warning if triggered."""
-        max_chars = self._settings.oz_max_context_chars
+        """Hard-truncate to settings.llm_max_context_chars. Log a warning if triggered."""
+        max_chars = self._settings.llm_max_context_chars
         if len(prompt) > max_chars:
             logger.warning(
-                "Prompt truncated from %d to %d chars (oz_max_context_chars limit)",
+                "Prompt truncated from %d to %d chars (llm_max_context_chars limit)",
                 len(prompt),
                 max_chars,
             )

@@ -1,5 +1,0 @@
-{
-  "hasConflict": true,
-  "conflictDescription": "The report mentions both refactoring auth and rebuilding the frontend, which are large competing priorities.",
-  "resolutionQuestion": "Which initiative should take priority this week: auth refactoring or frontend rebuild?"
-}

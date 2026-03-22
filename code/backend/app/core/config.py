@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=_resolve_env_file(),
         env_file_encoding="utf-8",
+        extra="ignore",  # silently discard unknown env vars (e.g. deprecated OZ_* keys)
     )
 
     database_url: str = Field("sqlite+aiosqlite:///./data/dev.db", validation_alias="DATABASE_URL")
@@ -45,28 +46,20 @@ class Settings(BaseSettings):
         validation_alias="FRONTEND_CORS_ORIGINS",
     )
 
-    # ── OZ / AI settings ──────────────────────────────────────────────────
-    oz_api_key: str = Field("", validation_alias="OZ_API_KEY")
-    # Cost tip: claude-haiku-4 is cheapest; only upgrade model if output quality is insufficient
-    oz_model_id: str = Field("anthropic/claude-haiku-4", validation_alias="OZ_MODEL_ID")
+    # ── LLM / AI settings (provider-agnostic) ───────────────────────────────
+    # LLM_PROVIDER: "anthropic" (Claude) or "groq" (Llama). Empty llm_api_key → mock mode.
+    llm_provider: str = Field("anthropic", validation_alias="LLM_PROVIDER")
+    llm_api_key: str = Field("", validation_alias="LLM_API_KEY")
+    # Default model per provider. Override with LLM_MODEL_ID env var.
+    # anthropic default: claude-3-5-haiku-latest  |  groq default: llama-3.1-8b-instant
+    llm_model_id: str = Field("claude-3-5-haiku-latest", validation_alias="LLM_MODEL_ID")
     ai_enabled: bool = Field(True, validation_alias="AI_ENABLED")
-    oz_max_wait_seconds: int = Field(90, validation_alias="OZ_MAX_WAIT_SECONDS")
-    oz_max_context_chars: int = Field(8000, validation_alias="OZ_MAX_CONTEXT_CHARS")
-
-    # OZ Cloud Environment — UID of the environment to run agents in.
-    # Create one at https://app.warp.dev → Environments. Required for non-mock runs.
-    oz_environment_id: str = Field("", validation_alias="OZ_ENVIRONMENT_ID")
-
-    # OZ Skill Spec — identifies the dashboard-assistant skill in the repo.
-    # Format: "owner/repo:skill_name" e.g. "myuser/my-repo:dashboard-assistant"
-    # When set, Oz uses `.agents/skills/dashboard-assistant/SKILL.md` as the
-    # agent's system instructions. Leave empty to send prompts without a skill.
-    oz_skill_spec: str = Field("", validation_alias="OZ_SKILL_SPEC")
+    llm_max_context_chars: int = Field(8000, validation_alias="LLM_MAX_CONTEXT_CHARS")
 
     # Rate limit caps — enforced by AIRateLimiter (service layer, not SlowAPI)
-    oz_max_synthesis_per_week: int = Field(3, validation_alias="OZ_MAX_SYNTHESIS_PER_WEEK")
-    oz_max_suggestions_per_day: int = Field(5, validation_alias="OZ_MAX_SUGGESTIONS_PER_DAY")
-    oz_max_coplan_per_day: int = Field(3, validation_alias="OZ_MAX_COPLAN_PER_DAY")
+    llm_max_synthesis_per_week: int = Field(3, validation_alias="LLM_MAX_SYNTHESIS_PER_WEEK")
+    llm_max_suggestions_per_day: int = Field(5, validation_alias="LLM_MAX_SUGGESTIONS_PER_DAY")
+    llm_max_coplan_per_day: int = Field(3, validation_alias="LLM_MAX_COPLAN_PER_DAY")
 
     def get_cors_origins(self) -> list[str]:
         """Split the raw comma-separated origin string into a validated list.
@@ -84,33 +77,25 @@ class Settings(BaseSettings):
                     )
         return origins
 
-    def validate_oz_config(self) -> None:
-        """Startup guard: OZ_API_KEY must be set when AI is enabled in non-dev mode.
+    def validate_llm_config(self) -> None:
+        """Startup guard: LLM_API_KEY should be set when AI is enabled in non-dev mode.
 
-        Also warns if OZ_ENVIRONMENT_ID or OZ_SKILL_SPEC are missing, since
-        cloud agent runs need an environment and skill reference.
+        Warns if running in mock mode (empty key). Raises if provider is unknown.
         """
-        if self.app_env != "dev" and self.oz_api_key == "" and self.ai_enabled:
+        import logging
+        _log = logging.getLogger(__name__)
+        if not self.llm_api_key:
+            _log.warning("LLM_API_KEY is not set — running in mock mode.")
+        if self.llm_provider not in ("anthropic", "groq"):
+            raise ValueError(
+                f"Unknown LLM_PROVIDER: {self.llm_provider!r}. Use 'anthropic' or 'groq'."
+            )
+        if self.app_env != "dev" and self.llm_api_key == "" and self.ai_enabled:
             raise RuntimeError(
-                "OZ_API_KEY must be set when AI_ENABLED=true in non-dev environments. "
-                "Run `python scripts/setup_oz.py` to configure your API key, "
+                "LLM_API_KEY must be set when AI_ENABLED=true in non-dev environments. "
+                "Run `python scripts/setup_llm.py` to configure your API key, "
                 "or set AI_ENABLED=false to disable AI features."
             )
-        if self.ai_enabled and self.oz_api_key:
-            import logging
-            _log = logging.getLogger(__name__)
-            if not self.oz_environment_id:
-                _log.warning(
-                    "OZ_ENVIRONMENT_ID is not set. Cloud agent runs require an "
-                    "environment. Create one at https://app.warp.dev → Environments "
-                    "and set OZ_ENVIRONMENT_ID in .env."
-                )
-            if not self.oz_skill_spec:
-                _log.warning(
-                    "OZ_SKILL_SPEC is not set. Without a skill spec, prompts are "
-                    "sent without the dashboard-assistant skill instructions. "
-                    "Set OZ_SKILL_SPEC=owner/repo:dashboard-assistant in .env."
-                )
 
     def validate_database_config(self) -> None:
         """Startup guard: prevent SQLite from being used in production.

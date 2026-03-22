@@ -87,7 +87,7 @@ async def lifespan(app: FastAPI):
         )
 
     # Startup guard: OZ API key required when AI is enabled in non-dev mode.
-    settings.validate_oz_config()
+    settings.validate_llm_config()
 
     # Startup guard: SQLite must not be used in production.
     settings.validate_database_config()

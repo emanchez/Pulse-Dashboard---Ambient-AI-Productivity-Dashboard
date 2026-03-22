@@ -1,8 +1,8 @@
 """Inference Context Builder — assembles ambient data into structured context for AI prompts.
 
-This service only queries and structures data — it never calls OZ.  Its output
-feeds PromptBuilder, which enforces the ``oz_max_context_chars`` hard cap before
-any token is sent to OZ.
+This service only queries and structures data — it never calls the LLM directly. Its output
+feeds PromptBuilder, which enforces the ``llm_max_context_chars`` hard cap before
+any token is sent to the LLM provider.
 """
 
 from __future__ import annotations

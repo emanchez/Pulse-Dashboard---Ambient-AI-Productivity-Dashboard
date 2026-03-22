@@ -19,7 +19,7 @@ class AIUsageLog(TimestampedBase):
 
     user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     endpoint: Mapped[str] = mapped_column(String(50), nullable=False, index=True)  # "synthesis" | "suggest" | "coplan"
-    oz_run_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    llm_run_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     prompt_chars: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     was_mocked: Mapped[bool] = mapped_column(Boolean, default=False)
     # ISO-week bucket for weekly grouping, e.g. "2026-W11"

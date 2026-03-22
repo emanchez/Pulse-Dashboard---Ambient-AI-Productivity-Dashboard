@@ -41,7 +41,7 @@ class SynthesisResponse(CamelModel):
 class SynthesisStatusResponse(CamelModel):
     id: str
     status: str  # pending | completed | failed
-    oz_run_id: str | None = None
+    llm_run_id: str | None = None
 
 
 # ---------------------------------------------------------------------------

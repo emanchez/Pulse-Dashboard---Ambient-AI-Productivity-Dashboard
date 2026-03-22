@@ -17,12 +17,12 @@ The primary objective is to transition from Active Data Entry (high friction) to
 | Frontend   | Next.js (TypeScript)| Hybrid UI utilizing Progressive Disclosure. |
 | Backend    | FastAPI (Python)    | High-performance orchestration of Pydantic AI agents. |
 | Database   | SQLAlchemy          | Local event-sourcing via SQLite/Postgres. |
-| Intelligence| OZ (Warp)          | Cloud agent platform for AI inference via Skills. |
+| Intelligence| LLM Provider (Anthropic/Groq) | Provider-agnostic inference via `LLMClient`. Anthropic Claude (primary) or Groq Llama (free tier). |
 | Type Sync  | @hey-api/openapi-ts | Prevents "Maintenance Madness" by automating FE/BE parity. |
 
 ### 2.1 Architectural Decision Records (ADRs)
 
-- **ADR-001: OZ Cloud Agent Platform.** Context: Privacy (zero-data-retention policy) and operational simplicity. Decision: Use OZ (Warp) as the inference backend via the `dashboard-assistant` Skill. Consequence: No local GPU required; inference is credit-billed. Supersedes the original Ollama decision.
+- **ADR-001: LLM Provider via LLMClient (Phase 4.1.2 revision).** Context: OZ (Warp cloud agent) beta access was not received. Decision: Use a provider-agnostic `LLMClient` abstraction supporting Anthropic Claude and Groq Llama, switchable via `LLM_PROVIDER` env var. Consequence: No OZ dependency; inference is pay-per-token (Anthropic) or free-tier (Groq). Supersedes prior OZ Cloud Agent ADR.
 - **ADR-002: Event Logging (ActionLog).** Context: Need for ambient sensing. Decision: Every task update triggers an immutable log entry. Consequence: Enables deep historical analysis for Sunday Synthesis.
 
 ## 3. Core Data Models
@@ -117,6 +117,6 @@ The system employs a "Proactive Pause" when faced with ambiguity:
 
 ### Phase 4: Sunday Synthesis & Co-Planning
 
-- **Backend:** OZ agent orchestration for Synthesis and Ambiguity Guard.
+- **Backend:** LLM inference (`LLMClient`) for Synthesis and Ambiguity Guard.
 - **Frontend:** Sunday Modal and Reasoning Sidebar for Inference Cards.
 - **UI/UX:** Implement Ghost List to visualize wheel-spinning tasks.

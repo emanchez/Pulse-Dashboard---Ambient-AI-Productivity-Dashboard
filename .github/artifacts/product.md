@@ -54,4 +54,4 @@
 - **Phase 1:** Skeleton, JWT Auth, Type Sync.
 - **Phase 2:** Task CRUD, ActionLog Middleware, Silence Indicator.
 - **Phase 3:** Manual Reporting, System Pause Scheduler.
-- **Phase 4:** OZ Agent Orchestration, Sunday Synthesis Modal.
+- **Phase 4:** LLM Inference Layer (LLMClient), Sunday Synthesis Modal.

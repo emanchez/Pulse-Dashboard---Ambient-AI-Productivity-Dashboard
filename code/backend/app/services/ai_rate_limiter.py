@@ -58,14 +58,14 @@ class AIRateLimiter:
         self,
         user_id: str,
         endpoint: str,
-        oz_run_id: str | None,
+        llm_run_id: str | None,
         prompt_chars: int,
         was_mocked: bool,
         db: AsyncSession,
     ) -> None:
         """Persist a usage log entry.
 
-        Called ONLY after a real, successful OZ parse completes.
+        Called ONLY after a real, successful LLM parse completes.
         NEVER called for errors. NEVER called for mock-mode.
         """
         if was_mocked:
@@ -76,7 +76,7 @@ class AIRateLimiter:
         entry = AIUsageLog(
             user_id=user_id,
             endpoint=endpoint,
-            oz_run_id=oz_run_id,
+            llm_run_id=llm_run_id,
             prompt_chars=prompt_chars,
             was_mocked=was_mocked,
             week_number=now.strftime("%G-W%V"),
@@ -85,7 +85,7 @@ class AIRateLimiter:
         )
         db.add(entry)
         await db.commit()
-        logger.info("AI usage recorded: user=%s endpoint=%s oz_run_id=%s chars=%d", user_id, endpoint, oz_run_id, prompt_chars)
+        logger.info("AI usage recorded: user=%s endpoint=%s llm_run_id=%s chars=%d", user_id, endpoint, llm_run_id, prompt_chars)
 
     async def get_usage_summary(self, user_id: str, db: AsyncSession) -> dict:
         """Return current usage counts vs. caps for all three endpoint types.
@@ -111,7 +111,7 @@ class AIRateLimiter:
         now = datetime.now(timezone.utc)
 
         if endpoint == SYNTHESIS:
-            limit = self._settings.oz_max_synthesis_per_week
+            limit = self._settings.llm_max_synthesis_per_week
             window_label = "week"
             week_str = now.strftime("%G-W%V")
             stmt = select(func.count()).select_from(AIUsageLog).where(
@@ -122,9 +122,9 @@ class AIRateLimiter:
             )
         elif endpoint in (SUGGEST, COPLAN):
             limit = (
-                self._settings.oz_max_suggestions_per_day
+                self._settings.llm_max_suggestions_per_day
                 if endpoint == SUGGEST
-                else self._settings.oz_max_coplan_per_day
+                else self._settings.llm_max_coplan_per_day
             )
             window_label = "day"
             day_str = now.strftime("%Y-%m-%d")

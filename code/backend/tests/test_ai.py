@@ -1,7 +1,7 @@
 """Tests for AI endpoints — Steps 3 (Synthesis) and 4 (Task Suggester, Co-Planning).
 
-CRITICAL: All tests run in mock mode (OZ_API_KEY=""). No real OZ API calls.
-Tests that exercise 429 or short-circuit paths assert OZClient.run_prompt was NEVER called.
+CRITICAL: All tests run in mock mode (LLM_API_KEY=""). No real LLM API calls.
+Tests that exercise 429 or short-circuit paths assert LLMClient.run_prompt was NEVER called.
 """
 from __future__ import annotations
 
@@ -73,7 +73,7 @@ def _insert_usage_logs(user_id: str, endpoint: str, count: int):
                 entry = AIUsageLog(
                     user_id=user_id,
                     endpoint=endpoint,
-                    oz_run_id=f"fake-run-{endpoint}-{i}",
+                    llm_run_id=f"fake-run-{endpoint}-{i}",
                     prompt_chars=100,
                     was_mocked=False,
                     week_number=now.strftime("%G-W%V"),
@@ -175,7 +175,7 @@ class TestTriggerSynthesis:
         svc = SynthesisService()
         with patch.object(svc._oz_client, "_settings") as mock_oz_s:
             mock_oz_s.ai_enabled = False
-            mock_oz_s.oz_api_key = ""
+            mock_oz_s.llm_api_key = ""
             mock_oz_s.app_env = "dev"
 
             async def _do():
@@ -194,13 +194,13 @@ class TestTriggerSynthesis:
         _clear_ai_data(user_id)
         _insert_usage_logs(user_id, "synthesis", 3)
 
-        with patch("app.services.oz_client.OZClient.run_prompt", new_callable=AsyncMock) as mock_oz:
+        with patch("app.services.llm_client.LLMClient.run_prompt", new_callable=AsyncMock) as mock_oz:
             r = client.post("/ai/synthesis", headers=auth_headers)
             assert r.status_code == 429
             data = r.json()
             assert "detail" in data
             assert "resetsIn" in data["detail"]
-            # OZ must not have been called
+            # LLM must not have been called
             mock_oz.assert_not_called()
 
         _clear_ai_data(user_id)
@@ -217,13 +217,13 @@ class TestTriggerSynthesis:
         async def _run_failed():
             async with async_session() as db:
                 with patch.object(svc._oz_client, "run_prompt", new_callable=AsyncMock) as mock_oz:
-                    mock_oz.side_effect = RuntimeError("OZ exploded")
+                    mock_oz.side_effect = RuntimeError("LLM exploded")
                     with patch.object(svc._oz_client, "_is_mock_mode", return_value=False):
                         return await svc.trigger_synthesis(user_id, db)
 
         report = _run(_run_failed())
         assert report.status == "failed"
-        assert "OZ exploded" in report.summary
+        assert "LLM exploded" in report.summary
 
         # No usage log should exist for this failed run
         count = _count_usage_logs(user_id, "synthesis")
@@ -332,7 +332,7 @@ class TestSuggestTasks:
         svc = AIService()
         with patch.object(svc._oz_client, "_settings") as mock_oz_s:
             mock_oz_s.ai_enabled = False
-            mock_oz_s.oz_api_key = ""
+            mock_oz_s.llm_api_key = ""
             mock_oz_s.app_env = "dev"
 
             async def _do():
@@ -369,7 +369,7 @@ class TestSuggestTasks:
         _clear_ai_data(user_id)
         _insert_usage_logs(user_id, "suggest", 5)
 
-        with patch("app.services.oz_client.OZClient.run_prompt", new_callable=AsyncMock) as mock_oz:
+        with patch("app.services.llm_client.LLMClient.run_prompt", new_callable=AsyncMock) as mock_oz:
             r = client.post("/ai/suggest-tasks", headers=auth_headers)
             assert r.status_code == 429
             mock_oz.assert_not_called()
@@ -427,12 +427,12 @@ class TestCoPlan:
 
         initial_count = _count_usage_logs(user_id, "coplan")
 
-        with patch("app.services.oz_client.OZClient.run_prompt", new_callable=AsyncMock) as mock_oz:
+        with patch("app.services.llm_client.LLMClient.run_prompt", new_callable=AsyncMock) as mock_oz:
             r = client.post("/ai/co-plan", json={"reportId": report_id}, headers=auth_headers)
             assert r.status_code == 200
             data = r.json()
             assert data["hasConflict"] is False
-            # OZ must not be called
+            # LLM must not be called
             mock_oz.assert_not_called()
 
         # No new usage log entry
@@ -452,7 +452,7 @@ class TestCoPlan:
             "It discusses multiple topics including auth refactoring and frontend rebuilds that could conflict.",
         )
 
-        with patch("app.services.oz_client.OZClient.run_prompt", new_callable=AsyncMock) as mock_oz:
+        with patch("app.services.llm_client.LLMClient.run_prompt", new_callable=AsyncMock) as mock_oz:
             r = client.post("/ai/co-plan", json={"reportId": report_id}, headers=auth_headers)
             assert r.status_code == 429
             mock_oz.assert_not_called()

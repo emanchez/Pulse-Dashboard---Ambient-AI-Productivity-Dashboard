@@ -1,12 +1,14 @@
 # Agentic Reasoning & Prompts
 
-## 1. The Inference Engine (OZ)
+## 1. The Inference Engine (LLMClient)
 
-**Platform:** OZ (Warp cloud agent platform) via the `dashboard-assistant` Skill.
+> **Note (Phase 4.1.2):** This project originally planned to use OZ (Warp cloud agent platform) but did not receive beta access. All AI inference now runs through `LLMClient` directly.
 
-**Default Model:** claude-haiku-4 (cheapest capable model; configurable via `OZ_MODEL_ID`).
+**Platform:** `LLMClient` abstraction (`app/services/llm_client.py`) — Anthropic Claude (`anthropic`) or Groq Llama (`groq`), switchable via `LLM_PROVIDER` env var.
 
-**Context Window:** ~8k characters (enforced by `oz_max_context_chars` config cap).
+**Default Model:** `claude-3-5-haiku-latest` for Anthropic; `llama-3.1-8b-instant` for Groq (configurable via `LLM_MODEL_ID`).
+
+**Context Window:** ~8k characters (enforced by `llm_max_context_chars` config cap).
 
 ## 2. Inferred Commitment Analysis
 
@@ -82,7 +84,7 @@
 All inference context (tasks, reports, action logs, system states, silence gaps) MUST be fetched using the `user_id` extracted from the JWT `sub` claim:
 
 ```python
-# CORRECT — always scope queries by user_id before sending to OZ
+# CORRECT — always scope queries by user_id before sending to the LLM
 tasks = await session.execute(
     select(Task)
     .where(Task.user_id == user_id)       # explicit user scope
@@ -98,7 +100,7 @@ The `inference_context.py` service is the single authorised builder of inference
 
 ### 4.3 Context Size & Truncation
 
-The model context window is 8k tokens. The `oz_max_context_chars` config cap (default 8000) enforces this at the service layer. When assembling context:
+The model context window is 8k tokens. The `llm_max_context_chars` config cap (default 8000) enforces this at the service layer. When assembling context:
 
 1. Prioritise recent data: last 7 days of action logs, 3 most recent reports.
 2. Truncate oldest entries first when over the character budget.
@@ -120,7 +122,7 @@ When the app is extended to multiple users, the following MUST be enforced per i
 
 - **Reports and task names may contain personal/private content** (health issues, personal goals, financial data). Treat all inference inputs as sensitive PII.
 - Never log the full prompt text at INFO or higher — log only metadata (user_id, context char count, model, timestamp).
-- In production, ensure the OZ API key is stored securely and never committed to version control. Use environment variables or a secrets manager.
+- In production, ensure the LLM API key is stored securely and never committed to version control. Use environment variables or a secrets manager.
 - If switching to a different cloud model provider in the future, require explicit user consent and document that data handling may change in the product UI and privacy policy.
 
 ---
@@ -139,7 +141,7 @@ Rate limits are enforced at the service layer (`AIRateLimiter`) and tracked in `
 
 ### 5.2 Circuit Breaker
 
-`OzClient` implements a circuit breaker that opens after repeated failures (timeout or 5xx from the model backend). When open:
+`LLMClient` implements a circuit breaker that opens after repeated failures (timeout or 5xx from the model backend). When open:
 - Return a `ServiceUnavailableError` rather than hanging.
 - Surface a user-friendly message in the UI (not raw exception text).
 - Log the failure reason server-side at ERROR level.
@@ -153,4 +155,4 @@ When multiple users are present, rate limits must be per-user (already the case 
 GLOBAL_SYNTHESIS_DAILY_CAP = 50  # adjust based on hardware
 ```
 
-Add this as a configurable setting (`OZ_GLOBAL_DAILY_CAP`) and enforce it in `AIRateLimiter` before the per-user check.
+Add this as a configurable setting (`LLM_GLOBAL_DAILY_CAP`) and enforce it in `AIRateLimiter` before the per-user check.

@@ -3,9 +3,9 @@
 Pipeline order (mandatory — see master.md Rate Limiting section):
   1. check_limit()   — FIRST, before any work
   2. build_context() — only if a slot is available
-  3. build_prompt()  — enforces oz_max_context_chars
-  4. oz_client.run() — real or mock
-  5. parse_response() — extract JSON from OZ transcript
+  3. build_prompt()  — enforces llm_max_context_chars
+  4. llm_client.run() — real or mock
+  5. parse_response() — extract JSON from LLM response
   6. persist_result() — save to DB on success
   7. record_usage()  — LAST, only after real successful parse
 """
@@ -24,21 +24,21 @@ from ..models.synthesis import SynthesisReport
 from ..schemas.synthesis import SuggestedTask, SynthesisResponse
 from ..services.ai_rate_limiter import AIRateLimiter, SYNTHESIS
 from ..services.inference_context import InferenceContextBuilder
-from ..services.oz_client import OZClient
+from ..services.llm_client import LLMClient
 from ..services.prompt_builder import PromptBuilder
 
 logger = logging.getLogger(__name__)
 
 
 class SynthesisService:
-    """Orchestrates Sunday Synthesis: context → prompt → OZ → persist."""
+    """Orchestrates Sunday Synthesis: context → prompt → LLM → persist."""
 
     def __init__(self) -> None:
         self._settings = get_settings()
         self._rate_limiter = AIRateLimiter()
         self._context_builder = InferenceContextBuilder()
         self._prompt_builder = PromptBuilder()
-        self._oz_client = OZClient()
+        self._oz_client = LLMClient()
 
     async def trigger_synthesis(
         self, user_id: str, db: AsyncSession, period_days: int = 7
@@ -77,21 +77,21 @@ class SynthesisService:
                 prompt, title=f"Sunday Synthesis {now.strftime('%Y-%m-%d')}"
             )
 
-            # 5. Parse OZ response
+            # 5. Parse LLM response
             parsed = self._parse_oz_response(result)
             report.summary = parsed.get("summary", "No summary generated.")
             report.theme = parsed.get("theme", "Unknown")
             report.commitment_score = int(parsed.get("commitmentScore", 0))
             report.suggested_tasks = json.dumps(parsed.get("suggestedTasks", []))
             report.status = "completed"
-            report.oz_run_id = result.get("id") or result.get("run_id")
+            report.llm_run_id = result.get("provider")
             report.raw_response = json.dumps(result)
 
-            # 6. Record usage — ONLY after successful real OZ parse
+            # 6. Record usage — ONLY after successful real LLM parse
             await self._rate_limiter.record_usage(
                 user_id=user_id,
                 endpoint=SYNTHESIS,
-                oz_run_id=report.oz_run_id,
+                llm_run_id=report.llm_run_id,
                 prompt_chars=len(prompt),
                 was_mocked=was_mocked,
                 db=db,
