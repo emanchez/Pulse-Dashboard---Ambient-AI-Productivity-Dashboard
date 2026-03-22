@@ -1,7 +1,7 @@
 """Pydantic models for the inference context structure.
 
 These schemas define the shape of data assembled by InferenceContextBuilder
-and injected into OZ prompts by PromptBuilder.
+and injected into LLM prompts by PromptBuilder.
 """
 
 from __future__ import annotations
@@ -56,7 +56,7 @@ class WeeklySummary(CamelModel):
 
 
 class InferenceContext(CamelModel):
-    """Complete context payload for OZ prompt injection."""
+    """Complete context payload for LLM prompt injection."""
 
     period_start: datetime
     period_end: datetime

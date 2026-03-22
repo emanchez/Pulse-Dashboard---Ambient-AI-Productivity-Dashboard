@@ -58,8 +58,9 @@ Provision a Neon serverless PostgreSQL database, run Alembic migrations to creat
    JWT_ALGORITHM=HS256
    ACCESS_TOKEN_EXPIRE_MINUTES=60
    FRONTEND_CORS_ORIGINS=https://<your-frontend-domain>
-   OZ_API_KEY=<your-oz-api-key>
-   OZ_MODEL_ID=anthropic/claude-haiku-4
+   LLM_PROVIDER=anthropic
+   LLM_API_KEY=<your-llm-api-key>
+   LLM_MODEL_ID=claude-3-5-haiku-latest
    AI_ENABLED=true
    ```
 

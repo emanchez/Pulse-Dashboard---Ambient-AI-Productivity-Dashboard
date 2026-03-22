@@ -37,7 +37,7 @@ _synthesis_service = SynthesisService()
 _ai_service = AIService()
 
 # ── Exception → HTTP mapping ──────────────────────────────────────────────
-_OZ_EXCEPTION_MAP: dict[type[Exception], tuple[int, str]] = {
+_LLM_EXCEPTION_MAP: dict[type[Exception], tuple[int, str]] = {
     ServiceDisabledError: (503, "AI features are currently disabled."),
     CircuitBreakerOpen: (503, "AI service temporarily unavailable. Please try again later."),
     TimeoutError: (504, "AI service timed out. Please try again later."),
@@ -47,11 +47,11 @@ _OZ_EXCEPTION_MAP: dict[type[Exception], tuple[int, str]] = {
 
 
 def _handle_ai_exception(exc: Exception) -> HTTPException:
-    """Convert OZ/AI exceptions to structured HTTP errors.
+    """Convert LLM/AI exceptions to structured HTTP errors.
 
     Sanitizes internal error details — only generic messages are exposed.
     """
-    for exc_type, (status_code, message) in _OZ_EXCEPTION_MAP.items():
+    for exc_type, (status_code, message) in _LLM_EXCEPTION_MAP.items():
         if isinstance(exc, exc_type):
             logger.error("AI exception mapped to HTTP %d: %s", status_code, exc)
             return HTTPException(status_code=status_code, detail=message)
@@ -167,7 +167,7 @@ async def co_plan(
 
 
 # ---------------------------------------------------------------------------
-#  Accept AI-suggested tasks (Step 4) — no OZ call, no rate limit
+#  Accept AI-suggested tasks (Step 4) — no LLM call, no rate limit
 # ---------------------------------------------------------------------------
 
 @router.post("/accept-tasks", status_code=201)
@@ -178,7 +178,7 @@ async def accept_tasks(
 ):
     """Accept AI-suggested tasks and add them to the user's task list.
 
-    No OZ call. No rate limit. Creates real Task rows.
+    No LLM call. No rate limit. Creates real Task rows.
     """
     task_ids = await _ai_service.accept_tasks(user_id, body.tasks, db)
     return {"createdTaskIds": task_ids}

@@ -38,12 +38,12 @@ class SynthesisService:
         self._rate_limiter = AIRateLimiter()
         self._context_builder = InferenceContextBuilder()
         self._prompt_builder = PromptBuilder()
-        self._oz_client = LLMClient()
+        self._llm_client = LLMClient()
 
     async def trigger_synthesis(
         self, user_id: str, db: AsyncSession, period_days: int = 7
     ) -> SynthesisReport:
-        """Full pipeline: check limit → build context → prompt → OZ → parse → store."""
+        """Full pipeline: check limit → build context → prompt → LLM → parse → store."""
 
         # 0. RATE LIMIT CHECK — must be first (master.md non-negotiable order)
         await self._rate_limiter.check_limit(user_id, SYNTHESIS, db)
@@ -70,15 +70,15 @@ class SynthesisService:
         await db.commit()
         await db.refresh(report)
 
-        # 4. Submit to OZ
-        was_mocked = self._oz_client._is_mock_mode()
+        # 4. Submit to LLM
+        was_mocked = self._llm_client._is_mock_mode()
         try:
-            result = await self._oz_client.run_prompt(
+            result = await self._llm_client.run_prompt(
                 prompt, title=f"Sunday Synthesis {now.strftime('%Y-%m-%d')}"
             )
 
             # 5. Parse LLM response
-            parsed = self._parse_oz_response(result)
+            parsed = self._parse_llm_response(result)
             report.summary = parsed.get("summary", "No summary generated.")
             report.theme = parsed.get("theme", "Unknown")
             report.commitment_score = int(parsed.get("commitmentScore", 0))
@@ -137,15 +137,15 @@ class SynthesisService:
     # Response parsing
     # ------------------------------------------------------------------
 
-    def _parse_oz_response(self, result: dict) -> dict:
-        """Extract structured JSON from OZ agent response.
+    def _parse_llm_response(self, result: dict) -> dict:
+        """Extract structured JSON from LLM response.
 
-        OZ returns a dict with a 'result' key containing either:
-          - a JSON string (from the agent's text output), or
+        LLMClient returns a dict with a 'result' key containing either:
+          - a JSON string (from the model's text output), or
           - nested dict already parsed.
         We extract the first valid JSON object from the text.
         """
-        # Try 'result' key first (standard OZ response shape)
+        # Try 'result' key first (standard LLMClient response shape)
         raw = result.get("result", "")
 
         # If raw is already a dict, return it
@@ -180,7 +180,7 @@ class SynthesisService:
                 except (json.JSONDecodeError, ValueError):
                     pass
 
-        raise ValueError(f"Could not parse JSON from OZ response: {str(result)[:200]}")
+        raise ValueError(f"Could not parse JSON from LLM response: {str(result)[:200]}")
 
     def _report_to_response(self, report: SynthesisReport) -> SynthesisResponse:
         """Convert a SynthesisReport ORM object to a SynthesisResponse schema."""

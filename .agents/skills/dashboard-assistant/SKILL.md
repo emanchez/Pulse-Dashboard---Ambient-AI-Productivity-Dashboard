@@ -146,7 +146,7 @@ Return a single JSON object:
 
 ## Constraints
 
-- **OZ-only inference.** All inference runs through the OZ (Warp) cloud agent platform. No local model setup required.
+- **LLM inference via LLMClient.** All inference runs through the provider-agnostic `LLMClient` abstraction (Anthropic Claude or Groq Llama, switchable via `LLM_PROVIDER` env var). No local model setup required.
 - **Context window budget:** Keep the assembled prompt under 8,000 characters. Truncate oldest `action_logs` first. Prepend `"[N older actions omitted]"` if truncation occurs.
 - **Never log prompt contents** at INFO or higher — log only metadata (`user_id`, char count, model, timestamp).
 - **No cross-user data.** If a query returns rows for more than one `user_id`, abort and raise a `SecurityError` before dispatch.

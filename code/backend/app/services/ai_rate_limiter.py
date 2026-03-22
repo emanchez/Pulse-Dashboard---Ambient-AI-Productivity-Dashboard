@@ -37,7 +37,7 @@ class AIRateLimiter:
     async def check_limit(self, user_id: str, endpoint: str, db: AsyncSession) -> None:
         """Check if the user is within limits. Raise HTTPException(429) if exceeded.
 
-        This MUST be the FIRST call in any AI service method that invokes OZ.
+        This MUST be the FIRST call in any AI service method that invokes the LLM.
         """
         limit, window_label, used = await self._get_usage(user_id, endpoint, db)
         if used >= limit:

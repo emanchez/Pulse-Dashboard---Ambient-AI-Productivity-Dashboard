@@ -1,6 +1,6 @@
 """AIUsageLog — persists every AI API call for rate limiting and spend tracking.
 
-Records are inserted ONLY after a real, successful OZ parse completes.
+Records are inserted ONLY after a real, successful LLM parse completes.
 Mock-mode calls and failed calls MUST NOT produce entries — this ensures
 rate-limit caps are never consumed by non-billable events.
 """

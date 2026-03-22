@@ -150,7 +150,7 @@ class TestTriggerSynthesis:
     """POST /ai/synthesis"""
 
     def test_trigger_synthesis_success(self, client, auth_headers):
-        """Mock OZ response → 202, status=completed."""
+        """Mock LLM response → 202, status=completed."""
         user_id = _get_user_id(client, auth_headers)
         _clear_ai_data(user_id)
 
@@ -173,40 +173,40 @@ class TestTriggerSynthesis:
         _clear_ai_data(user_id)
 
         svc = SynthesisService()
-        with patch.object(svc._oz_client, "_settings") as mock_oz_s:
-            mock_oz_s.ai_enabled = False
-            mock_oz_s.llm_api_key = ""
-            mock_oz_s.app_env = "dev"
+        with patch.object(svc._llm_client, "_settings") as mock_llm_s:
+            mock_llm_s.ai_enabled = False
+            mock_llm_s.llm_api_key = ""
+            mock_llm_s.app_env = "dev"
 
             async def _do():
                 async with async_session() as db:
                     return await svc.trigger_synthesis(user_id, db)
 
-            # The OZ client raises ServiceDisabledError, caught by try/except → status=failed
+            # The LLM client raises ServiceDisabledError, caught by try/except → status=failed
             report = _run(_do())
             assert report.status == "failed"
             assert "disabled" in report.summary.lower()
         _clear_ai_data(user_id)
 
     def test_trigger_synthesis_rate_limited(self, client, auth_headers):
-        """Exhaust weekly synthesis cap (3) → 429. OZ must NOT be called."""
+        """Exhaust weekly synthesis cap (3) → 429. LLM must NOT be called."""
         user_id = _get_user_id(client, auth_headers)
         _clear_ai_data(user_id)
         _insert_usage_logs(user_id, "synthesis", 3)
 
-        with patch("app.services.llm_client.LLMClient.run_prompt", new_callable=AsyncMock) as mock_oz:
+        with patch("app.services.llm_client.LLMClient.run_prompt", new_callable=AsyncMock) as mock_llm:
             r = client.post("/ai/synthesis", headers=auth_headers)
             assert r.status_code == 429
             data = r.json()
             assert "detail" in data
             assert "resetsIn" in data["detail"]
             # LLM must not have been called
-            mock_oz.assert_not_called()
+            mock_llm.assert_not_called()
 
         _clear_ai_data(user_id)
 
     def test_trigger_synthesis_failed_run_not_counted(self, client, auth_headers):
-        """OZ error → status=failed stored, no usage log entry (unit test)."""
+        """LLM error → status=failed stored, no usage log entry (unit test)."""
         from app.services.synthesis_service import SynthesisService
 
         user_id = _get_user_id(client, auth_headers)
@@ -216,9 +216,9 @@ class TestTriggerSynthesis:
 
         async def _run_failed():
             async with async_session() as db:
-                with patch.object(svc._oz_client, "run_prompt", new_callable=AsyncMock) as mock_oz:
-                    mock_oz.side_effect = RuntimeError("LLM exploded")
-                    with patch.object(svc._oz_client, "_is_mock_mode", return_value=False):
+                with patch.object(svc._llm_client, "run_prompt", new_callable=AsyncMock) as mock_llm:
+                    mock_llm.side_effect = RuntimeError("LLM exploded")
+                    with patch.object(svc._llm_client, "_is_mock_mode", return_value=False):
                         return await svc.trigger_synthesis(user_id, db)
 
         report = _run(_run_failed())
@@ -300,7 +300,7 @@ class TestSuggestTasks:
     """POST /ai/suggest-tasks"""
 
     def test_suggest_tasks_success(self, client, auth_headers):
-        """Mock OZ with suggestions → 200 with correct shape."""
+        """Mock LLM with suggestions → 200 with correct shape."""
         user_id = _get_user_id(client, auth_headers)
         _clear_ai_data(user_id)
 
@@ -330,10 +330,10 @@ class TestSuggestTasks:
         _clear_ai_data(user_id)
 
         svc = AIService()
-        with patch.object(svc._oz_client, "_settings") as mock_oz_s:
-            mock_oz_s.ai_enabled = False
-            mock_oz_s.llm_api_key = ""
-            mock_oz_s.app_env = "dev"
+        with patch.object(svc._llm_client, "_settings") as mock_llm_s:
+            mock_llm_s.ai_enabled = False
+            mock_llm_s.llm_api_key = ""
+            mock_llm_s.app_env = "dev"
 
             async def _do():
                 async with async_session() as db:
@@ -364,15 +364,15 @@ class TestSuggestTasks:
         _clear_ai_data(user_id)
 
     def test_suggest_tasks_rate_limited(self, client, auth_headers):
-        """Exhaust daily suggest cap (5) → 429. OZ not called."""
+        """Exhaust daily suggest cap (5) → 429. LLM not called."""
         user_id = _get_user_id(client, auth_headers)
         _clear_ai_data(user_id)
         _insert_usage_logs(user_id, "suggest", 5)
 
-        with patch("app.services.llm_client.LLMClient.run_prompt", new_callable=AsyncMock) as mock_oz:
+        with patch("app.services.llm_client.LLMClient.run_prompt", new_callable=AsyncMock) as mock_llm:
             r = client.post("/ai/suggest-tasks", headers=auth_headers)
             assert r.status_code == 429
-            mock_oz.assert_not_called()
+            mock_llm.assert_not_called()
 
         _clear_ai_data(user_id)
 
@@ -386,7 +386,7 @@ class TestCoPlan:
     """POST /ai/co-plan"""
 
     def test_co_plan_success(self, client, auth_headers):
-        """Report with sufficient content, mock OZ → 200 with conflict analysis."""
+        """Report with sufficient content, mock LLM → 200 with conflict analysis."""
         user_id = _get_user_id(client, auth_headers)
         _clear_ai_data(user_id)
         report_id = _create_report(
@@ -414,26 +414,26 @@ class TestCoPlan:
         report_id = _create_report(
             user_id_a,
             "User A report",
-            "Detailed enough report body with more than twenty words for the co-planning endpoint to actually reach the OZ call section properly.",
+            "Detailed enough report body with more than twenty words for the co-planning endpoint to actually reach the LLM call section properly.",
         )
         r = client.post("/ai/co-plan", json={"reportId": report_id}, headers=auth_headers_b)
         assert r.status_code == 404
 
     def test_co_plan_short_report(self, client, auth_headers):
-        """Report < 20 words → hasConflict=false, no OZ call, no usage log."""
+        """Report < 20 words → hasConflict=false, no LLM call, no usage log."""
         user_id = _get_user_id(client, auth_headers)
         _clear_ai_data(user_id)
         report_id = _create_report(user_id, "Short", "Just a few words here.")
 
         initial_count = _count_usage_logs(user_id, "coplan")
 
-        with patch("app.services.llm_client.LLMClient.run_prompt", new_callable=AsyncMock) as mock_oz:
+        with patch("app.services.llm_client.LLMClient.run_prompt", new_callable=AsyncMock) as mock_llm:
             r = client.post("/ai/co-plan", json={"reportId": report_id}, headers=auth_headers)
             assert r.status_code == 200
             data = r.json()
             assert data["hasConflict"] is False
             # LLM must not be called
-            mock_oz.assert_not_called()
+            mock_llm.assert_not_called()
 
         # No new usage log entry
         after_count = _count_usage_logs(user_id, "coplan")
@@ -441,7 +441,7 @@ class TestCoPlan:
         _clear_ai_data(user_id)
 
     def test_co_plan_rate_limited(self, client, auth_headers):
-        """Exhaust daily co-plan cap (3) → 429. OZ not called."""
+        """Exhaust daily co-plan cap (3) → 429. LLM not called."""
         user_id = _get_user_id(client, auth_headers)
         _clear_ai_data(user_id)
         _insert_usage_logs(user_id, "coplan", 3)
@@ -452,10 +452,10 @@ class TestCoPlan:
             "It discusses multiple topics including auth refactoring and frontend rebuilds that could conflict.",
         )
 
-        with patch("app.services.llm_client.LLMClient.run_prompt", new_callable=AsyncMock) as mock_oz:
+        with patch("app.services.llm_client.LLMClient.run_prompt", new_callable=AsyncMock) as mock_llm:
             r = client.post("/ai/co-plan", json={"reportId": report_id}, headers=auth_headers)
             assert r.status_code == 429
-            mock_oz.assert_not_called()
+            mock_llm.assert_not_called()
 
         _clear_ai_data(user_id)
 

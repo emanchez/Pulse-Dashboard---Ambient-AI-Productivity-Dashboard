@@ -1,6 +1,6 @@
 """SynthesisReport — stores AI-generated weekly synthesis narratives.
 
-Each row is one OZ agent run that analyzed the user's ambient data and
+Each row is one LLM inference run that analyzed the user's ambient data and
 produced a narrative, theme, commitment score, and suggested tasks.
 """
 from __future__ import annotations

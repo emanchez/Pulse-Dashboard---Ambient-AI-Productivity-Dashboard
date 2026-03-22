@@ -1,5 +1,14 @@
 # Phase 4.2 — Pre-Deployment Work Summary
 
+> **⚠️ SUPERSEDED — Phase 4.1.2 (LLMClient Migration)**
+>
+> This document describes OZ (Warp cloud agent platform) alignment work that
+> was performed before the project pivoted away from OZ. Phase 4.1.2 replaced
+> all OZ integration with the provider-agnostic `LLMClient` abstraction
+> (Anthropic / Groq). The changes listed here (renaming `oz_run_id`, adding
+> `setup_oz.py`, etc.) have been superseded by LLMClient equivalents. Retain
+> for historical context only — do not use as implementation guidance.
+
 **Date:** 2026-03-22
 **Branch:** `phase-4-2/predeployment-oz-cleanup`
 

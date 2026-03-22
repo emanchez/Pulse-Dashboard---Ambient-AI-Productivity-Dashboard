@@ -80,9 +80,9 @@ All previous steps must be complete before running this checklist:
 
 | # | Test | Expected | Status |
 |---|------|----------|--------|
-| 6.1 | Trigger AI synthesis (if OZ is configured) | Returns a synthesis report or graceful error | ☐ |
+| 6.1 | Trigger AI synthesis (if LLM API key is configured) | Returns a synthesis report or graceful error | ☐ |
 | 6.2 | AI rate limiter works | Rapid requests are throttled with 429 | ☐ |
-| 6.3 | AI feature with mock mode | Returns mock response (if OZ not configured) | ☐ |
+| 6.3 | AI feature with mock mode | Returns mock response (if LLM API key not configured) | ☐ |
 
 ### 7. System State
 
@@ -195,7 +195,7 @@ None — this is a verification document.
 |------|------------|
 | Smoke test reveals critical issue | Rollback procedures documented above. Each issue feeds back to the relevant step. |
 | Free tier limits hit during testing | Monitor usage dashboards. Neon and Railway free tiers are generous for single-user apps. |
-| OZ AI service not accessible from Railway | Verify OZ API is reachable from Railway's network. If not, document and use mock mode. |
+| LLM AI service not accessible from Railway | Verify LLM API is reachable from Railway's network. If not, document and use mock mode. |
 | DNS not propagated yet | Use platform URLs (*.railway.app, *.vercel.app) for smoke test. Retest after DNS propagates. |
 
 ## References

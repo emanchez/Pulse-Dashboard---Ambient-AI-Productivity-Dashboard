@@ -86,7 +86,7 @@ async def lifespan(app: FastAPI):
             "Set the JWT_SECRET environment variable to a strong random secret."
         )
 
-    # Startup guard: OZ API key required when AI is enabled in non-dev mode.
+    # Startup guard: LLM API key required when AI is enabled in non-dev mode.
     settings.validate_llm_config()
 
     # Startup guard: SQLite must not be used in production.

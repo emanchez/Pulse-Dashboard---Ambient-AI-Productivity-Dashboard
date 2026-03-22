@@ -1,7 +1,7 @@
 """Tests for InferenceContextBuilder (Step 2).
 
 These tests exercise the context builder in isolation using the test DB.
-No OZ calls are made — this service is read-only data aggregation.
+No LLM calls are made — this service is read-only data aggregation.
 """
 
 import asyncio

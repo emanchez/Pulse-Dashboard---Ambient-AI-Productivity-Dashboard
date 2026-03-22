@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class PromptBuilder:
-    """Builds structured prompts for OZ agent runs with strict size constraints."""
+    """Builds structured prompts for LLM inference runs with strict size constraints."""
 
     def __init__(self) -> None:
         self._settings = get_settings()

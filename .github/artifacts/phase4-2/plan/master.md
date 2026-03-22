@@ -28,7 +28,7 @@ After evaluating free/cost-effective hosting options, the following stack is rec
 | **Frontend** | **Vercel** | Hobby (Free) | $0 | Native Next.js support, automatic CI/CD from Git, global CDN, free SSL, preview deployments. Best-in-class for Next.js. |
 | **Backend** | **Railway** | Hobby ($5 w/ credits) | $0–5 | Usage-based billing (pay only for active CPU/memory), Docker support, built-in secrets management, auto-deploy from Git. A FastAPI app serving one user will stay well within the $5 credit. Alternative: Render Free (but Render free services spin down after 15 min inactivity, causing cold-start delays). |
 | **Database** | **Neon** | Free | $0 | Serverless PostgreSQL with connection pooling, scale-to-zero, 0.5 GB storage per project, 100 CU-hours/month. Perfect for a single-user app. No server to manage. Compatible with `asyncpg`/SQLAlchemy async. |
-| **AI Inference** | **OZ (Warp)** | Existing | Per-use | Already integrated. `OZ_API_KEY` required. Claude Haiku is the cheapest capable model. |
+| **AI Inference** | **LLMClient** (Anthropic/Groq) | Existing | Per-use | Already integrated via `LLMClient`. `LLM_API_KEY` and `LLM_PROVIDER` required. Claude Haiku is the cheapest capable model. |
 | **DNS/Domain** | **Cloudflare** | Free | $0 (+ domain cost) | Free DNS, free SSL, DDoS protection. Domain registration ~$10–15/year via any registrar. |
 
 ### Alternatives Considered
@@ -52,7 +52,7 @@ After evaluating free/cost-effective hosting options, the following stack is rec
 | **Vercel account** | [vercel.com/signup](https://vercel.com/signup) | Frontend deployment | Steps 6, 8 |
 | **Railway account** | [railway.com/login](https://railway.com/login) | Backend deployment | Steps 5, 8 |
 | **Neon account** | [console.neon.tech](https://console.neon.tech) | PostgreSQL database | Steps 3, 4 |
-| **OZ API key** | Run `python scripts/setup_oz.py` or [app.warp.dev](https://app.warp.dev) | AI inference | Step 5 |
+| **LLM API key** | Run `python scripts/setup_llm.py` or configure manually in `.env` | AI inference | Step 5 |
 | **Domain name** (optional) | Any registrar (Namecheap, Cloudflare, etc.) | Custom domain | Step 7 |
 | **Cloudflare account** (optional) | [cloudflare.com](https://cloudflare.com) | DNS management | Step 7 |
 | **GitHub repo** | [github.com](https://github.com) | CI/CD for Vercel + Railway | Steps 5, 6, 8 |
@@ -98,7 +98,7 @@ Steps are **strictly sequential** due to cascading dependencies (each step's out
 2. `.github/artifacts/phase4-2/plan/step-2-schema-hardening.md` — branch: `phase-4.2/step-2-schema-hardening` (after step 1)
 3. `.github/artifacts/phase4-2/plan/step-3-neon-provision-migrate.md` — branch: `phase-4.2/step-3-neon-provision-migrate` (after step 2; **BLOCKED on Neon account**)
 4. `.github/artifacts/phase4-2/plan/step-4-asyncpg-switchover.md` — branch: `phase-4.2/step-4-asyncpg-switchover` (after step 3; **BLOCKED on Neon DATABASE_URL**)
-5. `.github/artifacts/phase4-2/plan/step-5-backend-deploy-railway.md` — branch: `phase-4.2/step-5-backend-deploy-railway` (after step 4; **BLOCKED on Railway account + OZ_API_KEY + JWT_SECRET**)
+5. `.github/artifacts/phase4-2/plan/step-5-backend-deploy-railway.md` — branch: `phase-4.2/step-5-backend-deploy-railway` (after step 4; **BLOCKED on Railway account + LLM_API_KEY + JWT_SECRET**)
 6. `.github/artifacts/phase4-2/plan/step-6-frontend-deploy-vercel.md` — branch: `phase-4.2/step-6-frontend-deploy-vercel` (after step 5; **BLOCKED on Vercel account + production backend URL**)
 7. `.github/artifacts/phase4-2/plan/step-7-security-hardening.md` — branch: `phase-4.2/step-7-security-hardening` (after step 6; needs both deploys live to test cookie flow)
 8. `.github/artifacts/phase4-2/plan/step-8-cicd-pipeline.md` — branch: `phase-4.2/step-8-cicd-pipeline` (after step 5+6; **BLOCKED on GitHub repo**)
@@ -133,7 +133,7 @@ Steps are **strictly sequential** due to cascading dependencies (each step's out
 
 ### Group B — Deployment (Steps 5–6)
 - **Strictly sequential:** Backend must deploy first (Step 5) to get a production URL before frontend (Step 6) can configure `NEXT_PUBLIC_API_BASE`.
-- Step 5 is **BLOCKED** on: Railway account, `OZ_API_KEY`, `JWT_SECRET`, Neon `DATABASE_URL`.
+- Step 5 is **BLOCKED** on: Railway account, `LLM_API_KEY`, `JWT_SECRET`, Neon `DATABASE_URL`.
 - Step 6 is **BLOCKED** on: Vercel account, Step 5 completion (need backend URL).
 
 ### Group C — Security & Infrastructure (Steps 7–9)
@@ -196,7 +196,7 @@ curl -s -I -X OPTIONS https://<backend-url>/tasks \
 | SQLite → PostgreSQL data migration loses data | Data loss | Step 3 includes a mandatory `dev.db` backup before any migration. Validate row counts post-migration. Keep `dev.db.pre-deploy.bak` permanently. |
 | httpOnly cookie auth breaks existing frontend token flow | Auth broken, app unusable | Step 7 implements cookie auth behind the `APP_ENV=prod` flag. Dev mode retains `localStorage` flow. Both paths are tested. |
 | Alembic migration fails on Neon | Cannot deploy schema | Test all migrations locally against a PostgreSQL Docker container before running on Neon. Keep `alembic downgrade` path tested. |
-| OZ API key invalid or expired in production | AI features fail with 503 | `ServiceDisabledError` handling (from Phase 4.1 Step 4) returns a clean 503. UI degrades gracefully. Non-blocking for core task/report functionality. |
+| LLM API key invalid or expired in production | AI features fail with 503 | `ServiceDisabledError` handling (from Phase 4.1.2 LLMClient) returns a clean 503. UI degrades gracefully. Non-blocking for core task/report functionality. |
 | DNS propagation delay on custom domain | Site unreachable via domain for hours | Use platform-provided URLs (.vercel.app / .up.railway.app) as primary until DNS propagates. Domain is optional. |
 
 ### Rollback Plan

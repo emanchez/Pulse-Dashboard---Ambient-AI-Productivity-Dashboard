@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=_resolve_env_file(),
         env_file_encoding="utf-8",
-        extra="ignore",  # silently discard unknown env vars (e.g. deprecated OZ_* keys)
+        extra="ignore",  # silently discard unknown env vars (e.g. stale keys during migration)
     )
 
     database_url: str = Field("sqlite+aiosqlite:///./data/dev.db", validation_alias="DATABASE_URL")

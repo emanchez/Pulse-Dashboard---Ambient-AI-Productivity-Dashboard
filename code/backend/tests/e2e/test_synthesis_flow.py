@@ -1,10 +1,10 @@
 """E2E integration tests for the full Phase 4 synthesis pipeline.
 
 Tests the complete flow: login → synthesis → accept tasks → ghost list → rate limits.
-All tests use mock OZ mode (no real API calls).
+All tests use mock LLM mode (no real API calls).
 
 Rate limit tests insert usage logs directly into the shared SQLite test.db
-with was_mocked=False to simulate real OZ calls being counted against caps.
+with was_mocked=False to simulate real LLM calls being counted against caps.
 """
 from __future__ import annotations
 
@@ -245,7 +245,7 @@ class TestSynthesisFlowRateLimits:
         _clear_ai_data(user_id)
 
     def test_accept_tasks_never_rate_limited(self, client, auth_headers):
-        """POST /ai/accept-tasks should never return 429 — no OZ call, no limit."""
+        """POST /ai/accept-tasks should never return 429 — no LLM call, no limit."""
         r = client.post(
             "/ai/accept-tasks",
             json={"tasks": [{"name": "Test Task", "priority": "Medium"}]},

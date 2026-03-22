@@ -55,7 +55,7 @@ class AIService:
         self._rate_limiter = AIRateLimiter()
         self._context_builder = InferenceContextBuilder()
         self._prompt_builder = PromptBuilder()
-        self._oz_client = LLMClient()
+        self._llm_client = LLMClient()
 
     # ------------------------------------------------------------------
     # Task Suggester (Prompt B)
@@ -80,10 +80,10 @@ class AIService:
         # 2. Build prompt (re-entry mode is handled via is_returning_from_leave in context)
         prompt = self._prompt_builder.build_task_suggestion_prompt(context_dict)
 
-        # 3. Submit to OZ
-        was_mocked = self._oz_client._is_mock_mode()
+        # 3. Submit to LLM
+        was_mocked = self._llm_client._is_mock_mode()
         try:
-            result = await self._oz_client.run_prompt(
+            result = await self._llm_client.run_prompt(
                 prompt, title="Task Suggestions"
             )
 
@@ -134,7 +134,7 @@ class AIService:
         # 0. Fetch and validate report — BEFORE rate limit check
         report = await self._get_user_report(user_id, report_id, db)
 
-        # Short report check — < 20 words → no OZ call, no slot consumed
+        # Short report check — < 20 words → no LLM call, no slot consumed
         word_count = len((report.body or "").split())
         if word_count < 20:
             return CoPlanResponse(
@@ -144,7 +144,7 @@ class AIService:
                 suggested_priority=None,
             )
 
-        # 1. RATE LIMIT CHECK — after validation, before OZ
+        # 1. RATE LIMIT CHECK — after validation, before LLM call
         await self._rate_limiter.check_limit(user_id, COPLAN, db)
 
         # 2. Fetch open tasks for context
@@ -155,10 +155,10 @@ class AIService:
         report_body = (report.body or "")[:1000]
         prompt = self._prompt_builder.build_co_planning_prompt(report_body, task_dicts)
 
-        # 4. Submit to OZ
-        was_mocked = self._oz_client._is_mock_mode()
+        # 4. Submit to LLM
+        was_mocked = self._llm_client._is_mock_mode()
         try:
-            result = await self._oz_client.run_prompt(
+            result = await self._llm_client.run_prompt(
                 prompt, title="Co-Planning Analysis"
             )
 
@@ -194,7 +194,7 @@ class AIService:
             )
 
     # ------------------------------------------------------------------
-    # Accept tasks (no OZ call, no rate limit)
+    # Accept tasks (no LLM call, no rate limit)
     # ------------------------------------------------------------------
 
     async def accept_tasks(
@@ -202,7 +202,7 @@ class AIService:
     ) -> list[str]:
         """Create real Task rows from accepted AI suggestions.
 
-        Returns list of created task IDs. No OZ call, no rate limit.
+        Returns list of created task IDs. No LLM call, no rate limit.
         """
         created_ids: list[str] = []
         for t in tasks:
@@ -253,7 +253,7 @@ class AIService:
         return list(result.scalars().all())
 
     def _parse_suggestion_response(self, result: dict) -> list[dict]:
-        """Extract a JSON array of suggestions from OZ response."""
+        """Extract a JSON array of suggestions from LLM response."""
         raw = result.get("result", "")
 
         # If already a list, return it
@@ -280,10 +280,10 @@ class AIService:
             if arr is not None:
                 return arr
 
-        raise ValueError("Could not parse suggestions from OZ response")
+        raise ValueError("Could not parse suggestions from LLM response")
 
     def _parse_coplan_response(self, result: dict) -> dict:
-        """Extract co-planning JSON from OZ response."""
+        """Extract co-planning JSON from LLM response."""
         raw = result.get("result", "")
 
         if isinstance(raw, dict):
