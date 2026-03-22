@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 import os
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -34,7 +35,38 @@ class Settings(BaseSettings):
         extra="ignore",  # silently discard unknown env vars (e.g. stale keys during migration)
     )
 
+    # Dev  (SQLite):   sqlite+aiosqlite:///./data/dev.db
+    # Prod (Neon/PG):  postgresql+asyncpg://user:pass@host/db?ssl=require
+    # Note: bare postgresql:// and postgres:// schemes are auto-normalized to postgresql+asyncpg://
+    #       and libpq-only params (sslmode, channel_binding) are stripped/converted by the validator.
     database_url: str = Field("sqlite+aiosqlite:///./data/dev.db", validation_alias="DATABASE_URL")
+
+    @field_validator("database_url", mode="after")
+    @classmethod
+    def normalize_database_url(cls, v: str) -> str:
+        """Normalize bare postgresql:// and postgres:// URLs to postgresql+asyncpg://
+        and strip/convert asyncpg-incompatible libpq parameters:
+          - channel_binding  → removed (libpq-only)
+          - sslmode=require  → ssl=require  (asyncpg uses 'ssl', not 'sslmode')
+        """
+        if v.startswith("postgres://"):
+            v = "postgresql+asyncpg://" + v[len("postgres://"):]
+        elif v.startswith("postgresql://"):
+            v = "postgresql+asyncpg://" + v[len("postgresql://"):]
+
+        if "channel_binding" in v or "sslmode" in v:
+            parsed = urlparse(v)
+            params = parse_qs(parsed.query, keep_blank_values=True)
+            # Remove libpq-only params
+            params.pop("channel_binding", None)
+            # Convert sslmode → ssl for asyncpg
+            sslmodes = params.pop("sslmode", [])
+            if sslmodes and sslmodes[0] in ("require", "verify-ca", "verify-full"):
+                params["ssl"] = ["require"]
+            new_query = urlencode({k: vals[0] for k, vals in params.items() if vals})
+            v = urlunparse(parsed._replace(query=new_query))
+        return v
+
     jwt_secret: str = Field("dev-secret-change-me", validation_alias="JWT_SECRET")
     jwt_algorithm: str = Field("HS256", validation_alias="JWT_ALGORITHM")
     access_token_expire_minutes: int = Field(60 * 8, validation_alias="ACCESS_TOKEN_EXPIRE_MINUTES")  # 8 hours

@@ -176,7 +176,7 @@ python scripts/migrate_sqlite_to_pg.py \
 - Blocking steps:
   - `Blocked until: .github/artifacts/phase4-2/plan/step-2-schema-hardening.md`
   - **🔴 Blocked until: User provides Neon DATABASE_URL**
-- Merge Readiness: false
+- Merge Readiness: true
 
 ## Risks & Mitigations
 

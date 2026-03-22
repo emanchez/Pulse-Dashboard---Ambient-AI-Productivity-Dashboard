@@ -93,11 +93,26 @@ async def lifespan(app: FastAPI):
     settings.validate_database_config()
 
     # Ensure all registered models have their tables created (idempotent).
-    # This covers newly added models (e.g. session_logs) without requiring
-    # a manual migration step in development.
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    logger.info("DB tables verified/created via create_all")
+    # Only runs in dev mode — in non-dev environments use Alembic migrations.
+    # See: code/backend/alembic/ and `alembic upgrade head`.
+    if settings.app_env == "dev":
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("DB tables verified/created via create_all (dev mode)")
+    else:
+        logger.info(
+            "Skipping create_all in %s mode — use `alembic upgrade head` for schema changes",
+            settings.app_env,
+        )
+        # Verify database connectivity at startup — surfaces misconfigured DATABASE_URL early.
+        from sqlalchemy import text as _text
+        try:
+            async with engine.connect() as conn:
+                await conn.execute(_text("SELECT 1"))
+            logger.info("Database connection verified (%s)", settings.app_env)
+        except Exception as _e:
+            logger.error("Database connection failed at startup: %s", _e)
+            raise
     yield
 
 

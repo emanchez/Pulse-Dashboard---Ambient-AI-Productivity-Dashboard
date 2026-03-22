@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from pydantic import ConfigDict
-from sqlalchemy import DateTime, Index, Integer, String
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..db.base import TimestampedBase
@@ -16,8 +16,8 @@ class SessionLog(TimestampedBase):
         Index('ix_session_logs_user_ended', 'user_id', 'ended_at'),
     )
 
-    user_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
-    task_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
+    task_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("tasks.id"), nullable=True)
     task_name: Mapped[str | None] = mapped_column(String(256), nullable=True)
     goal_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     started_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))

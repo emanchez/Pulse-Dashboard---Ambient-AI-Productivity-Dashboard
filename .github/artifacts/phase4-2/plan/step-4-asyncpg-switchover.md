@@ -176,7 +176,7 @@ DATABASE_URL="postgresql+asyncpg://..." python -m pytest -q --tb=short
 - Blocking steps:
   - `Blocked until: .github/artifacts/phase4-2/plan/step-3-neon-provision-migrate.md`
   - **🔴 Blocked until: Neon DATABASE_URL is available**
-- Merge Readiness: false
+- Merge Readiness: true
 
 ## Risks & Mitigations
 

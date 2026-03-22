@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..db.base import TimestampedBase
@@ -16,9 +16,12 @@ from ..db.base import TimestampedBase
 
 class AIUsageLog(TimestampedBase):
     __tablename__ = "ai_usage_logs"
+    __table_args__ = (
+        Index("ix_ai_usage_user_endpoint_ts", "user_id", "endpoint", "timestamp"),
+    )
 
-    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False, index=True)
-    endpoint: Mapped[str] = mapped_column(String(50), nullable=False, index=True)  # "synthesis" | "suggest" | "coplan"
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
+    endpoint: Mapped[str] = mapped_column(String(50), nullable=False)  # "synthesis" | "suggest" | "coplan"
     llm_run_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     prompt_chars: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     was_mocked: Mapped[bool] = mapped_column(Boolean, default=False)

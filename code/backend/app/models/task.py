@@ -5,7 +5,7 @@ from typing import List
 
 from ..schemas.base import CamelModel
 from pydantic import Field, field_validator
-from sqlalchemy import Boolean, DateTime, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..db.base import TimestampedBase
@@ -99,4 +99,4 @@ class Task(TimestampedBase):
     is_completed: Mapped[bool] = mapped_column(Boolean, default=False)
     deadline: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    user_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False, index=True)
