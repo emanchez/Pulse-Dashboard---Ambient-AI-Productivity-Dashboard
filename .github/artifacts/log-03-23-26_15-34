@@ -1,0 +1,338 @@
+backend:
+
+2026-03-23T19:32:37.730430691Z [inf]  Running Alembic migrations...
+2026-03-23T19:32:38.036689557Z [inf]  Starting Container
+2026-03-23T19:32:38.141887085Z [err]  INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+2026-03-23T19:32:38.141890511Z [err]  INFO  [alembic.runtime.migration] Will assume transactional DDL.
+2026-03-23T19:32:38.292160207Z [inf]  Starting uvicorn...
+2026-03-23T19:32:38.839052369Z [err]  INFO:     Started server process [1]
+2026-03-23T19:32:38.839058837Z [err]  INFO:     Waiting for application startup.
+2026-03-23T19:32:38.886190143Z [err]  INFO:     Application startup complete.
+2026-03-23T19:32:38.886194026Z [err]  INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+2026-03-23T19:32:39.082600826Z [inf]  INFO:     100.64.0.2:32985 - "GET /health HTTP/1.1" 200 OK
+2026-03-23T19:33:09.085120865Z [inf]  INFO:     100.64.0.3:24300 - "OPTIONS /login HTTP/1.1" 400 Bad Request
+2026-03-23T19:39:09.859014942Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859025439Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859030057Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859033888Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859039565Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859042815Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859047074Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859050267Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859053281Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859057640Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859061949Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859063877Z [inf]  INFO:     100.64.0.4:58728 - "OPTIONS /login HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859068572Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859069109Z [inf]  INFO:     100.64.0.4:58728 - "POST /login HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859074121Z [inf]  INFO:     100.64.0.4:58728 - "OPTIONS /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859074243Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859079595Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859080393Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859083203Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859087658Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859090854Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859895846Z [inf]  INFO:     100.64.0.4:21168 - "OPTIONS /stats/ghost-list HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859900924Z [inf]  INFO:     100.64.0.4:58728 - "OPTIONS /ai/usage HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859906142Z [inf]  INFO:     100.64.0.4:21158 - "OPTIONS /ai/synthesis/latest HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859909542Z [inf]  INFO:     100.64.0.4:21178 - "OPTIONS /system-states HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859914224Z [inf]  INFO:     100.64.0.4:58728 - "GET /ai/synthesis/latest HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859917128Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859920752Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859924500Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859928517Z [inf]  INFO:     100.64.0.4:58728 - "OPTIONS /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859931954Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859934964Z [inf]  INFO:     100.64.0.4:58728 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859938087Z [inf]  INFO:     100.64.0.4:58728 - "OPTIONS /stats/pulse HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859941052Z [inf]  INFO:     100.64.0.4:58728 - "GET /stats/pulse HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859944099Z [inf]  INFO:     100.64.0.4:21158 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859947947Z [inf]  INFO:     100.64.0.4:21158 - "OPTIONS /stats/flow-state HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859950770Z [inf]  INFO:     100.64.0.4:58728 - "OPTIONS /sessions/active HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859953667Z [inf]  INFO:     100.64.0.4:58728 - "OPTIONS /tasks/ HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859956597Z [inf]  INFO:     100.64.0.4:21158 - "GET /stats/flow-state HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859959537Z [inf]  INFO:     100.64.0.4:58728 - "GET /sessions/active HTTP/1.1" 200 OK
+2026-03-23T19:39:09.859962126Z [inf]  INFO:     100.64.0.4:21168 - "GET /tasks/ HTTP/1.1" 200 OK
+2026-03-23T19:39:09.861631543Z [inf]  INFO:     100.64.0.4:21178 - "GET /stats/ghost-list HTTP/1.1" 200 OK
+2026-03-23T19:39:09.861637227Z [inf]  INFO:     100.64.0.4:21158 - "GET /ai/usage HTTP/1.1" 200 OK
+2026-03-23T19:39:09.861641541Z [inf]  INFO:     100.64.0.4:21168 - "GET /system-states HTTP/1.1" 200 OK
+2026-03-23T19:39:09.861645274Z [inf]  INFO:     100.64.0.4:21190 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:39:09.861649114Z [inf]  INFO:     100.64.0.4:21194 - "OPTIONS /reports?offset=0&limit=20 HTTP/1.1" 200 OK
+2026-03-23T19:39:09.861652627Z [inf]  INFO:     100.64.0.4:21190 - "GET /tasks/ HTTP/1.1" 200 OK
+2026-03-23T19:39:09.861656064Z [inf]  INFO:     100.64.0.4:21190 - "GET /reports?offset=0&limit=20 HTTP/1.1" 200 OK
+2026-03-23T19:39:09.861659310Z [inf]  INFO:     100.64.0.4:21190 - "GET /ai/usage HTTP/1.1" 200 OK
+2026-03-23T19:39:09.861663101Z [inf]  INFO:     100.64.0.4:21194 - "GET /system-states HTTP/1.1" 200 OK
+2026-03-23T19:39:39.851104986Z [inf]  INFO:     100.64.0.4:11236 - "GET /stats/pulse HTTP/1.1" 200 OK
+2026-03-23T19:40:09.790673781Z [inf]  INFO:     100.64.0.4:26100 - "GET /stats/pulse HTTP/1.1" 200 OK
+2026-03-23T19:40:39.829134762Z [inf]  INFO:     100.64.0.4:47582 - "GET /stats/pulse HTTP/1.1" 200 OK
+2026-03-23T19:41:09.831893267Z [inf]  INFO:     100.64.0.4:41722 - "OPTIONS /reports HTTP/1.1" 200 OK
+2026-03-23T19:41:09.831895969Z [inf]  INFO:     100.64.0.4:41722 - "POST /reports HTTP/1.1" 201 Created
+2026-03-23T19:41:09.831898529Z [inf]  INFO:     100.64.0.4:41722 - "GET /reports?offset=0&limit=20 HTTP/1.1" 200 OK
+2026-03-23T19:41:09.831901275Z [inf]  INFO:     100.64.0.4:41722 - "GET /stats/pulse HTTP/1.1" 200 OK
+2026-03-23T19:41:19.480803423Z [inf]  INFO:     100.64.0.4:13826 - "GET /me HTTP/1.1" 200 OK
+2026-03-23T19:41:19.524957384Z [inf]  INFO:     100.64.0.4:13826 - "GET /stats/flow-state HTTP/1.1" 200 OK
+2026-03-23T19:41:19.531324910Z [inf]  INFO:     100.64.0.4:13844 - "GET /tasks/ HTTP/1.1" 200 OK
+2026-03-23T19:41:19.531330562Z [inf]  INFO:     100.64.0.4:13838 - "GET /sessions/active HTTP/1.1" 200 OK
+2026-03-23T19:41:19.621963756Z [inf]  INFO:     100.64.0.4:13838 - "GET /stats/ghost-list HTTP/1.1" 200 OK
+2026-03-23T19:41:19.621968814Z [inf]  INFO:     100.64.0.4:13826 - "GET /ai/synthesis/latest HTTP/1.1" 200 OK
+2026-03-23T19:41:19.621973057Z [inf]  INFO:     100.64.0.4:13844 - "GET /ai/usage HTTP/1.1" 200 OK
+2026-03-23T19:41:19.621977180Z [inf]  INFO:     100.64.0.4:13858 - "GET /system-states HTTP/1.1" 200 OK
+2026-03-23T19:41:39.647138861Z [inf]  INFO:     100.64.0.4:15484 - "GET /stats/pulse HTTP/1.1" 200 OK
+2026-03-23T19:41:46.605491524Z [inf]  INFO:     100.64.0.4:17354 - "POST /tasks/ HTTP/1.1" 201 Created
+2026-03-23T19:41:46.633605871Z [inf]  INFO:     100.64.0.4:17354 - "GET /tasks/ HTTP/1.1" 200 OK
+2026-03-23T19:41:49.592466841Z [inf]  INFO:     100.64.0.4:17354 - "GET /sessions/active HTTP/1.1" 200 OK
+2026-03-23T19:42:09.591406552Z [inf]  INFO:     100.64.0.4:18610 - "GET /stats/pulse HTTP/1.1" 200 OK
+2026-03-23T19:42:09.591411135Z [inf]  INFO:     100.64.0.4:18624 - "POST /tasks/ HTTP/1.1" 201 Created
+2026-03-23T19:42:09.591414356Z [inf]  INFO:     100.64.0.4:18624 - "GET /tasks/ HTTP/1.1" 200 OK
+2026-03-23T19:42:19.516950309Z [inf]  INFO:     100.64.0.4:59000 - "GET /tasks/ HTTP/1.1" 200 OK
+2026-03-23T19:42:19.519960008Z [inf]  INFO:     100.64.0.4:58996 - "GET /stats/flow-state HTTP/1.1" 200 OK
+2026-03-23T19:42:19.599451738Z [inf]  INFO:     100.64.0.4:59000 - "GET /sessions/active HTTP/1.1" 200 OK
+2026-03-23T19:42:39.583838442Z [inf]  INFO:     100.64.0.4:27852 - "GET /stats/pulse HTTP/1.1" 200 OK
+2026-03-23T19:42:39.583843400Z [inf]  INFO:     100.64.0.4:27858 - "POST /tasks/ HTTP/1.1" 500 Internal Server Error
+2026-03-23T19:42:39.583850251Z [err]  ERROR:    Exception in ASGI application
+2026-03-23T19:42:39.583854074Z [err]  Traceback (most recent call last):
+2026-03-23T19:42:39.583857034Z [err]    File "asyncpg/protocol/prepared_stmt.pyx", line 175, in asyncpg.protocol.protocol.PreparedStatementState._encode_bind_msg
+2026-03-23T19:42:39.583859947Z [err]    File "asyncpg/protocol/codecs/base.pyx", line 251, in asyncpg.protocol.protocol.Codec.encode
+2026-03-23T19:42:39.583862908Z [err]    File "asyncpg/protocol/codecs/base.pyx", line 153, in asyncpg.protocol.protocol.Codec.encode_scalar
+2026-03-23T19:42:39.583865623Z [err]    File "asyncpg/pgproto/codecs/datetime.pyx", line 152, in asyncpg.pgproto.pgproto.timestamp_encode
+2026-03-23T19:42:39.583868258Z [err]  TypeError: can't subtract offset-naive and offset-aware datetimes
+2026-03-23T19:42:39.583871561Z [err]  
+2026-03-23T19:42:39.583874531Z [err]  The above exception was the direct cause of the following exception:
+2026-03-23T19:42:39.583877541Z [err]  
+2026-03-23T19:42:39.583880954Z [err]  Traceback (most recent call last):
+2026-03-23T19:42:39.583884191Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 552, in _prepare_and_execute
+2026-03-23T19:42:39.583886883Z [err]      self._rows = await prepared_stmt.fetch(*parameters)
+2026-03-23T19:42:39.583889592Z [err]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.583892303Z [err]    File "/usr/local/lib/python3.11/site-packages/asyncpg/prepared_stmt.py", line 177, in fetch
+2026-03-23T19:42:39.583895063Z [err]      data = await self.__bind_execute(args, 0, timeout)
+2026-03-23T19:42:39.583897814Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.585036819Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 921, in do_execute
+2026-03-23T19:42:39.585040288Z [err]    File "/usr/local/lib/python3.11/site-packages/asyncpg/prepared_stmt.py", line 268, in __bind_execute
+2026-03-23T19:42:39.585044417Z [err]      cursor.execute(statement, parameters)
+2026-03-23T19:42:39.585046141Z [err]      data, status, _ = await self.__do_execute(
+2026-03-23T19:42:39.585049964Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 585, in execute
+2026-03-23T19:42:39.585051389Z [err]                        ^^^^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.585055216Z [err]      self._adapt_connection.await_(
+2026-03-23T19:42:39.585057245Z [err]    File "/usr/local/lib/python3.11/site-packages/asyncpg/prepared_stmt.py", line 257, in __do_execute
+2026-03-23T19:42:39.585060714Z [err]      return await executor(protocol)
+2026-03-23T19:42:39.585063800Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.585066539Z [err]    File "asyncpg/protocol/protocol.pyx", line 184, in bind_execute
+2026-03-23T19:42:39.585069349Z [err]    File "asyncpg/protocol/prepared_stmt.pyx", line 204, in asyncpg.protocol.protocol.PreparedStatementState._encode_bind_msg
+2026-03-23T19:42:39.585072140Z [err]  asyncpg.exceptions.DataError: invalid input for query argument $5: datetime.datetime(2026, 3, 27, 0, 0, tzi... (can't subtract offset-naive and offset-aware datetimes)
+2026-03-23T19:42:39.585074990Z [err]  
+2026-03-23T19:42:39.585078649Z [err]  The above exception was the direct cause of the following exception:
+2026-03-23T19:42:39.585081528Z [err]  
+2026-03-23T19:42:39.585084690Z [err]  Traceback (most recent call last):
+2026-03-23T19:42:39.585087665Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1965, in _exec_single_context
+2026-03-23T19:42:39.585091226Z [err]      self.dialect.do_execute(
+2026-03-23T19:42:39.606524366Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 125, in await_only
+2026-03-23T19:42:39.606530865Z [err]      return current.driver.switch(awaitable)  # type: ignore[no-any-return]
+2026-03-23T19:42:39.606535433Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.606539139Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 185, in greenlet_spawn
+2026-03-23T19:42:39.606542854Z [err]      value = await result
+2026-03-23T19:42:39.606546926Z [err]              ^^^^^^^^^^^^
+2026-03-23T19:42:39.606551022Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 564, in _prepare_and_execute
+2026-03-23T19:42:39.606555274Z [err]      self._handle_exception(error)
+2026-03-23T19:42:39.606558741Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 515, in _handle_exception
+2026-03-23T19:42:39.606562282Z [err]      self._adapt_connection._handle_exception(error)
+2026-03-23T19:42:39.606565531Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 802, in _handle_exception
+2026-03-23T19:42:39.606568912Z [err]      raise translated_error from error
+2026-03-23T19:42:39.606572715Z [err]  sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.Error: <class 'asyncpg.exceptions.DataError'>: invalid input for query argument $5: datetime.datetime(2026, 3, 27, 0, 0, tzi... (can't subtract offset-naive and offset-aware datetimes)
+2026-03-23T19:42:39.606576299Z [err]  
+2026-03-23T19:42:39.606582065Z [err]  The above exception was the direct cause of the following exception:
+2026-03-23T19:42:39.606585754Z [err]  
+2026-03-23T19:42:39.606588906Z [err]  Traceback (most recent call last):
+2026-03-23T19:42:39.606591900Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/protocols/http/httptools_impl.py", line 435, in run_asgi
+2026-03-23T19:42:39.608191185Z [err]      self.gen.throw(typ, value, traceback)
+2026-03-23T19:42:39.608198113Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/_utils.py", line 93, in collapse_excgroups
+2026-03-23T19:42:39.608202949Z [err]      raise exc
+2026-03-23T19:42:39.608205025Z [err]      result = await app(  # type: ignore[func-returns-value]
+2026-03-23T19:42:39.608209501Z [err]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.608213556Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 78, in __call__
+2026-03-23T19:42:39.608217372Z [err]      return await self.app(scope, receive, send)
+2026-03-23T19:42:39.608221703Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.608224786Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/applications.py", line 1054, in __call__
+2026-03-23T19:42:39.608228729Z [err]      await super().__call__(scope, receive, send)
+2026-03-23T19:42:39.608232906Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/applications.py", line 123, in __call__
+2026-03-23T19:42:39.608236594Z [err]      await self.middleware_stack(scope, receive, send)
+2026-03-23T19:42:39.608239970Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 186, in __call__
+2026-03-23T19:42:39.608243085Z [err]      raise exc
+2026-03-23T19:42:39.608246195Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 164, in __call__
+2026-03-23T19:42:39.608249294Z [err]      await self.app(scope, receive, _send)
+2026-03-23T19:42:39.608253595Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/middleware/base.py", line 189, in __call__
+2026-03-23T19:42:39.608256324Z [err]      with collapse_excgroups():
+2026-03-23T19:42:39.608259092Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+2026-03-23T19:42:39.609380136Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/middleware/base.py", line 191, in __call__
+2026-03-23T19:42:39.609386693Z [err]      response = await self.dispatch_func(request, call_next)
+2026-03-23T19:42:39.609390690Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.609394462Z [err]    File "/app/app/main.py", line 67, in dispatch
+2026-03-23T19:42:39.609397644Z [err]      return await call_next(request)
+2026-03-23T19:42:39.609400877Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.609403908Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/middleware/base.py", line 165, in call_next
+2026-03-23T19:42:39.609413237Z [err]      raise app_exc
+2026-03-23T19:42:39.609418425Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/middleware/base.py", line 151, in coro
+2026-03-23T19:42:39.609422400Z [err]      await self.app(scope, receive_or_disconnect, send_no_error)
+2026-03-23T19:42:39.609425602Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/middleware/base.py", line 189, in __call__
+2026-03-23T19:42:39.609428437Z [err]      with collapse_excgroups():
+2026-03-23T19:42:39.609431470Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+2026-03-23T19:42:39.609435916Z [err]      self.gen.throw(typ, value, traceback)
+2026-03-23T19:42:39.609438877Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/_utils.py", line 93, in collapse_excgroups
+2026-03-23T19:42:39.609441627Z [err]      raise exc
+2026-03-23T19:42:39.609444632Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/middleware/base.py", line 191, in __call__
+2026-03-23T19:42:39.609450972Z [err]      response = await self.dispatch_func(request, call_next)
+2026-03-23T19:42:39.609453868Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.609456654Z [err]    File "/usr/local/lib/python3.11/site-packages/slowapi/middleware.py", line 136, in dispatch
+2026-03-23T19:42:39.610782830Z [err]      response = await call_next(request)
+2026-03-23T19:42:39.610788969Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.610792877Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/middleware/base.py", line 165, in call_next
+2026-03-23T19:42:39.610796356Z [err]      raise app_exc
+2026-03-23T19:42:39.610800144Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/middleware/base.py", line 151, in coro
+2026-03-23T19:42:39.610803838Z [err]      await self.app(scope, receive_or_disconnect, send_no_error)
+2026-03-23T19:42:39.610807340Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/middleware/base.py", line 189, in __call__
+2026-03-23T19:42:39.610811230Z [err]      with collapse_excgroups():
+2026-03-23T19:42:39.610814872Z [err]    File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+2026-03-23T19:42:39.610818659Z [err]      self.gen.throw(typ, value, traceback)
+2026-03-23T19:42:39.610821881Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/_utils.py", line 93, in collapse_excgroups
+2026-03-23T19:42:39.610828813Z [err]      raise exc
+2026-03-23T19:42:39.610833940Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/middleware/base.py", line 191, in __call__
+2026-03-23T19:42:39.610837638Z [err]      response = await self.dispatch_func(request, call_next)
+2026-03-23T19:42:39.610840962Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.610844253Z [err]    File "/app/app/middlewares/action_log.py", line 67, in dispatch
+2026-03-23T19:42:39.610847239Z [err]      response = await call_next(request)
+2026-03-23T19:42:39.610850556Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.610853745Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/middleware/base.py", line 165, in call_next
+2026-03-23T19:42:39.610856897Z [err]      raise app_exc
+2026-03-23T19:42:39.611916910Z [err]      await route.handle(scope, receive, send)
+2026-03-23T19:42:39.611923424Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 299, in handle
+2026-03-23T19:42:39.611927232Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/middleware/base.py", line 151, in coro
+2026-03-23T19:42:39.611935401Z [err]      await self.app(scope, receive_or_disconnect, send_no_error)
+2026-03-23T19:42:39.611940834Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py", line 91, in __call__
+2026-03-23T19:42:39.611946049Z [err]      await self.simple_response(scope, receive, send, request_headers=headers)
+2026-03-23T19:42:39.611950607Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py", line 146, in simple_response
+2026-03-23T19:42:39.611955316Z [err]      await self.app(scope, receive, send)
+2026-03-23T19:42:39.611960068Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+2026-03-23T19:42:39.611964360Z [err]      await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+2026-03-23T19:42:39.611970603Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+2026-03-23T19:42:39.611975032Z [err]      raise exc
+2026-03-23T19:42:39.611979194Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+2026-03-23T19:42:39.611984000Z [err]      await app(scope, receive, sender)
+2026-03-23T19:42:39.611988183Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 758, in __call__
+2026-03-23T19:42:39.611992566Z [err]      await self.middleware_stack(scope, receive, send)
+2026-03-23T19:42:39.611996228Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 778, in app
+2026-03-23T19:42:39.613346788Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.613353013Z [err]    File "/app/app/api/tasks.py", line 37, in create_task
+2026-03-23T19:42:39.613358281Z [err]      await session.commit()
+2026-03-23T19:42:39.613363286Z [err]      await self.app(scope, receive, send)
+2026-03-23T19:42:39.613368006Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 79, in app
+2026-03-23T19:42:39.613370903Z [err]      await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+2026-03-23T19:42:39.613373797Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+2026-03-23T19:42:39.613376805Z [err]      raise exc
+2026-03-23T19:42:39.613380402Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+2026-03-23T19:42:39.613384088Z [err]      await app(scope, receive, sender)
+2026-03-23T19:42:39.613387573Z [err]    File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 74, in app
+2026-03-23T19:42:39.613391942Z [err]      response = await func(request)
+2026-03-23T19:42:39.613394684Z [err]                 ^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.613397819Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 299, in app
+2026-03-23T19:42:39.613401347Z [err]      raise e
+2026-03-23T19:42:39.613404887Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 294, in app
+2026-03-23T19:42:39.613418228Z [err]      raw_response = await run_endpoint_function(
+2026-03-23T19:42:39.613422005Z [err]                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.613425011Z [err]    File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 191, in run_endpoint_function
+2026-03-23T19:42:39.613428060Z [err]      return await dependant.call(**values)
+2026-03-23T19:42:39.614488376Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py", line 959, in commit
+2026-03-23T19:42:39.614492104Z [err]      await greenlet_spawn(self.sync_session.commit)
+2026-03-23T19:42:39.614495171Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 192, in greenlet_spawn
+2026-03-23T19:42:39.614498267Z [err]      result = context.switch(value)
+2026-03-23T19:42:39.614501393Z [err]               ^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.614504364Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 1923, in commit
+2026-03-23T19:42:39.614507935Z [err]      trans.commit(_to_root=True)
+2026-03-23T19:42:39.614510566Z [err]    File "<string>", line 2, in commit
+2026-03-23T19:42:39.614513330Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+2026-03-23T19:42:39.614516030Z [err]      ret_value = fn(self, *arg, **kw)
+2026-03-23T19:42:39.614518679Z [err]                  ^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.614521326Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 1239, in commit
+2026-03-23T19:42:39.614524348Z [err]      self._prepare_impl()
+2026-03-23T19:42:39.614526976Z [err]    File "<string>", line 2, in _prepare_impl
+2026-03-23T19:42:39.614530338Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+2026-03-23T19:42:39.614533039Z [err]      ret_value = fn(self, *arg, **kw)
+2026-03-23T19:42:39.614535768Z [err]                  ^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.614538786Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 1214, in _prepare_impl
+2026-03-23T19:42:39.614541208Z [err]      self.session.flush()
+2026-03-23T19:42:39.614543854Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4179, in flush
+2026-03-23T19:42:39.616011031Z [err]      self._flush(objects)
+2026-03-23T19:42:39.616016223Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4314, in _flush
+2026-03-23T19:42:39.616020306Z [err]      with util.safe_reraise():
+2026-03-23T19:42:39.616024326Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 147, in __exit__
+2026-03-23T19:42:39.616027481Z [err]      raise exc_value.with_traceback(exc_tb)
+2026-03-23T19:42:39.616030586Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4275, in _flush
+2026-03-23T19:42:39.616034816Z [err]      flush_context.execute()
+2026-03-23T19:42:39.616038705Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+2026-03-23T19:42:39.616042601Z [err]      rec.execute(self)
+2026-03-23T19:42:39.616045927Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+2026-03-23T19:42:39.616048881Z [err]      util.preloaded.orm_persistence.save_obj(
+2026-03-23T19:42:39.616051730Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+2026-03-23T19:42:39.616054578Z [err]      _emit_insert_statements(
+2026-03-23T19:42:39.616057800Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py", line 1226, in _emit_insert_statements
+2026-03-23T19:42:39.616061959Z [err]      result = connection.execute(
+2026-03-23T19:42:39.616065467Z [err]               ^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.616069177Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1412, in execute
+2026-03-23T19:42:39.616073363Z [err]      return meth(
+2026-03-23T19:42:39.616077223Z [err]             ^^^^^
+2026-03-23T19:42:39.616080439Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+2026-03-23T19:42:39.617097277Z [err]      return connection._execute_clauseelement(
+2026-03-23T19:42:39.617102355Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.617106162Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1635, in _execute_clauseelement
+2026-03-23T19:42:39.617111797Z [err]      ret = self._execute_context(
+2026-03-23T19:42:39.617116433Z [err]            ^^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.617119557Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1844, in _execute_context
+2026-03-23T19:42:39.617122453Z [err]      return self._exec_single_context(
+2026-03-23T19:42:39.617125754Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.617130124Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1984, in _exec_single_context
+2026-03-23T19:42:39.617134499Z [err]      self._handle_dbapi_exception(
+2026-03-23T19:42:39.617139144Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2339, in _handle_dbapi_exception
+2026-03-23T19:42:39.617142964Z [err]      raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+2026-03-23T19:42:39.617145877Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1965, in _exec_single_context
+2026-03-23T19:42:39.617149912Z [err]      self.dialect.do_execute(
+2026-03-23T19:42:39.617153758Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 921, in do_execute
+2026-03-23T19:42:39.617157217Z [err]      cursor.execute(statement, parameters)
+2026-03-23T19:42:39.617159955Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 585, in execute
+2026-03-23T19:42:39.617162818Z [err]      self._adapt_connection.await_(
+2026-03-23T19:42:39.617166710Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 125, in await_only
+2026-03-23T19:42:39.635097440Z [err]  [parameters: ('Implement AI Assistant in Dashboard', 'High', 'code, ai, dev, devops', False, datetime.datetime(2026, 3, 27, 0, 0, tzinfo=TzInfo(0)), None, '0a784806-4f2d-4bf8-b4c5-6d2ef8198443', '02b154e4-598a-4a51-b5fa-80ad80ffac21', datetime.datetime(2026, 3, 23, 19, 42, 39, 95449), datetime.datetime(2026, 3, 23, 19, 42, 39, 95459))]
+2026-03-23T19:42:39.635103638Z [err]      return current.driver.switch(awaitable)  # type: ignore[no-any-return]
+2026-03-23T19:42:39.635109731Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-03-23T19:42:39.635113994Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 185, in greenlet_spawn
+2026-03-23T19:42:39.635118124Z [err]      value = await result
+2026-03-23T19:42:39.635122338Z [err]              ^^^^^^^^^^^^
+2026-03-23T19:42:39.635126178Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 564, in _prepare_and_execute
+2026-03-23T19:42:39.635130089Z [err]      self._handle_exception(error)
+2026-03-23T19:42:39.635133461Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 515, in _handle_exception
+2026-03-23T19:42:39.635137964Z [err]      self._adapt_connection._handle_exception(error)
+2026-03-23T19:42:39.635141966Z [err]    File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 802, in _handle_exception
+2026-03-23T19:42:39.635145819Z [err]      raise translated_error from error
+2026-03-23T19:42:39.635151243Z [err]  sqlalchemy.exc.DBAPIError: (sqlalchemy.dialects.postgresql.asyncpg.Error) <class 'asyncpg.exceptions.DataError'>: invalid input for query argument $5: datetime.datetime(2026, 3, 27, 0, 0, tzi... (can't subtract offset-naive and offset-aware datetimes)
+2026-03-23T19:42:39.635155405Z [err]  [SQL: INSERT INTO tasks (name, priority, tags, is_completed, deadline, notes, user_id, id, created_at, updated_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::VARCHAR, $4::BOOLEAN, $5::TIMESTAMP WITHOUT TIME ZONE, $6::VARCHAR, $7::VARCHAR, $8::VARCHAR, $9::TIMESTAMP WITHOUT TIME ZONE, $10::TIMESTAMP WITHOUT TIME ZONE)]
+2026-03-23T19:42:39.636654715Z [err]  (Background on this error at: https://sqlalche.me/e/20/dbapi)
+2026-03-23T19:42:59.637895773Z [inf]  INFO:     100.64.0.4:61202 - "GET /sessions/active HTTP/1.1" 200 OK
+2026-03-23T19:43:04.382924063Z [inf]  INFO:     100.64.0.4:62260 - "GET /stats/pulse HTTP/1.1" 200 OK
+2026-03-23T19:43:24.384831505Z [inf]  INFO:     100.64.0.4:58804 - "OPTIONS /tasks/ HTTP/1.1" 200 OK
+2026-03-23T19:43:24.384840923Z [inf]  INFO:     100.64.0.4:58788 - "GET /stats/flow-state HTTP/1.1" 200 OK
+2026-03-23T19:43:24.384845237Z [inf]  INFO:     100.64.0.4:58788 - "GET /tasks/ HTTP/1.1" 200 OK
+2026-03-23T19:43:24.384850307Z [inf]  INFO:     100.64.0.4:58788 - "GET /sessions/active HTTP/1.1" 200 OK
+
+frontend:
+
+GET
+https://pulse-dashboard-ambient-ai.vercel.app/favicon.ico
+[HTTP/2 404  0ms]
+
+XHRPOST
+https://pulse-dashboard-ambient-ai-productivity-dashbo-production.up.railway.app/tasks/
+CORS Missing Allow Origin
+
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at https://pulse-dashboard-ambient-ai-productivity-dashbo-production.up.railway.app/tasks/. (Reason: CORS header ‘Access-Control-Allow-Origin’ missing). Status code: 500.
+Failed to save task: TypeError: NetworkError when attempting to fetch resource. <anonymous code>:1:147461
+Source map error: Error: request failed with status 404
+Stack in the worker:networkRequest@resource://devtools/client/shared/source-map-loader/utils/network-request.js:43:9
+
+Resource URL: https://pulse-dashboard-ambient-ai.vercel.app/%3Canonymous%20code%3E
+Source Map URL: installHook.js.map

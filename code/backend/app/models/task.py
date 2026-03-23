@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 
 from ..schemas.base import CamelModel
@@ -11,6 +11,18 @@ from sqlalchemy.orm import Mapped, mapped_column
 from ..db.base import TimestampedBase
 
 _ALLOWED_PRIORITIES = {"High", "Medium", "Low"}
+
+
+def _strip_deadline_tz(v: datetime | None) -> datetime | None:
+    """Convert offset-aware deadline to UTC, then drop tzinfo.
+
+    The ``deadline`` column is ``TIMESTAMP WITHOUT TIME ZONE``; asyncpg raises
+    a TypeError when it receives an offset-aware datetime.  Normalise here so
+    the ORM layer always receives a naive UTC datetime.
+    """
+    if v is None or v.tzinfo is None:
+        return v
+    return v.astimezone(timezone.utc).replace(tzinfo=None)
 
 
 class TaskSchema(CamelModel):
@@ -38,6 +50,11 @@ class TaskCreate(CamelModel):
     is_completed: bool = False
     deadline: datetime | None = None
     notes: str | None = None
+
+    @field_validator("deadline", mode="after")
+    @classmethod
+    def normalize_deadline(cls, v: datetime | None) -> datetime | None:
+        return _strip_deadline_tz(v)
 
     @field_validator("name")
     @classmethod
@@ -67,6 +84,11 @@ class TaskUpdate(CamelModel):
     is_completed: bool | None = None
     deadline: datetime | None = None
     notes: str | None = None
+
+    @field_validator("deadline", mode="after")
+    @classmethod
+    def normalize_deadline(cls, v: datetime | None) -> datetime | None:
+        return _strip_deadline_tz(v)
 
     @field_validator("name")
     @classmethod
