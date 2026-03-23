@@ -117,6 +117,24 @@ def test_task_update_clears_deadline(client, auth_headers):
     assert r.json()["deadline"] is None
 
 
+def test_task_create_deadline_tz_aware(client, auth_headers):
+    """POST /tasks/ with a UTC-aware ISO deadline (Z suffix) must return 201.
+
+    Regression test for the asyncpg 'can't subtract offset-naive and
+    offset-aware datetimes' TypeError that caused 500s when the frontend
+    sends new Date().toISOString() (e.g. '2026-03-27T00:00:00.000Z').
+    """
+    r = client.post(
+        "/tasks/",
+        json={"name": "TZ Deadline Test", "deadline": "2026-03-27T00:00:00.000Z"},
+        headers=auth_headers,
+    )
+    assert r.status_code == 201
+    # Deadline must be stored and returned as a naive UTC string (no offset)
+    assert r.json()["deadline"] is not None
+    assert r.json()["deadline"].endswith("Z") is False or "+" not in r.json()["deadline"]
+
+
 def test_task_update_clears_notes(client, auth_headers):
     """PUT /tasks/{id} with {\"notes\": null} clears the notes."""
     r = client.post("/tasks/", json={"name": "Notes Test", "notes": "Important"}, headers=auth_headers)
