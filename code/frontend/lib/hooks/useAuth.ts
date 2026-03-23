@@ -12,32 +12,40 @@ export function useAuth() {
   const router = useRouter()
   const pathname = usePathname()
 
-  // Read token from localStorage on mount, then validate it against /me.
-  // This clears stale tokens (expired, missing iss/aud claims, deleted user, etc.)
-  // so the user is redirected to /login instead of silently receiving 401s everywhere.
+  // Validate session on mount.
+  //
+  // Strategy (works for both dev and production):
+  //   1. Read any stored JWT from localStorage (dev mode artifact).
+  //   2. Call GET /me with credentials: "include" so the browser sends the
+  //      httpOnly cookie automatically (production) AND the Authorization
+  //      header (dev).
+  //   3. 200 → authenticated. Token state is set to the stored JWT (dev) or
+  //      "cookie" (production sentinel — indicates auth is handled by cookie).
+  //   4. 401/403 → stale/invalid. Clear localStorage, set unauthenticated.
+  //   5. Network error → keep stored token so the UI can show a meaningful
+  //      error rather than bouncing the user to /login.
   useEffect(() => {
     const stored = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null
-    if (!stored) {
-      setTokenState(null)
-      setReady(true)
-      return
-    }
-    // Validate against the server — if rejected, wipe the stale token.
+
+    const headers: Record<string, string> = {}
+    if (stored) headers["Authorization"] = `Bearer ${stored}`
+
     fetch(`${BASE}/me`, {
-      headers: { Authorization: `Bearer ${stored}` },
-      credentials: "omit",
+      headers,
+      credentials: "include",
     })
       .then((res) => {
         if (res.status === 401 || res.status === 403) {
           localStorage.removeItem(TOKEN_KEY)
           setTokenState(null)
-        } else {
-          setTokenState(stored)
+        } else if (res.ok) {
+          // In production, stored is null — use "cookie" sentinel.
+          setTokenState(stored || "cookie")
         }
       })
       .catch(() => {
-        // Network error (backend down) — keep the token so the UI can show a
-        // meaningful error rather than bouncing the user to /login.
+        // Network error (backend down) — keep any stored token so the UI can
+        // show a meaningful error rather than silently redirecting to /login.
         setTokenState(stored)
       })
       .finally(() => setReady(true))
@@ -51,15 +59,21 @@ export function useAuth() {
   }, [ready, token, pathname, router])
 
   const setToken = useCallback((t: string) => {
-    // TODO(deploy): S-2 — Migrate token storage from localStorage to httpOnly + Secure +
-    //               SameSite=Strict cookies. Remove this localStorage write and the corresponding
-    //               read below. Implement a /refresh endpoint for session renewal.
-    localStorage.setItem(TOKEN_KEY, t)
+    // Only persist real JWTs to localStorage (not the "cookie" sentinel used in prod).
+    if (t && t !== "cookie") {
+      localStorage.setItem(TOKEN_KEY, t)
+    }
     setTokenState(t)
   }, [])
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     localStorage.removeItem(TOKEN_KEY)
+    // Call /logout so the backend clears the httpOnly pulse_token and csrf_token cookies.
+    try {
+      await fetch(`${BASE}/logout`, { method: "POST", credentials: "include" })
+    } catch {
+      // Ignore network errors on logout — clear local state regardless.
+    }
     setTokenState(null)
     router.replace("/login")
   }, [router])

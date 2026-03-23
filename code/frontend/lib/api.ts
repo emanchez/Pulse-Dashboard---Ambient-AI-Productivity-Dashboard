@@ -18,6 +18,18 @@ export class ApiError extends Error {
   }
 }
 
+// ── CSRF helper ───────────────────────────────────────────────────────────────
+// Reads the csrf_token cookie (set by /login in production, NOT httpOnly).
+// Returns an empty string in SSR (no document) and in dev (cookie not set).
+
+function getCsrfToken(): string {
+  if (typeof document === "undefined") return "";
+  const match = document.cookie
+    .split(";")
+    .find((c) => c.trim().startsWith("csrf_token="));
+  return match ? decodeURIComponent(match.trim().split("=").slice(1).join("=")) : "";
+}
+
 // Re-export all generated API-contract types.
 // PulseStats + getPulse live in the hand-written generated/pulseClient (preserved alongside generated files).
 // Task, SessionLog, FlowState types come from the @hey-api/openapi-ts generated barrel.
@@ -55,11 +67,33 @@ export type {
 };
 
 async function request(path: string, opts: RequestInit = {}) {
+  const method = (opts.method || "GET").toUpperCase();
+  const isMutating = ["POST", "PUT", "PATCH", "DELETE"].includes(method);
+  const inHeaders = (opts.headers || {}) as Record<string, string>;
+
+  // Strip the frontend sentinel "cookie" — it signals cookie-based auth and must
+  // never be forwarded as a Bearer token value to the backend.
+  const authHeader = inHeaders["Authorization"] ?? "";
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...inHeaders,
+  };
+  if (authHeader === "Bearer cookie") {
+    delete headers["Authorization"];
+  }
+
+  // Include CSRF token for state-mutating requests (required in production when
+  // cookie auth is active; harmless in dev where the backend ignores it).
+  if (isMutating) {
+    const csrfToken = getCsrfToken();
+    if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
+  }
+
   const res = await fetch(`${BASE}${path}`, {
-    credentials: "omit",
+    credentials: "include",
     ...opts,
     // headers must come AFTER ...opts so Content-Type is never overwritten
-    headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
+    headers,
   });
   if (!res.ok) {
     const text = await res.text();
@@ -96,9 +130,11 @@ export async function deleteTask(token: string, id: string) {
 // ── Session management ────────────────────────────────────────────────────────
 
 export async function getActiveSession(token: string): Promise<SessionLogSchema | null> {
+  const authHeaders: Record<string, string> = { "Content-Type": "application/json" };
+  if (token && token !== "cookie") authHeaders["Authorization"] = `Bearer ${token}`;
   const res = await fetch(`${BASE}/sessions/active`, {
-    credentials: "omit",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    credentials: "include",
+    headers: authHeaders,
   });
   if (!res.ok) {
     const text = await res.text();
@@ -166,9 +202,11 @@ export async function listSystemStates(token: string): Promise<SystemStateSchema
 }
 
 export async function getActiveSystemState(token: string): Promise<SystemStateSchema | null> {
+  const authHeaders: Record<string, string> = { "Content-Type": "application/json" };
+  if (token && token !== "cookie") authHeaders["Authorization"] = `Bearer ${token}`;
   const res = await fetch(`${BASE}/system-states/active`, {
-    credentials: "omit",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    credentials: "include",
+    headers: authHeaders,
   });
   if (!res.ok) {
     const text = await res.text();

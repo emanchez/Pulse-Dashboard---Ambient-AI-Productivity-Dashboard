@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json as _json
+import secrets
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -66,11 +67,53 @@ class _ContentSizeLimitMiddleware(BaseHTTPMiddleware):
 
         return await call_next(request)
 
-# TODO(deploy): S-3 — Enforce HTTPS. Deploy behind nginx/Caddy with TLS termination.
-#               Set Strict-Transport-Security header. Configure the `Secure` cookie flag.
+# ---------------------------------------------------------------------------
+# CSRF protection middleware (double-submit cookie pattern)
+# ---------------------------------------------------------------------------
 
-# TODO(deploy): S-8 — Add CSRF protection when httpOnly cookie auth is active (S-2).
-#               Use the double-submit cookie or synchronizer token pattern.
+class _CSRFMiddleware(BaseHTTPMiddleware):
+    """Validate X-CSRF-Token header against the csrf_token cookie on mutating
+    requests.  Disabled in dev mode so the test suite and ``make dev`` work
+    without any CSRF overhead.
+
+    /login, /logout, and /health are exempt — the CSRF cookie doesn't exist
+    until after the first successful login.
+    """
+
+    _SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
+    _EXEMPT_PATHS = frozenset({"/login", "/logout", "/health"})
+
+    async def dispatch(self, request: StarletteRequest, call_next):
+        from .core.config import get_settings as _gs
+        _s = _gs()
+        if _s.app_env == "dev" or request.method in self._SAFE_METHODS:
+            return await call_next(request)
+        if request.url.path in self._EXEMPT_PATHS:
+            return await call_next(request)
+        csrf_cookie = request.cookies.get("csrf_token")
+        csrf_header = request.headers.get("X-CSRF-Token")
+        if not csrf_cookie or not csrf_header or not secrets.compare_digest(csrf_cookie, csrf_header):
+            return JSONResponse(
+                status_code=403,
+                content={"detail": "CSRF validation failed"},
+            )
+        return await call_next(request)
+
+
+# ---------------------------------------------------------------------------
+# HSTS middleware (production only)
+# ---------------------------------------------------------------------------
+
+class _HSTSMiddleware(BaseHTTPMiddleware):
+    """Add Strict-Transport-Security header on every response in non-dev environments."""
+
+    async def dispatch(self, request: StarletteRequest, call_next):
+        response = await call_next(request)
+        from .core.config import get_settings as _gs
+        if _gs().app_env != "dev":
+            response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains"
+        return response
+
 
 settings = get_settings()
 
@@ -133,8 +176,6 @@ async def validation_exception_handler(request: StarletteRequest, exc: RequestVa
     return JSONResponse(status_code=422, content={"detail": jsonable_encoder(exc.errors())})
 
 
-# TODO(deploy): S-5 — Set FRONTEND_CORS_ORIGINS env var to the production domain.
-#               get_cors_origins() raises ValueError if localhost/127.0.0.1 remains in non-dev config.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.get_cors_origins(),
@@ -176,6 +217,8 @@ app.add_middleware(ActionLogMiddleware)
 # SlowAPIMiddleware enforces the default_limits=["200 per minute"] global cap (S-7).
 # _ContentSizeLimitMiddleware is outermost (added last) so it intercepts oversized
 # requests before they reach CORS or routing (S-13).
+app.add_middleware(_CSRFMiddleware)
 app.add_middleware(SlowAPIMiddleware)
+app.add_middleware(_HSTSMiddleware)
 app.add_middleware(_ContentSizeLimitMiddleware, max_bytes=_MAX_BODY_BYTES)
 logger.info("Routers and middleware wired")

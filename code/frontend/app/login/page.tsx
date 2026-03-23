@@ -27,7 +27,11 @@ export default function LoginPage() {
 
     try {
       const data = await login(username, password)
-      setToken(data.access_token)
+      // In production, /login sets an httpOnly cookie and returns {"message": "ok"}.
+      // In dev, it returns {"access_token": "...", "token_type": "bearer"}.
+      // setToken() handles both: stores the JWT in localStorage for dev, or uses
+      // the "cookie" sentinel for production (real auth is handled by the cookie).
+      setToken(data.access_token || "cookie")
       router.push("/")
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Login failed")

@@ -1,0 +1,55 @@
+name: Deploy
+
+# This workflow documents the auto-deploy behavior.
+# Railway (backend) and Vercel (frontend) both watch the `main` branch and
+# deploy automatically on push — no manual trigger is needed.
+#
+# This file exists to:
+#   1. Make the deploy flow visible in the Actions tab.
+#   2. Provide a hook for future manual deploy triggers if needed.
+#   3. Gate deployment on CI passing (branch protection enforces this).
+#
+# To enable manual backend deploys via Railway CLI, uncomment the
+# RAILWAY_TOKEN steps below and add the secret to GitHub.
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy-backend:
+    name: Deploy Backend (Railway)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Railway auto-deploys from Git
+        run: |
+          echo "Railway is connected to the GitHub repo and auto-deploys on push to main."
+          echo "No manual action required. Monitor at: https://railway.com/dashboard"
+        # ── Manual deploy (optional) ──────────────────────────────────────────
+        # Uncomment and configure RAILWAY_TOKEN + RAILWAY_SERVICE_ID in GitHub
+        # Secrets if you need a programmatic deploy trigger:
+        #
+        # - name: Install Railway CLI
+        #   run: npm install -g @railway/cli
+        # - name: Deploy to Railway
+        #   env:
+        #     RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        #   run: railway up --service ${{ secrets.RAILWAY_SERVICE_ID }}
+
+  deploy-frontend:
+    name: Deploy Frontend (Vercel)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Vercel auto-deploys from Git
+        run: |
+          echo "Vercel is connected to the GitHub repo and auto-deploys on push to main."
+          echo "Preview deployments are created for pull requests automatically."
+          echo "Monitor at: https://vercel.com/dashboard"
