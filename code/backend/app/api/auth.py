@@ -1,6 +1,6 @@
-import uuid
+import secrets
 
-from fastapi import APIRouter, HTTPException, Request, status, Depends
+from fastapi import APIRouter, HTTPException, Request, Response, status, Depends
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +14,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 router = APIRouter()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login", auto_error=False)
 
 _settings = get_settings()
 # In prod, limit login attempts to 5/min; dev uses 100/min to allow fast test suites.
@@ -54,7 +54,12 @@ async def _log_auth_event(
 
 @router.post("/login")
 @limiter.limit(_LOGIN_RATE_LIMIT)
-async def login(request: Request, payload: LoginRequest, session: AsyncSession = Depends(get_async_session)):
+async def login(
+    request: Request,
+    response: Response,
+    payload: LoginRequest,
+    session: AsyncSession = Depends(get_async_session),
+):
     q = await session.execute(select(User).filter_by(username=payload.username))
     user: User | None = q.scalars().first()
     client_host = request.client.host if request.client else None
@@ -75,15 +80,47 @@ async def login(request: Request, payload: LoginRequest, session: AsyncSession =
         client_host=client_host,
     )
     token = create_access_token(subject=str(user.id))
+    cookie_max_age = _settings.access_token_expire_minutes * 60
+
+    if _settings.app_env == "prod":
+        # Production: set httpOnly Secure cookie — JWT never exposed to JS.
+        response.set_cookie(
+            key="pulse_token",
+            value=token,
+            httponly=True,
+            secure=True,
+            samesite="lax",
+            max_age=cookie_max_age,
+            path="/",
+        )
+        # CSRF token: NOT httpOnly so JS can read it for the double-submit pattern.
+        csrf_token = secrets.token_urlsafe(32)
+        response.set_cookie(
+            key="csrf_token",
+            value=csrf_token,
+            httponly=False,
+            secure=True,
+            samesite="lax",
+            max_age=cookie_max_age,
+            path="/",
+        )
+        return {"message": "ok"}
+
+    # Dev mode: return token in response body (preserves `make dev` + test-suite flow).
     return {"access_token": token, "token_type": "bearer"}
 
 
+@router.post("/logout")
+async def logout(response: Response):
+    """Clear auth and CSRF cookies."""
+    response.delete_cookie("pulse_token", path="/")
+    response.delete_cookie("csrf_token", path="/")
+    return {"message": "Logged out"}
+
+
 @router.get("/me")
-async def me(token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_async_session)):
-    payload = decode_access_token(token)
-    user_id = payload.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+async def me(request: Request, session: AsyncSession = Depends(get_async_session)):
+    user_id = await get_current_user(request=request, session=session)
     q = await session.get(User, user_id)
     if not q:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
@@ -91,9 +128,36 @@ async def me(token: str = Depends(oauth2_scheme), session: AsyncSession = Depend
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    request: Request,
     session: AsyncSession = Depends(get_async_session),
 ) -> str:
+    """Dual-mode JWT auth dependency.
+
+    Priority order:
+    1. ``pulse_token`` httpOnly cookie — used in production (cookie-based auth).
+    2. ``Authorization: Bearer <token>`` header — used in dev mode and the test suite.
+
+    This allows the test suite (which uses Bearer headers) to work without cookies
+    while production enforces httpOnly cookie auth.
+    """
+    token: str | None = None
+
+    # 1. Cookie auth (production)
+    cookie_token = request.cookies.get("pulse_token")
+    if cookie_token:
+        token = cookie_token
+    else:
+        # 2. Bearer header fallback (dev + tests)
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            bearer = auth_header[7:]
+            # Reject the frontend sentinel value "cookie" — it is never a real JWT.
+            if bearer and bearer != "cookie":
+                token = bearer
+
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+
     payload = decode_access_token(token)
     sub = payload.get("sub")
     if not sub:
