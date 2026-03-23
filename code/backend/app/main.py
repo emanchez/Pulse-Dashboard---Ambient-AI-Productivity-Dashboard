@@ -217,8 +217,8 @@ app.add_middleware(ActionLogMiddleware)
 # SlowAPIMiddleware enforces the default_limits=["200 per minute"] global cap (S-7).
 # _ContentSizeLimitMiddleware is outermost (added last) so it intercepts oversized
 # requests before they reach CORS or routing (S-13).
+app.add_middleware(_CSRFMiddleware)
 app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(_HSTSMiddleware)
-app.add_middleware(_CSRFMiddleware)
 app.add_middleware(_ContentSizeLimitMiddleware, max_bytes=_MAX_BODY_BYTES)
 logger.info("Routers and middleware wired")
