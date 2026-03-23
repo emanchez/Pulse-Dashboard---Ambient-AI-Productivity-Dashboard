@@ -1,6 +1,5 @@
 [build]
-# Uses railpack.json (Nixpacks/Railpack) at project root for build steps.
-# Dockerfile at code/backend/Dockerfile is available for local testing only.
+# Uses Dockerfile at code/backend/Dockerfile for production container builds.
 # See code/backend/scripts/entrypoint.sh for the container startup sequence.
 
 [deploy]
