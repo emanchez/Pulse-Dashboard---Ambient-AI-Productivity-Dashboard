@@ -82,28 +82,31 @@ async def login(
     token = create_access_token(subject=str(user.id))
     cookie_max_age = _settings.access_token_expire_minutes * 60
 
+    # Set auth and CSRF cookies in all environments so this logic is covered by tests.
+    # In production the JWT is not exposed in the response body; in dev it is, to
+    # preserve existing tooling and test expectations.
+    response.set_cookie(
+        key="pulse_token",
+        value=token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=cookie_max_age,
+        path="/",
+    )
+    csrf_token = secrets.token_urlsafe(32)
+    response.set_cookie(
+        key="csrf_token",
+        value=csrf_token,
+        httponly=False,
+        secure=True,
+        samesite="lax",
+        max_age=cookie_max_age,
+        path="/",
+    )
+
     if _settings.app_env == "prod":
-        # Production: set httpOnly Secure cookie — JWT never exposed to JS.
-        response.set_cookie(
-            key="pulse_token",
-            value=token,
-            httponly=True,
-            secure=True,
-            samesite="lax",
-            max_age=cookie_max_age,
-            path="/",
-        )
-        # CSRF token: NOT httpOnly so JS can read it for the double-submit pattern.
-        csrf_token = secrets.token_urlsafe(32)
-        response.set_cookie(
-            key="csrf_token",
-            value=csrf_token,
-            httponly=False,
-            secure=True,
-            samesite="lax",
-            max_age=cookie_max_age,
-            path="/",
-        )
+        # Production: JWT only in httpOnly cookie, not in JSON body.
         return {"message": "ok"}
 
     # Dev mode: return token in response body (preserves `make dev` + test-suite flow).
