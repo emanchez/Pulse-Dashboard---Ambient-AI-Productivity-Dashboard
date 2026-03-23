@@ -149,7 +149,7 @@ NEXT_PUBLIC_API_BASE=https://<backend>.up.railway.app npm run build
   - `Blocked until: .github/artifacts/phase4-2/plan/step-5-backend-deploy-railway.md`
   - **🔴 Blocked until: Vercel account created by user**
   - **🔴 Blocked until: Production backend URL available from Step 5**
-- Merge Readiness: false
+- Merge Readiness: true
 
 ## Risks & Mitigations
 
