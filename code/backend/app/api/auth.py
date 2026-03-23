@@ -10,11 +10,8 @@ from ..core.limiter import limiter
 from ..core.security import create_access_token, decode_access_token, verify_password
 from ..db.session import get_async_session
 from ..models.user import User, UserSchema
-from fastapi.security import OAuth2PasswordBearer
 
 router = APIRouter()
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login", auto_error=False)
 
 _settings = get_settings()
 # In prod, limit login attempts to 5/min; dev uses 100/min to allow fast test suites.
