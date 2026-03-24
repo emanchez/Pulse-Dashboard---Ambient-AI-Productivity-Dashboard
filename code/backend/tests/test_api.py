@@ -308,6 +308,32 @@ def test_oversized_request_returns_413(client, auth_headers):
     assert r.status_code == 413
 
 
+def test_oversized_chunked_request_returns_413(client, auth_headers):
+    """POST with a chunked body > 512 KB (no Content-Length) must return 413.
+
+    Passes a generator to httpx so the request uses Transfer-Encoding: chunked
+    without a Content-Length header, exercising the receive-wrapping path of
+    _ContentSizeLimitMiddleware rather than the fast-path header check.
+    """
+    limit = 512 * 1024
+    chunk = b"x" * 1024
+
+    def chunked_body():
+        # Yield chunks until we have sent strictly more than `limit` bytes
+        # (512 * 1024 + 1024 = 513 KB) so the middleware's > check triggers.
+        sent = 0
+        while sent <= limit:
+            yield chunk
+            sent += len(chunk)
+
+    r = client.post(
+        "/reports",
+        content=chunked_body(),
+        headers={**auth_headers, "content-type": "application/json"},
+    )
+    assert r.status_code == 413
+
+
 def test_validation_error_returns_422_in_dev(client, auth_headers):
     """In dev mode, POST /tasks/ with missing name returns 422 with a list detail."""
     r = client.post("/tasks/", json={}, headers=auth_headers)
