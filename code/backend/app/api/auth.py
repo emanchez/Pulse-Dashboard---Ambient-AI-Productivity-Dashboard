@@ -1,5 +1,3 @@
-import secrets
-
 from fastapi import APIRouter, HTTPException, Request, Response, status, Depends
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -79,7 +77,7 @@ async def login(
     token = create_access_token(subject=str(user.id))
     cookie_max_age = _settings.access_token_expire_minutes * 60
 
-    # Set auth and CSRF cookies in all environments so this logic is covered by tests.
+    # Set the httpOnly JWT cookie in all environments so this logic is covered by tests.
     # In production the JWT is not exposed in the response body; in dev it is, to
     # preserve existing tooling and test expectations.
     #
@@ -88,21 +86,18 @@ async def login(
     # calls, so the cookie is never sent after login.  SameSite=None requires
     # Secure=True (already enforced; Railway uses HTTPS).  Dev uses "lax" since
     # localhost is same-site and SameSite=None is rejected over plain HTTP anyway.
+    #
+    # Note: csrf_token cookie removed (Phase 4.2 CSRF fix).  CSRF is now enforced
+    # via custom-header presence (X-CSRF-Token: any-non-empty-value).  The old
+    # double-submit cookie pattern broke in production because the frontend (Vercel)
+    # and backend (Railway) are on different domains — browser SOP prevents JS from
+    # reading cookies set by a different domain, so getCsrfToken() always returned ""
+    # and every mutating request received a 403.
     _samesite = "none" if _settings.app_env == "prod" else "lax"
     response.set_cookie(
         key="pulse_token",
         value=token,
         httponly=True,
-        secure=True,
-        samesite=_samesite,
-        max_age=cookie_max_age,
-        path="/",
-    )
-    csrf_token = secrets.token_urlsafe(32)
-    response.set_cookie(
-        key="csrf_token",
-        value=csrf_token,
-        httponly=False,
         secure=True,
         samesite=_samesite,
         max_age=cookie_max_age,

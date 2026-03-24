@@ -126,3 +126,9 @@ Adding `iss`/`aud` claims to `create_access_token` (or any other new required cl
 ### `user_id` filters must be explicit — never rely on joined ownership
 All API endpoints that return user-owned data must include an explicit `WHERE user_id = <sub>` clause in the SQLAlchemy query. Never infer ownership through a join (e.g. "tasks linked to reports owned by this user") — always filter the root table directly. Missed filters expose other users' data in multi-tenant deployments and cause silent empty results in single-user dev when the user ID changes.
 
+### Double-submit cookie CSRF is broken for cross-origin deployments
+The double-submit cookie CSRF pattern requires frontend JS to read a cookie set by the backend via `document.cookie`. When the frontend (Vercel) and backend (Railway) are on different domains, `document.cookie` only returns cookies for the *current* page's domain — the backend's cookie is permanently inaccessible. `getCsrfToken()` always returns `""`, the header is never sent, every mutating POST returns 403. Use **custom-header CSRF** instead: require any non-empty `X-CSRF-Token` header; send `X-CSRF-Token: 1` unconditionally from the frontend. Browser SOP + CORS allowlist prevents cross-origin JS from adding custom headers, so presence of the header is sufficient proof of same-origin intent.
+
+### Middleware with `app_env == "dev"` bypasses must be tested in simulated prod mode
+If a middleware short-circuits for `app_env == "dev"` (as CSRF did), the prod-only code path is dead from the test suite's perspective when all tests run against the dev subprocess server. Any bug in the prod-only path ships silently. Always add tests that temporarily patch `get_settings().app_env = "prod"` and make requests via `httpx.AsyncClient + ASGITransport` (in-process, no subprocess). Use a `yield` fixture to guarantee teardown. See `tests/test_csrf.py` for the canonical pattern.
+
