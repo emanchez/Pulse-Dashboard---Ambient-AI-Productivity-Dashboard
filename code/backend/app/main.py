@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json as _json
-import secrets
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -29,54 +28,110 @@ from .db.session import engine
 _MAX_BODY_BYTES = 512 * 1024  # 512 KB
 
 
-class _ContentSizeLimitMiddleware(BaseHTTPMiddleware):
-    """Middleware that rejects HTTP requests whose body exceeds *max_bytes*.
+class _ContentSizeLimitMiddleware:
+    """Pure ASGI middleware that enforces a maximum request body size.
 
-    Uses Content-Length header as a fast-path check (avoids buffering).
-    Requests without Content-Length are passed through unchecked — reading
-    request.body() inside BaseHTTPMiddleware triggers a Starlette/AnyIO bug
-    (RuntimeError: No response returned) on some request shapes.
+    Wraps the ASGI ``receive`` callable to count bytes from ``http.request``
+    messages so chunked / streaming bodies (Transfer-Encoding: chunked) are
+    bounded alongside Content-Length-declared bodies — no buffering required.
+
+    When the cumulative body size exceeds *max_bytes* the middleware signals
+    end-of-body to the downstream app so it stops reading, then intercepts the
+    first ``http.response.start`` message from the downstream app and replaces
+    the entire response with HTTP 413 before any bytes reach the client.
     """
 
     def __init__(self, app, max_bytes: int = _MAX_BODY_BYTES) -> None:
-        super().__init__(app)
+        self._app = app
         self._max_bytes = max_bytes
 
-    async def dispatch(self, request: StarletteRequest, call_next):
-        # Fast path: Content-Length header check
-        content_length = request.headers.get("content-length")
-        if content_length:
-            try:
-                if int(content_length) > self._max_bytes:
-                    return JSONResponse(
-                        status_code=413,
-                        content={"detail": "Request body too large"},
-                    )
-            except ValueError:
-                pass
+    async def __call__(self, scope, receive, send) -> None:
+        if scope["type"] != "http":
+            await self._app(scope, receive, send)
+            return
 
-        # Slow path is intentionally omitted: reading request.body() inside
-        # BaseHTTPMiddleware.dispatch and then calling call_next() triggers a
-        # known Starlette/AnyIO bug (RuntimeError: No response returned) on
-        # some request shapes, because the receive channel is consumed before
-        # the downstream ASGI app can read it. Requests without Content-Length
-        # are indeterminate-length streams (e.g. chunked uploads); we rely on
-        # the Content-Length fast path above for declared sizes and pass
-        # undeclared-length requests through unchecked.
+        # Fast path: Content-Length header present — reject immediately without
+        # touching the receive channel.
+        for name, value in scope.get("headers", []):
+            if name == b"content-length":
+                try:
+                    if int(value) > self._max_bytes:
+                        await self._reject(send)
+                        return
+                except ValueError:
+                    pass
+                break
 
-        return await call_next(request)
+        total = 0
+        limit_exceeded = False
+
+        async def limited_receive():
+            nonlocal total, limit_exceeded
+            message = await receive()
+            if message["type"] == "http.request":
+                total += len(message.get("body", b""))
+                if total > self._max_bytes:
+                    limit_exceeded = True
+                    # Signal end-of-body so the downstream app stops reading
+                    # instead of blocking on the next receive() call.
+                    return {"type": "http.request", "body": b"", "more_body": False}
+            return message
+
+        _413_sent = False
+
+        async def guarded_send(message) -> None:
+            nonlocal _413_sent
+            if limit_exceeded:
+                if not _413_sent and message["type"] == "http.response.start":
+                    _413_sent = True
+                    await self._reject(send)
+                # Swallow subsequent sends so the downstream app's response
+                # (which may be based on a truncated body) is never forwarded.
+                return
+            await send(message)
+
+        await self._app(scope, limited_receive, guarded_send)
+
+    @staticmethod
+    async def _reject(send) -> None:
+        body = b'{"detail":"Request body too large"}'
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 413,
+                "headers": [
+                    [b"content-type", b"application/json"],
+                    [b"content-length", str(len(body)).encode()],
+                ],
+            }
+        )
+        await send({"type": "http.response.body", "body": body})
 
 # ---------------------------------------------------------------------------
 # CSRF protection middleware (double-submit cookie pattern)
 # ---------------------------------------------------------------------------
 
 class _CSRFMiddleware(BaseHTTPMiddleware):
-    """Validate X-CSRF-Token header against the csrf_token cookie on mutating
-    requests.  Disabled in dev mode so the test suite and ``make dev`` work
-    without any CSRF overhead.
+    """Validate that mutating requests carry a non-empty X-CSRF-Token header.
 
-    /login, /logout, and /health are exempt — the CSRF cookie doesn't exist
-    until after the first successful login.
+    Security model — custom-header CSRF protection:
+    The browser's Same-Origin Policy (SOP) prevents cross-origin JavaScript
+    from adding *custom* headers to a cross-origin request without a successful
+    CORS preflight that the server explicitly approves.  Because the backend
+    CORS policy only allows known frontend origins, any request bearing the
+    X-CSRF-Token header must have originated from allowed JS.  The header
+    *value* does not need to match a secret — its mere non-empty presence is
+    the proof-of-intent token.
+
+    Why NOT the double-submit cookie pattern (previous implementation):
+    The old approach set a "csrf_token" cookie from the Railway backend domain
+    and required the frontend to read it via document.cookie.  In production
+    the frontend (Vercel) and backend (Railway) are on different domains;
+    browsers do not expose cross-domain cookies to JavaScript, so getCsrfToken()
+    always returned "" and every mutating request received a 403.
+
+    Disabled entirely in dev mode — no overhead for local development or tests.
+    /login, /logout, and /health are exempt (cookie-less clients need login).
     """
 
     _SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
@@ -89,9 +144,8 @@ class _CSRFMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         if request.url.path in self._EXEMPT_PATHS:
             return await call_next(request)
-        csrf_cookie = request.cookies.get("csrf_token")
-        csrf_header = request.headers.get("X-CSRF-Token")
-        if not csrf_cookie or not csrf_header or not secrets.compare_digest(csrf_cookie, csrf_header):
+        csrf_header = request.headers.get("X-CSRF-Token", "").strip()
+        if not csrf_header:
             return JSONResponse(
                 status_code=403,
                 content={"detail": "CSRF validation failed"},
