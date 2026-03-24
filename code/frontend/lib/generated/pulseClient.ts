@@ -12,9 +12,15 @@ export type PulseStats = {
 const BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
 export async function getPulse(token: string): Promise<PulseStats> {
+  // Strip the "cookie" sentinel — never forward it as a real Bearer token.
+  // credentials: "include" is required for cross-origin cookie auth (production).
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token && token !== "cookie") {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
   const res = await fetch(`${BASE}/stats/pulse`, {
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    credentials: "omit",
+    headers,
+    credentials: "include",
   });
   if (!res.ok) {
     const text = await res.text();

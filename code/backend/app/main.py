@@ -32,9 +32,10 @@ _MAX_BODY_BYTES = 512 * 1024  # 512 KB
 class _ContentSizeLimitMiddleware(BaseHTTPMiddleware):
     """Middleware that rejects HTTP requests whose body exceeds *max_bytes*.
 
-    Uses Content-Length as a fast-path check (avoids buffering). For requests
-    that lack Content-Length, buffers the body via request.body() and checks
-    the total size before passing the request to the next handler.
+    Uses Content-Length header as a fast-path check (avoids buffering).
+    Requests without Content-Length are passed through unchecked — reading
+    request.body() inside BaseHTTPMiddleware triggers a Starlette/AnyIO bug
+    (RuntimeError: No response returned) on some request shapes.
     """
 
     def __init__(self, app, max_bytes: int = _MAX_BODY_BYTES) -> None:
@@ -54,16 +55,14 @@ class _ContentSizeLimitMiddleware(BaseHTTPMiddleware):
             except ValueError:
                 pass
 
-        # Slow path: buffer body for requests without Content-Length
-        # Only applies to methods that typically have a body
-        if request.method in ("POST", "PUT", "PATCH"):
-            if not content_length:
-                body = await request.body()
-                if len(body) > self._max_bytes:
-                    return JSONResponse(
-                        status_code=413,
-                        content={"detail": "Request body too large"},
-                    )
+        # Slow path is intentionally omitted: reading request.body() inside
+        # BaseHTTPMiddleware.dispatch and then calling call_next() triggers a
+        # known Starlette/AnyIO bug (RuntimeError: No response returned) on
+        # some request shapes, because the receive channel is consumed before
+        # the downstream ASGI app can read it. Requests without Content-Length
+        # are indeterminate-length streams (e.g. chunked uploads); we rely on
+        # the Content-Length fast path above for declared sizes and pass
+        # undeclared-length requests through unchecked.
 
         return await call_next(request)
 
