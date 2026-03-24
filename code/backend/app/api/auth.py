@@ -82,12 +82,19 @@ async def login(
     # Set auth and CSRF cookies in all environments so this logic is covered by tests.
     # In production the JWT is not exposed in the response body; in dev it is, to
     # preserve existing tooling and test expectations.
+    #
+    # SameSite: production uses "none" because the frontend (Vercel) and backend
+    # (Railway) are on different domains — SameSite=Lax blocks cross-origin fetch
+    # calls, so the cookie is never sent after login.  SameSite=None requires
+    # Secure=True (already enforced; Railway uses HTTPS).  Dev uses "lax" since
+    # localhost is same-site and SameSite=None is rejected over plain HTTP anyway.
+    _samesite = "none" if _settings.app_env == "prod" else "lax"
     response.set_cookie(
         key="pulse_token",
         value=token,
         httponly=True,
         secure=True,
-        samesite="lax",
+        samesite=_samesite,
         max_age=cookie_max_age,
         path="/",
     )
@@ -97,7 +104,7 @@ async def login(
         value=csrf_token,
         httponly=False,
         secure=True,
-        samesite="lax",
+        samesite=_samesite,
         max_age=cookie_max_age,
         path="/",
     )
