@@ -159,8 +159,6 @@ export default function ReasoningSidebar({ token }: ReasoningSidebarProps) {
           <p className="text-slate-500 text-xs">
             Synthesis: {usage.synthesis.used}/{usage.synthesis.limit} this week
             {" · "}
-            Tasks: {usage.suggest.used}/{usage.suggest.limit} today
-            {" · "}
             Co-plan: {usage.coplan.used}/{usage.coplan.limit} today
           </p>
         ) : (
