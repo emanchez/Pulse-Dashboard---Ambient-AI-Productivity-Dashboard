@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json as _json
-import secrets
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -71,12 +70,26 @@ class _ContentSizeLimitMiddleware(BaseHTTPMiddleware):
 # ---------------------------------------------------------------------------
 
 class _CSRFMiddleware(BaseHTTPMiddleware):
-    """Validate X-CSRF-Token header against the csrf_token cookie on mutating
-    requests.  Disabled in dev mode so the test suite and ``make dev`` work
-    without any CSRF overhead.
+    """Validate that mutating requests carry a non-empty X-CSRF-Token header.
 
-    /login, /logout, and /health are exempt — the CSRF cookie doesn't exist
-    until after the first successful login.
+    Security model — custom-header CSRF protection:
+    The browser's Same-Origin Policy (SOP) prevents cross-origin JavaScript
+    from adding *custom* headers to a cross-origin request without a successful
+    CORS preflight that the server explicitly approves.  Because the backend
+    CORS policy only allows known frontend origins, any request bearing the
+    X-CSRF-Token header must have originated from allowed JS.  The header
+    *value* does not need to match a secret — its mere non-empty presence is
+    the proof-of-intent token.
+
+    Why NOT the double-submit cookie pattern (previous implementation):
+    The old approach set a "csrf_token" cookie from the Railway backend domain
+    and required the frontend to read it via document.cookie.  In production
+    the frontend (Vercel) and backend (Railway) are on different domains;
+    browsers do not expose cross-domain cookies to JavaScript, so getCsrfToken()
+    always returned "" and every mutating request received a 403.
+
+    Disabled entirely in dev mode — no overhead for local development or tests.
+    /login, /logout, and /health are exempt (cookie-less clients need login).
     """
 
     _SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
@@ -89,9 +102,8 @@ class _CSRFMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         if request.url.path in self._EXEMPT_PATHS:
             return await call_next(request)
-        csrf_cookie = request.cookies.get("csrf_token")
-        csrf_header = request.headers.get("X-CSRF-Token")
-        if not csrf_cookie or not csrf_header or not secrets.compare_digest(csrf_cookie, csrf_header):
+        csrf_header = request.headers.get("X-CSRF-Token", "").strip()
+        if not csrf_header:
             return JSONResponse(
                 status_code=403,
                 content={"detail": "CSRF validation failed"},

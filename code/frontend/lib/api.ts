@@ -82,11 +82,22 @@ async function request(path: string, opts: RequestInit = {}) {
     delete headers["Authorization"];
   }
 
-  // Include CSRF token for state-mutating requests (required in production when
-  // cookie auth is active; harmless in dev where the backend ignores it).
+  // Include CSRF token on all state-mutating requests.
+  //
+  // Security model — custom-header CSRF protection:
+  // The browser SOP prevents cross-origin JS from adding custom headers without
+  // a CORS preflight the server approves.  Sending ANY non-empty X-CSRF-Token
+  // is therefore proof of same-origin intent.  The value does not need to be
+  // secret or match a cookie.
+  //
+  // Why not the old double-submit cookie approach:
+  // The backend previously set a "csrf_token" cookie from the Railway domain.
+  // getCsrfToken() reads document.cookie, which only returns cookies for the
+  // *current* domain (Vercel).  Cross-domain cookies are never exposed to JS,
+  // so getCsrfToken() always returned "" → header never sent → 403 on every
+  // mutating request in production.
   if (isMutating) {
-    const csrfToken = getCsrfToken();
-    if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
+    headers["X-CSRF-Token"] = getCsrfToken() || "1";
   }
 
   const res = await fetch(`${BASE}${path}`, {
