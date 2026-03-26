@@ -38,6 +38,7 @@ coverage/
 code/backend/data/*.db
 code/backend/data/*.db-*
 code/backend/data/*.bak
+code/backend/tests/*.db
 
 # Log files
 *.log
