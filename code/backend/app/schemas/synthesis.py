@@ -5,7 +5,10 @@ Covers Steps 3 and 4 of Phase 4.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List
+
+from pydantic import field_validator
+
+from pydantic import field_validator
 
 from ..schemas.base import CamelModel
 
@@ -24,6 +27,14 @@ class SuggestedTask(CamelModel):
     priority: str  # Low | Medium | High
     rationale: str  # why the AI suggests this task
     is_low_friction: bool = False  # True for re-entry mode suggestions
+
+    @field_validator("priority", mode="before")
+    @classmethod
+    def normalize_priority(cls, v: object) -> object:
+        """Normalize LLM-returned priority to Title Case (e.g. 'high' → 'High')."""
+        if isinstance(v, str):
+            return v.strip().title()
+        return v
 
 
 class SynthesisResponse(CamelModel):
@@ -82,6 +93,14 @@ class AcceptedTask(CamelModel):
     name: str
     priority: str = "Medium"
     notes: str | None = None
+
+    @field_validator("priority", mode="before")
+    @classmethod
+    def normalize_priority(cls, v: object) -> object:
+        """Normalize priority to Title Case so stored tasks always use canonical casing."""
+        if isinstance(v, str):
+            return v.strip().title()
+        return v
 
 
 class AcceptTasksRequest(CamelModel):

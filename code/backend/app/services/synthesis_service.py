@@ -79,6 +79,17 @@ class SynthesisService:
 
             # 5. Parse LLM response
             parsed = self._parse_llm_response(result)
+
+            # Post-process: strip suggested tasks that duplicate existing open tasks (Issue #2c)
+            open_names = {t.name.lower().strip() for t in context.open_tasks}
+            raw_suggested = parsed.get("suggestedTasks", [])
+            deduped = [
+                t for t in raw_suggested
+                if (t.get("title") or t.get("name", "")).lower().strip() not in open_names
+            ]
+            # Fall back to raw list only if deduplication wiped everything out
+            parsed["suggestedTasks"] = deduped if deduped else raw_suggested
+
             report.summary = parsed.get("summary", "No summary generated.")
             report.theme = parsed.get("theme", "Unknown")
             report.commitment_score = int(parsed.get("commitmentScore", 0))

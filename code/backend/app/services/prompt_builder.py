@@ -29,9 +29,11 @@ class PromptBuilder:
         system = (
             "You are an analytical productivity coach. "
             "Analyze the user's weekly data and produce a synthesis report. "
+            "For suggestedTasks, generate 3-5 NEW actionable tasks that do NOT duplicate "
+            "any task already present in the openTasks list. "
             "Output ONLY valid JSON matching this schema — no other text:\n"
             '{"summary": "<1-paragraph narrative>", "theme": "<3-5 word theme>", '
-            '"commitmentScore": <int 1-10>, "suggestedTasks": [{"title": "<task>", "priority": "high|medium|low"}]}'
+            '"commitmentScore": <int 1-10>, "suggestedTasks": [{"title": "<task>", "priority": "High|Medium|Low", "rationale": "<1 sentence>"}]}'
         )
         data_section = self._build_compact_json(context)
         prompt = f"{system}\n\nUser data (last 7 days):\n{data_section}"
@@ -45,7 +47,7 @@ class PromptBuilder:
             "If is_returning_from_leave is true, suggest low-friction re-entry tasks "
             '(e.g., "Update README", "Organize tags", "Review open PRs"). '
             "Output ONLY a valid JSON array — no other text:\n"
-            '[{"title": "<task>", "priority": "high|medium|low", "rationale": "<1 sentence>"}]'
+            '[{"title": "<task>", "priority": "High|Medium|Low", "rationale": "<1 sentence>"}]'
         )
         data_section = self._build_compact_json(context)
         prompt = f"{system}\n\nUser context:\n{data_section}"
