@@ -1,4 +1,5 @@
 [build]
+builder = "dockerfile"
 # Uses Dockerfile at code/backend/Dockerfile for production container builds.
 # See code/backend/scripts/entrypoint.sh for the container startup sequence.
 
