@@ -86,12 +86,19 @@ class ActionLogMiddleware(BaseHTTPMiddleware):
                     except Exception:
                         task_id = None
 
-                # Extract user_id from Authorization header JWT (best-effort)
+                # Extract user_id from JWT (best-effort).
+                # Try Authorization: Bearer header first (dev / API clients),
+                # then fall back to the pulse_token httpOnly cookie (prod cookie auth).
                 user_id: str | None = None
+                raw_token: str | None = None
                 auth_header = request.headers.get("Authorization", "")
                 if auth_header.startswith("Bearer "):
+                    raw_token = auth_header.removeprefix("Bearer ").strip()
+                if not raw_token:
+                    raw_token = request.cookies.get("pulse_token")
+                if raw_token:
                     try:
-                        payload = decode_access_token(auth_header.removeprefix("Bearer ").strip())
+                        payload = decode_access_token(raw_token)
                         user_id = payload.get("sub")
                     except Exception:
                         pass

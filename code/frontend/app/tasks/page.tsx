@@ -20,7 +20,7 @@ import type { FlowStateSchema, SessionLogSchema, Task, TaskUpdate } from "../../
 
 export default function TasksPage() {
   const { token, ready, logout } = useAuth()
-  const { silenceState, gapMinutes, pausedUntil } = useSilenceState()
+  const { silenceState, gapMinutes, pausedUntil, refreshPulse } = useSilenceState()
 
   const [flowState, setFlowState] = useState<FlowStateSchema | null>(null)
   const [activeSession, setActiveSession] = useState<SessionLogSchema | null>(null)
@@ -41,6 +41,18 @@ export default function TasksPage() {
       setTasks(await listTasks(tokenRef.current))
     } catch (err: unknown) {
       if (err instanceof ApiError && err.isUnauthorized) logout()
+    }
+  }
+
+  // After any mutation, eagerly refresh pulse + flow state so the dashboard
+  // reflects the new action log entry without waiting for the next poll.
+  const refreshPulseAndFlow = async () => {
+    await refreshPulse()
+    if (!tokenRef.current) return
+    try {
+      setFlowState(await getFlowState(tokenRef.current))
+    } catch {
+      // non-fatal
     }
   }
 
@@ -120,6 +132,7 @@ export default function TasksPage() {
     try {
       await deleteTask(token, task.id)
       await refreshTasks()
+      void refreshPulseAndFlow()
     } catch (err: unknown) {
       console.error("Failed to delete task:", err)
     }
@@ -131,6 +144,7 @@ export default function TasksPage() {
       const update: TaskUpdate = { isCompleted: !task.isCompleted }
       await updateTask(token, task.id, update)
       await refreshTasks()
+      void refreshPulseAndFlow()
     } catch (err: unknown) {
       console.error("Failed to toggle task:", err)
     }
@@ -140,6 +154,7 @@ export default function TasksPage() {
     setShowTaskForm(false)
     setEditingTask(null)
     await refreshTasks()
+    void refreshPulseAndFlow()
   }
 
   if (!ready || !token || loading) {
