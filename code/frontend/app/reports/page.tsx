@@ -81,6 +81,7 @@ export default function ReportsPage() {
     try {
       await deleteReport(token, id)
       await refreshReports()
+      void refreshPulse()
     } catch (err: unknown) {
       handleAuthError(err)
     }
@@ -91,6 +92,7 @@ export default function ReportsPage() {
     try {
       await archiveReport(token, id)
       await refreshReports()
+      void refreshPulse()
     } catch (err: unknown) {
       handleAuthError(err)
     }
@@ -216,6 +218,7 @@ export default function ReportsPage() {
           }}
           onSave={() => {
             refreshReports()
+            void refreshPulse()
             setShowForm(false)
             setEditingReport(null)
           }}
