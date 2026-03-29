@@ -158,13 +158,23 @@ class _CSRFMiddleware(BaseHTTPMiddleware):
 # ---------------------------------------------------------------------------
 
 class _HSTSMiddleware(BaseHTTPMiddleware):
-    """Add Strict-Transport-Security header on every response in non-dev environments."""
+    """Add security headers on every response.
+
+    In non-dev environments:
+    - Strict-Transport-Security (HSTS)
+    - X-Content-Type-Options: nosniff
+    - X-Frame-Options: DENY
+    - Referrer-Policy: strict-origin-when-cross-origin
+    """
 
     async def dispatch(self, request: StarletteRequest, call_next):
         response = await call_next(request)
         from .core.config import get_settings as _gs
         if _gs().app_env != "dev":
             response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains"
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            response.headers["X-Frame-Options"] = "DENY"
+            response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         return response
 
 
@@ -212,7 +222,17 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Ambient AI Productivity Dashboard", lifespan=lifespan)
+app = FastAPI(
+    title="Ambient AI Productivity Dashboard",
+    lifespan=lifespan,
+    # Disable automatic trailing-slash redirects. FastAPI's default redirect
+    # builds the Location URL using the *internal* HTTP scheme (Railway
+    # terminates TLS at the edge and forwards HTTP internally), which produces
+    # an `http://` Location header — a protocol downgrade. Setting
+    # redirect_slashes=False avoids the redirect entirely; the generated
+    # TypeScript client and all API routes already use canonical paths.
+    redirect_slashes=False,
+)
 
 # ── Rate limiting (S-6, S-7) ──────────────────────────────────────────────
 app.state.limiter = limiter
