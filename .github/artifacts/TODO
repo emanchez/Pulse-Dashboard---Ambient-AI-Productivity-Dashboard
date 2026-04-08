@@ -3,15 +3,26 @@ features:
     calendar events widget
     gmail integration/widget
     able to reposition and resize widgets
+    notifications when stagnation is detected
+    admin:
+        logout feature
+        light/dark mode
+        user settings: 
+            change username (check availability), password, email
+
 fixes:
+    tasks:
+        hide completed tasks when datetime of completion is over 24hrs ago
+        have a more obvious ui feature indicating how many tasks were completed out of the week
+            5 being default target but can be changed in user settings (not yet implemented)
     reports modal: 
         ability to create a new task within the create/edit report modal
-        when selecting tasks to attach to report, add an option to hide completed tasks
+        when selecting tasks to attach to report, hide completed tasks by default and add an option to show them
         add ability to search task list
     tasks modal:
         make deadline optional, it should have a checkbox that when ticked, reveals the date input field. in the database, null dates will simply be set at epoch time
     nav bar (top):
-        rename Tasks to Dashboard.
+        rename Tasks to Dashboard. (also with the url target, and do a codebase sweep to reflect the change)
     Nav bar (right):
-        add new sidebar navigation when user icon is clicked. always hidden until profile icon is clicked
+        add new sidebar navigation when user icon is clicked. always hidden until profile icon is clicked. Will contain buttons to logout and to access profile settings (neither are implemented yet)
         
