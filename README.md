@@ -5,7 +5,7 @@ A **local-first** personal productivity dashboard that combats procrastination t
 ![Status](https://img.shields.io/badge/status-MVP%20complete-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Node](https://img.shields.io/badge/node-20.x-green)
-![License](https://img.shields.io/badge/license-private-lightgrey)
+![License](https://img.shields.io/badge/license-unlicensed-lightgrey)
 
 ---
 
